@@ -31,7 +31,7 @@ pl_2.layer = 21
 pl_1.build()
 pl_2.build()
 
-#%% define barriers 
+#%% define barriers
 
 bar_qda_1 = qda_elements.add_barrier('barrier_array_1')
 bar_qda_1.width = 30
@@ -155,8 +155,14 @@ sensor_left.build()
 
 #%% Sensor positions
 
-sensor_pos_x = sl_pl2.xlim[1]+sensor_right.gap_sep+sensor_right.plunger.diameter/2*sensor_right.plunger.get_asym()[0]
-sensor_pos_y = sl_pl1.ylim[1]+sensor_top.gap_sep+sensor_top.plunger.diameter/2*sensor_top.plunger.get_asym()[1]
+sensor_pos_x = (sl_pl2.xlim[1] +
+                sensor_right.gap_sep +
+                sensor_right.plunger.diameter/2 *
+                sensor_right.plunger.get_asym()[0])
+
+sensor_pos_y = (sl_pl1.ylim[1]+sensor_top.gap_sep +
+                sensor_top.plunger.diameter/2 *
+                sensor_top.plunger.get_asym()[1])
 
 sl_st = qda.add_sublattice('sublattice_sensor_top')
 sl_st.element = sensor_top
