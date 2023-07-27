@@ -22,15 +22,16 @@ Functions:
 
 """
 
-#%% imports
+# %% imports
 
 import gdstk
 import numpy as np
 import copy
 from abc import ABC, abstractmethod
+from collections import defaultdict
 
+# %% definitions
 
-#%% definitions
 
 def rot_mat(theta):
     """
@@ -43,10 +44,11 @@ def rot_mat(theta):
         Rotation matrix as a numpy array.
 
     """
-    return np.array([[np.cos(theta),-np.sin(theta)],
+    return np.array([[np.cos(theta), -np.sin(theta)],
                      [np.sin(theta), np.cos(theta)]])
 
-def gen_poly(n, sp = None):
+
+def gen_poly(n, sp=None):
     """
     Generate a regular polygon with a given number of sides.
 
@@ -65,6 +67,57 @@ def gen_poly(n, sp = None):
     for k in range(n):
         poly.append(np.dot(mat, poly[-1]))
     return [tuple(co) for co in poly]
+
+
+def generate_clavier_gates(width, length, clavier_width, clavier_length,
+                           num_clavier, spacing, shift, position):
+    vertices = []
+
+    # Calculate the total space occupied by the claviers and the gaps
+    total_clavier_space = (num_clavier * clavier_width +
+                           (num_clavier - 1) * spacing)
+
+    # Calculate the start point of the claviers (centered and shifted)
+    start_clavier = (length - total_clavier_space) / 2 + shift
+
+    # Start point
+    vertices.append((0 + position[0], 0 + position[1]))
+
+    # Bottom edge of the rectangle
+    for i in range(num_clavier + 1):
+        # Before clavier
+        vertices.append((start_clavier + i * (clavier_width + spacing) -
+                         spacing / 2 + position[0], 0 + position[1]))
+
+        # If there is a clavier here
+        if i < num_clavier:
+            # Move to the clavier
+            vertices.append((start_clavier + i * (clavier_width + spacing) +
+                             position[0], 0 + position[1]))
+            # Traverse the clavier
+            vertices.append((start_clavier + i * (clavier_width + spacing) +
+                             position[0], -clavier_length + position[1]))
+            vertices.append((start_clavier + i * (clavier_width + spacing) +
+                             clavier_width + position[0],
+                             - clavier_length + position[1]))
+            vertices.append((start_clavier + i * (clavier_width + spacing) +
+                             clavier_width + position[0], 0 + position[1]))
+            # Return to the rectangle
+            vertices.append((start_clavier + i * (clavier_width + spacing) +
+                             clavier_width + spacing / 2 + position[0],
+                             0 + position[1]))
+
+    # Right end of the rectangle
+    vertices.append((length + position[0], 0 + position[1]))
+
+    # Top edge of the rectangle
+    vertices.append((length + position[0], width + position[1]))
+    vertices.append((0 + position[0], width + position[1]))
+
+    # Closing the polygon
+    vertices.append((0 + position[0], 0 + position[1]))
+
+    return vertices
 
 
 class QuantumDotArrayElements:
@@ -86,8 +139,7 @@ class QuantumDotArrayElements:
     """
 
     def __init__(self):
-        self.elements = {}
-        self.sublattices = []
+        self.components = {}
         self.unit_cells = {}
 
     def add_plunger(self, name):
@@ -102,7 +154,7 @@ class QuantumDotArrayElements:
 
         """
         plunger = Plunger(name)
-        self.elements[name] = plunger
+        self.components[name] = plunger
         return plunger
 
     def add_barrier(self, name):
@@ -117,9 +169,8 @@ class QuantumDotArrayElements:
 
         """
         barrier = Barrier(name)
-        self.elements[name] = barrier
+        self.components[name] = barrier
         return barrier
-
 
     def add_screening_gate(self, name):
         """
@@ -133,7 +184,7 @@ class QuantumDotArrayElements:
 
         """
         screening_gate = ScreeningGate(name)
-        self.elements[name] = screening_gate
+        self.components[name] = screening_gate
         return screening_gate
 
     def add_ohmic(self, name):
@@ -148,7 +199,7 @@ class QuantumDotArrayElements:
 
         """
         ohmic = Ohmic(name)
-        self.elements[name] = ohmic
+        self.components[name] = ohmic
         return ohmic
 
     def add_sensor(self, name):
@@ -163,26 +214,39 @@ class QuantumDotArrayElements:
 
         """
         sensor = Sensor(name)
-        self.elements[name] = sensor
+        self.components[name] = sensor
         return sensor
+
+    def add_copy(self, component, copy_name):
+        attributes = copy.copy(vars(component))
+        attributes.pop('name')
+        attributes.pop('cell')
+        new_element = type(component)(copy_name)
+        new_element.__dict__.update(attributes)
+        self.components[copy_name] = new_element
+        return new_element
 
 
 class UnitCell:
-    def __init__(self, qda_instance, name='unit_cell'):
+    def __init__(self, name='unit_cell'):
         """
         Initialize a UnitCell object.
 
         Args:
-            qda_instance: The QuantumDotArray instance that this UnitCell belongs to.
+            parent_instance: The QuantumDotArray instance that this UnitCell belongs to.
             name (str): Name of the unit cell (default: 'unit_cell').
         """
-        self.parent = qda_instance
-        self.sublattices = {}
-        self.elements = {}
-        self.cells = []
-        self.unit_cell = gdstk.Cell(name)
 
-    def add_sublattice(self, name):
+        self.name = name
+        self.components = {}
+        self.components_position = defaultdict(list)
+        self.cell = gdstk.Cell(name)
+        self.xmin = None
+        self.xmax = None
+        self.ymin = None
+        self.ymax = None
+
+    def add_component(self, name):
         """
         Add a sublattice to the unit cell.
 
@@ -193,9 +257,25 @@ class UnitCell:
             Sublattice: The created Sublattice object.
         """
         sublattice = Sublattice(name)
-        self.sublattices[name] = sublattice
-        self.cells.append(sublattice)
+        self.components[name] = sublattice
         return sublattice
+
+    def get_lim(self, axis=0):
+        cell_max = 0
+        cell_min = 0
+        for poly in self.cell.get_polygons():
+            poly_max = poly.points[:, axis].max()
+            poly_min = poly.points[:, axis].min()
+            cell_max = max(cell_max, poly_max)
+            cell_min = min(cell_min, poly_min)
+        if axis:
+            self.ymax = cell_max
+            self.ymin = cell_min
+        else:
+            self.xmax = cell_max
+            self.xmin = cell_min
+
+        return (cell_min, cell_max)
 
     def build(self):
         """
@@ -203,41 +283,44 @@ class UnitCell:
 
         This method adds the sublattices to the unit cell's cell object.
         """
-        for cell in self.cells:
-            self.unit_cell.add(gdstk.Reference(cell.cell))
-        self.unit_cell.flatten()
+        for cell in self.components.values():
+            self.cell.add(gdstk.Reference(cell.cell))
+        self.cell.flatten()
+        self.xlim = self.get_lim(axis=0)
+        self.ylim = self.get_lim(axis=1)
+        self.get_positions()
+
+    def get_positions(self):
+        """
+        Get the positions of the elements in the sublattice.
+
+        Returns:
+            list: List of element positions as tuples (x, y).
+        """
+        for sublattices in self.components.values():
+            for key, positions in sublattices.components_position.items():
+                self.components_position[key].append(positions)
+
+        return self.components_position
 
 
 class QuantumDotArray:
-    def __init__(self, parent_instance, unitcell_instance=None):
+    def __init__(self):
         """
         Initialize a QuantumDotArray object.
 
         Args:
             parent_instance: The parent instance.
-            unitcell_instance (UnitCell): An optional UnitCell instance to use for the array.
+            unitcell_instance (UnitCell): An optional UnitCell instance to use
+            for the array.
         """
         self.spacing_qd = 200
         self.spacing_qd_diag = 2**0.5 * self.spacing_qd
-        self.parent_instance = parent_instance
-        self.unitcell_instance = unitcell_instance
-        self.sublattices = {}
-        self.cells = []
-        self.elements = self.parent_instance.elements
+        self.components = {}
+        self.components_position = {}
         self.main_cell = gdstk.Cell('MAIN')
-        self.add_unitcells()
 
-    def add_unitcells(self, name='unit_cell'):
-        """
-        Add unit cells to the QuantumDotArray.
-
-        Args:
-            name (str): Name of the unit cells (default: 'unit_cell').
-        """
-        for cell in self.unitcell_instance:
-            self.cells.append(cell)
-
-    def add_sublattice(self, name):
+    def add_component(self, name):
         """
         Add a sublattice to the QuantumDotArray.
 
@@ -248,9 +331,28 @@ class QuantumDotArray:
             Sublattice: The created Sublattice object.
         """
         sublattice = Sublattice(name)
-        self.sublattices[name] = sublattice
-        self.cells.append(sublattice)
+        self.components[name] = sublattice
         return sublattice
+
+    def get_comp_pos(self, unitcell_name, comp_name):
+        pos_unitcell = np.array(self.components[unitcell_name].positions)
+        if isinstance(self.components[unitcell_name].component, Element):
+            pos_comp = np.zeros((1, 2))
+        else:
+            pos_comp = np.array(
+                self.components[unitcell_name].component.
+                components[comp_name].positions)
+
+        pos_comp_ucs = np.empty((0, 2))
+        for pos_uc in pos_unitcell:
+            pos_comp_uc = pos_uc + pos_comp
+            pos_comp_ucs = np.append(pos_comp_ucs,
+                                     pos_comp_uc, axis=0)
+
+        pcu_sorted = pos_comp_ucs[np.lexsort((pos_comp_ucs[:, 0],
+                                              -pos_comp_ucs[:, 1]))]
+
+        self.components_position[comp_name] = pcu_sorted
 
     def build(self):
         """
@@ -258,7 +360,7 @@ class QuantumDotArray:
 
         This method adds the sublattices and unit cells to the main cell object.
         """
-        for cell in self.cells:
+        for cell in self.components.values():
             if isinstance(cell, Sublattice):
                 self.main_cell.add(gdstk.Reference(cell.cell))
             elif isinstance(cell, UnitCell):
@@ -304,23 +406,6 @@ class Element(ABC):
         This method should be implemented in subclasses to build the specific element.
         """
         pass
-
-    def copy(self, copy_name):
-        """
-        Create a copy of the element.
-
-        Args:
-            copy_name (str): Name of the copied element.
-
-        Returns:
-            Element: The copied Element object.
-        """
-        attributes = copy.copy(vars(self))
-        attributes.pop('name')
-        attributes.pop('cell')
-        new_element = type(self)(copy_name)
-        new_element.__dict__.update(attributes)
-        return new_element
 
 
 class Plunger(Element):
@@ -418,6 +503,7 @@ class ScreeningGate(Element):
     def build(self):
         print('Build method for Screening gate not implemeneted yet.')
 
+
 class Ohmic(Element):
     def __init__(self, name):
         super().__init__(name)
@@ -427,6 +513,7 @@ class Ohmic(Element):
 
     def build(self):
         print('Build method for Ohmic not implemeneted yet.')
+
 
 class Sensor:
     def __init__(self, name):
@@ -440,27 +527,37 @@ class Sensor:
         self.cell = None
         self.x = 0
         self.y = 0
-        self.plunger = Plunger(f'{name} plunger')
-        self.barrier_source = Barrier(f'{name} barrier source')
-        self.barrier_drain = Barrier(f'{name} barrier drain')
-        self.source = Ohmic(f'{name} source')
-        self.drain = Ohmic(f'{name} barrier drain')
-        self.barrier_sep = Barrier(f'{name} barrier seperation')
+        self.plunger = Plunger(f'{name}_plunger')
+        self.barrier_source = Barrier(f'{name}_barrier_source')
+        self.barrier_drain = Barrier(f'{name}_barrier_drain')
+        self.source = Ohmic(f'{name}_source')
+        self.drain = Ohmic(f'{name}_barrier_drain')
+        self.barrier_sep = Barrier(f'{name}_barrier_seperation')
         self.gap_ohmic_pl = 40
         self.gap_sep = 40
         self.source_pos = 'left'
         self.drain_pos = 'right'
         self.sep_pos = 'bottom'
-        self.source_position_offset = (0,0)
-        self.drain_position_offset = (0,0)
-        self.bar_sou_position_offset = (0,0)
-        self.bar_dra_position_offset = (0,0)
-        self.bar_sharp_source = (0,0)
-        self.bar_sharp_drain = (0,0)
+        self.source_position_offset = (0, 0)
+        self.drain_position_offset = (0, 0)
+        self.bar_sou_position_offset = (0, 0)
+        self.bar_dra_position_offset = (0, 0)
+        self.bar_sharp_source = (0, 0)
+        self.bar_sharp_drain = (0, 0)
         self.fillet = (0, 1e-3)
         self.__feature_gap = None
         self.sd_position = None
         self.bar_position = None
+
+        self.components = {self.plunger.name: self.plunger,
+                           self.barrier_source.name: self.barrier_source,
+                           self.barrier_drain.name: self.barrier_drain,
+                           self.source.name: self.source,
+                           self.drain.name: self.drain,
+                           self.barrier_sep.name: self.barrier_sep
+                           }
+
+        self.components_position = {}
 
     def copy(self, copy_name):
         """
@@ -495,23 +592,23 @@ class Sensor:
         bar_sep = self.barrier_sep
         self.__feature_gap = self.barrier_source.width - self.gap_ohmic_pl
 
-        orientation_dict = {'top':(0,1), 'right':(1,0),
-                            'bottom':(0,-1), 'left':(-1,0),
-                            'top-right':(2**0.5/2,2**0.5/2),
-                            'bottom-right':(2**0.5/2,-2**0.5/2),
-                            'bottom-left':(-2**0.5/2,-2**0.5/2),
-                            'top-left':(-2**0.5/2,2**0.5/2)}
+        orientation_dict = {'top': (0, 1), 'right': (1, 0),
+                            'bottom': (0, -1), 'left': (-1, 0),
+                            'top-right': (2**0.5/2, 2**0.5/2),
+                            'bottom-right': (2**0.5/2, -2**0.5/2),
+                            'bottom-left': (-2**0.5/2, -2**0.5/2),
+                            'top-left': (-2**0.5/2, 2**0.5/2)}
 
-        bar_angle_dict = {'top':np.pi, 'right':-np.pi/2,
-                          'bottom':np.pi, 'left':+np.pi/2,
-                          'top-right':-np.pi/4,
-                          'bottom-right':np.pi/4,
-                          'bottom-left':3*np.pi/4,
-                          'top-left':-3*np.pi/4}
+        bar_angle_dict = {'top': np.pi, 'right': -np.pi/2,
+                          'bottom': np.pi, 'left': +np.pi/2,
+                          'top-right': -np.pi/4,
+                          'bottom-right': np.pi/4,
+                          'bottom-left': 3*np.pi/4,
+                          'top-left': -3*np.pi/4}
 
-        (i,j) = orientation_dict[self.source_pos]
-        (m,n) = orientation_dict[self.drain_pos]
-        (u,v) = orientation_dict[self.sep_pos]
+        (i, j) = orientation_dict[self.source_pos]
+        (m, n) = orientation_dict[self.drain_pos]
+        (u, v) = orientation_dict[self.sep_pos]
 
         sd_position = ((i*(plunger._asymx*plunger.diameter/2 +
                            bar_source.width+source.width/2) +
@@ -558,6 +655,22 @@ class Sensor:
         bar_sep.x = sep_position[0]
         bar_sep.y = sep_position[1]
 
+        self.components_position = {self.plunger.name:
+                                    (self.plunger.x, self.plunger.y),
+                                    self.barrier_source.name:
+                                    (self.barrier_source.x,
+                                     self.barrier_source.y),
+                                    self.barrier_drain.name:
+                                    (self.barrier_drain.x,
+                                     self.barrier_drain.y),
+                                    self.source.name:
+                                    (self.source.x, self.source.y),
+                                    self.drain.name:
+                                    (self.drain.x, self.drain.y),
+                                    self.barrier_sep.name:
+                                    (self.barrier_sep.x, self.barrier_sep.y),
+                                    }
+
         self.plunger.build()
         self.barrier_source.build()
         self.barrier_drain.build()
@@ -585,14 +698,15 @@ class Sublattice:
             name (str): Name of the sublattice.
         """
         self.name = name
-        self.element = None
+        self.component = None
+        self.components_position = {}
         self.n_rows = 1
         self.n_columns = 1
         self.spacing_x = 100
         self.spacing_y = 100
         self.center = (0, 0)
-        self.positions = list()
-        self.points = list()
+        self.positions = []
+        self.points = []
         self.cell = None
         self._width = (self.n_columns-1) * self.spacing_x
         self._height = (self.n_rows-1) * self.spacing_y
@@ -601,13 +715,15 @@ class Sublattice:
 
     def _update_width(self):
         """
-        Update the width of the sublattice based on the number of columns and spacing.
+        Update the width of the sublattice based on the number of columns and
+        spacing.
         """
         self._width = (self.n_columns-1) * self.spacing_x
 
     def _update_height(self):
         """
-        Update the height of the sublattice based on the number of rows and spacing.
+        Update the height of the sublattice based on the number of rows and
+        spacing.
         """
         self._height = (self.n_rows-1) * self.spacing_y
 
@@ -618,7 +734,7 @@ class Sublattice:
         Args:
             element (Element): The element to be placed in the sublattice.
         """
-        self.element = element
+        self.component = element
 
     def set_rows(self, rows):
         """
@@ -671,10 +787,12 @@ class Sublattice:
 
     def get_lim(self, axis=0):
         """
-        Get the minimum and maximum limits along the specified axis of the sublattice cell.
+        Get the minimum and maximum limits along the specified axis of the
+        sublattice cell.
 
         Args:
-            axis (int): Axis along which to find the limits (0 for x-axis, 1 for y-axis).
+            axis (int): Axis along which to find the limits (0 for x-axis,
+                                                             1 for y-axis).
 
         Returns:
             tuple: Minimum and maximum limits as a tuple (min, max).
@@ -682,8 +800,8 @@ class Sublattice:
         cell_max = 0
         cell_min = 0
         for poly in self.cell.get_polygons():
-            poly_max = poly.points[:,axis].max()
-            poly_min = poly.points[:,axis].min()
+            poly_max = poly.points[:, axis].max()
+            poly_min = poly.points[:, axis].min()
             cell_max = max(cell_max, poly_max)
             cell_min = min(cell_min, poly_min)
         return (cell_min, cell_max)
@@ -695,7 +813,7 @@ class Sublattice:
         Returns:
             list: List of element positions as tuples (x, y).
         """
-        positions = list()
+        positions = []
         x0 = self.center[0] - self._width/2
         y0 = self.center[1] - self._height/2
         for row in reversed(range(self.n_rows)):
@@ -704,6 +822,7 @@ class Sublattice:
                 y = y0 + row*self.spacing_y
                 positions.append([x, y])
         self.positions = positions
+        self.components_position[self.component.name] = positions
 
         return positions
 
@@ -712,18 +831,32 @@ class Sublattice:
         Get the points defining the elements in the sublattice.
 
         Returns:
-            list: List of polygons points defining the elements in the sublattice.
+            list: List of polygons points defining the elements in the
+            sublattice.
         """
-        poly_points = list()
+        poly_points = []
         x0 = self.center[0] - self._width/2
         y0 = self.center[1] - self._height/2
-        polygons = self.element.cell.polygons
-        for row in reversed(range(self.n_rows)):
-            for col in range(self.n_columns):
-                for poly in polygons:
-                    x = x0 + col*self.spacing_x
-                    y = y0 + row*self.spacing_y
-                    poly_points.append(poly.points + [x, y])
+
+        if (isinstance(self.component, Element) or
+            isinstance(self.component, Sensor) or
+                isinstance(self.component, Sublattice)):
+            polygons = self.component.cell.polygons
+            for row in reversed(range(self.n_rows)):
+                for col in range(self.n_columns):
+                    for poly in polygons:
+                        x = x0 + col*self.spacing_x
+                        y = y0 + row*self.spacing_y
+                        poly_points.append(poly.points + [x, y])
+        elif (isinstance(self.component, UnitCell)):
+            for sl in self.components.values():
+                polygons = sl.component.cell.polygons
+                for row in reversed(range(self.n_rows)):
+                    for col in range(self.n_columns):
+                        for poly in polygons:
+                            x = x0 + col*self.spacing_x
+                            y = y0 + row*self.spacing_y
+                            poly_points.append(poly.points + [x, y])
 
         self.points = poly_points
 
@@ -731,12 +864,13 @@ class Sublattice:
 
     def build(self):
         """
-        Build the sublattice cell by adding the element references to the sublattice cell.
+        Build the sublattice cell by adding the element references to the
+        sublattice cell.
         """
         self.get_positions()
-        self.get_points()
+        # self.get_points()
         cell = gdstk.Cell(self.name)
-        cell.add(gdstk.Reference(self.element.cell,
+        cell.add(gdstk.Reference(self.component.cell,
                                  (self.center[0] - self._width/2,
                                   self.center[1] - self._height/2),
                                  columns=self.n_columns,
@@ -746,6 +880,10 @@ class Sublattice:
         self.cell = cell
         self.xlim = self.get_lim(axis=0)
         self.ylim = self.get_lim(axis=1)
+        # if not (isinstance(self.component, Element) or
+        #         isinstance(self.component, Sensor)):
+        #     for comp in self.component.components.keys():
+        #         self.get_comp_pos(comp)
 
 
 class Gate:
