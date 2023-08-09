@@ -371,7 +371,7 @@ class QuantumDotArrayElements:
 
 
 class UnitCell:
-    def __init__(self, name='unit_cell'):
+    def __init__(self, name):
         """
         Initialize a UnitCell object.
 
@@ -386,8 +386,9 @@ class UnitCell:
         self.cell = gdstk.Cell(name)
         self.xlim = None
         self.ylim = None
+        self._n = 0
 
-    def add_component(self, name):
+    def add_component(self):
         """
         Add a sublattice to the unit cell.
 
@@ -397,6 +398,8 @@ class UnitCell:
         Returns:
             Sublattice: The created Sublattice object.
         """
+        name = f'{self.name}_sublattice_{self._n}'
+        self._n = self._n + 1
         sublattice = Sublattice(name)
         self.components[name] = sublattice
         return sublattice

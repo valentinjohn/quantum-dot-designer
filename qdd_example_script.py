@@ -12,103 +12,109 @@ import QuantumDotDesigner as qdd
 # %% Init
 
 qda_elements = qdd.QuantumDotArrayElements()
-unit_cell = qdd.UnitCell()
+unit_cell = qdd.UnitCell('unit_cell')
 qda = qdd.QuantumDotArray()
 
 # %% define plungers
 
-pl_1 = qda_elements.add_plunger('plunger_1')
-pl_2 = qda_elements.add_plunger('plunger_2')
+pl_ver = qda_elements.add_plunger('plunger_vertically_elongated')
+pl_ver.asym = 0.8
+pl_ver.diameter = 150
+pl_ver.layer = 21
 
-pl_1.diameter = 150
-pl_1.asym = 0.8
-pl_1.layer = 21
+pl_hor = qda_elements.add_plunger('plunger_horizontally_elongated')
+pl_hor.asym = 1.1
+pl_hor.diameter = 100
+pl_hor.layer = 21
 
-pl_2.diameter = 100
-pl_2.asym = 1.1
-pl_2.layer = 21
-
-pl_1.build()
-pl_2.build()
+pl_ver.build()
+pl_hor.build()
 
 # %% define barriers
 
-bar_qda_1 = qda_elements.add_barrier('barrier_array_1')
-bar_qda_1.width = 30
-bar_qda_1.length = 70
-bar_qda_1.layer = 5
-bar_qda_1.rotate = 1/4*np.pi
+bar_one_fourths_pi = qda_elements.add_barrier('barrier_one_fourths_pi_rotated')
+bar_one_fourths_pi.width = 30
+bar_one_fourths_pi.length = 70
+bar_one_fourths_pi.layer = 5
+bar_one_fourths_pi.rotate = 1/4*np.pi
 
-bar_qda_2 = qda_elements.add_copy(bar_qda_1, 'barrier_array_2')
-bar_qda_2.rotate = 3/4*np.pi
+bar_three_fourths_pi = qda_elements.add_copy(bar_one_fourths_pi,
+                                             'barrier_three_fourths_pi_rotated')
+bar_three_fourths_pi.rotate = 3/4*np.pi
 
-bar_qda_3 = qda_elements.add_copy(bar_qda_1, 'barrier_array_3')
-bar_qda_3.rotate = -1/4*np.pi
+bar_five_fourths_pi = qda_elements.add_copy(bar_one_fourths_pi,
+                                            'barrier_five_fourths_pi_rotated')
+bar_five_fourths_pi.rotate = -3/4*np.pi
 
-bar_qda_4 = qda_elements.add_copy(bar_qda_1, 'barrier_array_4')
-bar_qda_4.rotate = -3/4*np.pi
+bar_seven_fourths_pi = qda_elements.add_copy(bar_one_fourths_pi,
+                                             'barrier_seven_fourths_pi_rotated')
+bar_seven_fourths_pi.rotate = -1/4*np.pi
 
-bar_qda_1.build()
-bar_qda_2.build()
-bar_qda_3.build()
-bar_qda_4.build()
+bar_one_fourths_pi.build()
+bar_three_fourths_pi.build()
+bar_five_fourths_pi.build()
+bar_seven_fourths_pi.build()
 
 # %% define unit cell
 
 unit_cell.spacing_qd = 200
 
-sl_pl1 = unit_cell.add_component('sublattice_plunger_1')
-sl_pl2 = unit_cell.add_component('sublattice_plunger_2')
+sl_pl_ver = unit_cell.add_component()
+sl_pl_hor = unit_cell.add_component()
 
-sl_bar1 = unit_cell.add_component('sublattice_barrier_1')
-sl_bar2 = unit_cell.add_component('sublattice_barrier_2')
-sl_bar3 = unit_cell.add_component('sublattice_barrier_3')
-sl_bar4 = unit_cell.add_component('sublattice_barrier_4')
+sl_bar_three_fourths_pi = unit_cell.add_component()
+sl_bar_one_fourths_pi = unit_cell.add_component()
+sl_bar_seven_fourths_pi = unit_cell.add_component()
+sl_bar_five_fourths_pi = unit_cell.add_component()
 
-sl_pl1.component = pl_1
-sl_pl1.center = (0, 0)
-sl_pl1.rows = 2
-sl_pl1.columns = 2
-sl_pl1.spacing = (qda.spacing_qd_diag,
-                  qda.spacing_qd_diag)
+sl_pl_ver.component = pl_ver
+sl_pl_ver.center = (0, 0)
+sl_pl_ver.rows = 2
+sl_pl_ver.columns = 2
+sl_pl_ver.spacing = (qda.spacing_qd_diag,
+                     qda.spacing_qd_diag)
 
-sl_pl2.component = pl_2
-sl_pl2.center = (0, 0)
-sl_pl2.columns = 3
-sl_pl2.spacing = (qda.spacing_qd_diag,
-                  qda.spacing_qd_diag)
+sl_pl_hor.component = pl_hor
+sl_pl_hor.center = (0, 0)
+sl_pl_hor.columns = 3
+sl_pl_hor.spacing = (qda.spacing_qd_diag,
+                     qda.spacing_qd_diag)
 
-sl_bar1.component = bar_qda_2
-sl_bar1.center = (-qda.spacing_qd_diag/4, qda.spacing_qd_diag/4)
-sl_bar1.columns = 2
-sl_bar1.spacing = (qda.spacing_qd_diag,
-                   qda.spacing_qd_diag)
+sl_bar_one_fourths_pi.component = bar_one_fourths_pi
+sl_bar_one_fourths_pi.center = (+qda.spacing_qd_diag/4,
+                                qda.spacing_qd_diag/4)
+sl_bar_one_fourths_pi.columns = 2
+sl_bar_one_fourths_pi.spacing = (qda.spacing_qd_diag,
+                                 qda.spacing_qd_diag)
 
-sl_bar2.component = bar_qda_1
-sl_bar2.center = (+qda.spacing_qd_diag/4, qda.spacing_qd_diag/4)
-sl_bar2.columns = 2
-sl_bar2.spacing = (qda.spacing_qd_diag,
-                   qda.spacing_qd_diag)
+sl_bar_three_fourths_pi.component = bar_three_fourths_pi
+sl_bar_three_fourths_pi.center = (-qda.spacing_qd_diag/4,
+                                  qda.spacing_qd_diag/4)
+sl_bar_three_fourths_pi.columns = 2
+sl_bar_three_fourths_pi.spacing = (qda.spacing_qd_diag,
+                                   qda.spacing_qd_diag)
 
-sl_bar3.component = bar_qda_3
-sl_bar3.center = (+qda.spacing_qd_diag/4, -qda.spacing_qd_diag/4)
-sl_bar3.columns = 2
-sl_bar3.spacing = (qda.spacing_qd_diag,
-                   qda.spacing_qd_diag)
+sl_bar_five_fourths_pi.component = bar_five_fourths_pi
+sl_bar_five_fourths_pi.center = (-qda.spacing_qd_diag/4,
+                                 -qda.spacing_qd_diag/4)
+sl_bar_five_fourths_pi.columns = 2
+sl_bar_five_fourths_pi.spacing = (qda.spacing_qd_diag,
+                                  qda.spacing_qd_diag)
 
-sl_bar4.component = bar_qda_4
-sl_bar4.center = (-qda.spacing_qd_diag/4, -qda.spacing_qd_diag/4)
-sl_bar4.columns = 2
-sl_bar4.spacing = (qda.spacing_qd_diag,
-                   qda.spacing_qd_diag)
+sl_bar_seven_fourths_pi.component = bar_seven_fourths_pi
+sl_bar_seven_fourths_pi.center = (+qda.spacing_qd_diag/4,
+                                  -qda.spacing_qd_diag/4)
+sl_bar_seven_fourths_pi.columns = 2
+sl_bar_seven_fourths_pi.spacing = (qda.spacing_qd_diag,
+                                   qda.spacing_qd_diag)
 
-sl_pl1.build()
-sl_pl2.build()
+sl_pl_ver.build()
+sl_pl_hor.build()
 
-sl_bar1.build()
-sl_bar2.build()
-sl_bar3.build()
-sl_bar4.build()
+sl_bar_three_fourths_pi.build()
+sl_bar_one_fourths_pi.build()
+sl_bar_seven_fourths_pi.build()
+sl_bar_five_fourths_pi.build()
 
 # %% define sensor
 
@@ -159,8 +165,8 @@ sl_bar4.build()
 # %% add sensor to unit cell
 
 # unit_cell.ylim = (qda.spacing_qd_diag/2 +
-#                   pl_1.diameter/2 *
-#                   pl_1.get_asym()[1])
+#                   pl_ver.diameter/2 *
+#                   pl_ver.get_asym()[1])
 
 # sensor_pos_uniy = (unit_cell.ylim+sensor_top.gap_sep +
 #                    sensor_top.plunger.diameter/2 *
@@ -213,24 +219,12 @@ sl_unitcell.build()
 qda.build()
 qda.save_as_gds('qdd_test_design.gds')
 
-# %%
-
-qda.get_comp_pos('sublattice_unit_cell', 'sublattice_plunger_1')
-
-
-# %%
-
-qda.components['sublattice_unit_cell'].cell
-qda.components['sublattice_unit_cell'].cell.polygons
-qda.components['sublattice_unit_cell'].cell.flatten()
-qda.components['sublattice_unit_cell'].cell.polygons
-
 
 # %%
 fog = FanoutGenerator()
 
-(P1, P2, P3, P8, P9, P10) = fog.gates(sl_pl1)
-(P4, P5, P6, P7) = fog.gates(sl_pl2)
+(P1, P2, P3, P8, P9, P10) = fog.gates(sl_pl_ver)
+(P4, P5, P6, P7) = fog.gates(sl_pl_hor)
 
 P1.points
 P1.position
@@ -239,30 +233,30 @@ P1.add_fanout()
 
 # #%% Generate plungers and barriers
 
-# P1 = sl_pl1.gates[0]
-# P2 = sl_pl1.gates[1]
-# P3 = sl_pl1.gates[2]
-# P4 = sl_pl2.gates[0]
-# P5 = sl_pl2.gates[1]
-# P6 = sl_pl2.gates[2]
-# P7 = sl_pl2.gates[3]
-# P8 = sl_pl1.gates[3]
-# P9 = sl_pl1.gates[4]
-# P10 = sl_pl1.gates[5]
+# P1 = sl_pl_ver.gates[0]
+# P2 = sl_pl_ver.gates[1]
+# P3 = sl_pl_ver.gates[2]
+# P4 = sl_pl_hor.gates[0]
+# P5 = sl_pl_hor.gates[1]
+# P6 = sl_pl_hor.gates[2]
+# P7 = sl_pl_hor.gates[3]
+# P8 = sl_pl_ver.gates[3]
+# P9 = sl_pl_ver.gates[4]
+# P10 = sl_pl_ver.gates[5]
 
 
-# B1 = sl_bar1[0]
-# B2 = sl_bar2[0]
-# B3 = sl_bar1[1]
-# B4 = sl_bar2[1]
-# B5 = sl_bar1[2]
-# B6 = sl_bar2[2]
-# B7 = sl_bar3[0]
-# B8 = sl_bar4[0]
-# B9 = sl_bar3[1]
-# B10 = sl_bar4[1]
-# B11 = sl_bar3[2]
-B12 = sl_bar4[2]
+# B1 = sl_bar_three_fourths_pi[0]
+# B2 = sl_bar_one_fourths_pi[0]
+# B3 = sl_bar_three_fourths_pi[1]
+# B4 = sl_bar_one_fourths_pi[1]
+# B5 = sl_bar_three_fourths_pi[2]
+# B6 = sl_bar_one_fourths_pi[2]
+# B7 = sl_bar_seven_fourths_pi[0]
+# B8 = sl_bar_five_fourths_pi[0]
+# B9 = sl_bar_seven_fourths_pi[1]
+# B10 = sl_bar_five_fourths_pi[1]
+# B11 = sl_bar_seven_fourths_pi[2]
+B12 = sl_bar_five_fourths_pi[2]
 
 # %% define screening gates
 
