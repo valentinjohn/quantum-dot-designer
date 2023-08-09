@@ -995,7 +995,6 @@ class Sublattice:
         self.name = name
         self.elements = {}
         self.component = None
-        self.components_position = {}
         self.rows = 1
         self.columns = 1
         self.spacing = (100, 100)
