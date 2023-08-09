@@ -154,17 +154,17 @@ def generate_clavier_gates(width, length, gate_width, gate_length,
     return vertices
 
 
-def create_lattice_positions(n_rows, n_columns, spacing_x, spacing_y, center):
+def create_lattice_positions(rows, columns, spacing_x, spacing_y, center):
     """
     Generate lattice positions based on input parameters.
     """
     x_center, y_center = center
     positions = []
 
-    for i in range(n_rows):
-        for j in range(n_columns):
-            x = (j * spacing_x + x_center) - (n_columns - 1) * spacing_x / 2
-            y = - (i * spacing_y + y_center) + (n_rows - 1) * spacing_y / 2
+    for i in range(rows):
+        for j in range(columns):
+            x = (j * spacing_x + x_center) - (columns - 1) * spacing_x / 2
+            y = - (i * spacing_y + y_center) + (rows - 1) * spacing_y / 2
             positions.append([x, y])
     return positions
 
@@ -182,13 +182,13 @@ def apply_sublattice(main_lattice, sub_lattice):
     return result
 
 
-def update_positions(elements, n_rows, n_columns, spacing_x, spacing_y, center):
+def update_positions(elements, rows, columns, spacing_x, spacing_y, center):
     """
     Update the positions of elements based on the given lattice parameters.
     """
     # Generate lattice positions
     lattice_positions = create_lattice_positions(
-        n_rows, n_columns, spacing_x, spacing_y, center)
+        rows, columns, spacing_x, spacing_y, center)
 
     for key, value in elements.items():
         # Update the positions of each element in the dictionary
@@ -974,7 +974,7 @@ class Clavier:
         sl_clav_screen = cell.add_component(f'sublattice_clav_screen_up')
         sl_clav_screen.component = screen
         sl_clav_screen.center = (0, 0)
-        sl_clav_screen.n_rows = 2
+        sl_clav_screen.rows = 2
         sl_clav_screen.spacing_y = 2*abs(screen.y)
         sl_clav_screen.build()
 
@@ -996,91 +996,29 @@ class Sublattice:
         self.elements = {}
         self.component = None
         self.components_position = {}
-        self.elements = {}
-        self.n_rows = 1
-        self.n_columns = 1
-        self.spacing_x = 100
-        self.spacing_y = 100
+        self.rows = 1
+        self.columns = 1
+        self.spacing = (100, 100)
         self.center = (0, 0)
-        self.positions = []
-        self.points = []
         self.cell = None
-        self._width = (self.n_columns-1) * self.spacing_x
-        self._height = (self.n_rows-1) * self.spacing_y
-        self.xmax = None
-        self.ymax = None
+        self.xlim = None
+        self.ylim = None
+        self._width = (self.columns-1) * self.spacing[0]
+        self._height = (self.rows-1) * self.spacing[1]
 
     def _update_width(self):
         """
         Update the width of the sublattice based on the number of columns and
         spacing.
         """
-        self._width = (self.n_columns-1) * self.spacing_x
+        self._width = (self.columns-1) * self.spacing[0]
 
     def _update_height(self):
         """
         Update the height of the sublattice based on the number of rows and
         spacing.
         """
-        self._height = (self.n_rows-1) * self.spacing_y
-
-    def set_element(self, element):
-        """
-        Set the element of the sublattice.
-
-        Args:
-            element (Element): The element to be placed in the sublattice.
-        """
-        self.component = element
-
-    def set_rows(self, rows):
-        """
-        Set the number of rows in the sublattice.
-
-        Args:
-            rows (int): Number of rows.
-        """
-        self.n_rows = rows
-        self._update_height()
-
-    def set_columns(self, columns):
-        """
-        Set the number of columns in the sublattice.
-
-        Args:
-            columns (int): Number of columns.
-        """
-        self.n_columns = columns
-        self._update_width()
-
-    def set_center(self, center):
-        """
-        Set the center position of the sublattice.
-
-        Args:
-            center (tuple): Center position as a tuple (x, y).
-        """
-        self.center = center
-
-    def set_xspacing(self, spacing_x):
-        """
-        Set the horizontal spacing between elements in the sublattice.
-
-        Args:
-            spacing_x (float): Horizontal spacing.
-        """
-        self.spacing_x = spacing_x
-        self._update_width()
-
-    def set_yspacing(self, spacing_y):
-        """
-        Set the vertical spacing between elements in the sublattice.
-
-        Args:
-            spacing_y (float): Vertical spacing.
-        """
-        self.spacing_y = spacing_y
-        self._update_height()
+        self._height = (self.rows-1) * self.spacing[1]
 
     def _get_lim(self, axis=0):
         """
@@ -1101,90 +1039,36 @@ class Sublattice:
             poly_min = poly.points[:, axis].min()
             cell_max = max(cell_max, poly_max)
             cell_min = min(cell_min, poly_min)
-        return (cell_min, cell_max)
-
-    def get_positions(self):
-        """
-        Get the positions of the elements in the sublattice.
-
-        Returns:
-            list: List of element positions as tuples (x, y).
-        """
-        positions = []
-        x0 = self.center[0] - self._width/2
-        y0 = self.center[1] - self._height/2
-        for row in reversed(range(self.n_rows)):
-            for col in range(self.n_columns):
-                x = x0 + col*self.spacing_x
-                y = y0 + row*self.spacing_y
-                positions.append([x, y])
-        self.positions = positions
-        self.components_position[self.component.name] = positions
-
-        return positions
-
-    def get_points(self):
-        """
-        Get the points defining the elements in the sublattice.
-
-        Returns:
-            list: List of polygons points defining the elements in the
-            sublattice.
-        """
-        poly_points = []
-        x0 = self.center[0] - self._width/2
-        y0 = self.center[1] - self._height/2
-
-        if (isinstance(self.component, Element) or
-            isinstance(self.component, Sensor) or
-                isinstance(self.component, Sublattice)):
-            polygons = self.component.cell.polygons
-            for row in reversed(range(self.n_rows)):
-                for col in range(self.n_columns):
-                    for poly in polygons:
-                        x = x0 + col*self.spacing_x
-                        y = y0 + row*self.spacing_y
-                        poly_points.append(poly.points + [x, y])
-        elif (isinstance(self.component, UnitCell)):
-            for sl in self.components.values():
-                polygons = sl.component.cell.polygons
-                for row in reversed(range(self.n_rows)):
-                    for col in range(self.n_columns):
-                        for poly in polygons:
-                            x = x0 + col*self.spacing_x
-                            y = y0 + row*self.spacing_y
-                            poly_points.append(poly.points + [x, y])
-
-        self.points = poly_points
-
-        return poly_points
+        if axis == 0:
+            self.xlim = (cell_min, cell_max)
+        elif axis == 1:
+            self.ylim = (cell_min, cell_max)
+        else:
+            raise ValueError(
+                f"axis has to be 0 or 1, but is '{axis}'.")
 
     def build(self):
         """
         Build the sublattice cell by adding the element references to the
         sublattice cell.
         """
-        self.get_positions()
-        # self.get_points()
+        self._update_height()
+        self._update_width()
         cell = gdstk.Cell(self.name)
         cell.add(gdstk.Reference(self.component.cell,
                                  (self.center[0] - self._width/2,
                                   self.center[1] - self._height/2),
-                                 columns=self.n_columns,
-                                 rows=self.n_rows,
-                                 spacing=(self.spacing_x, self.spacing_y)
+                                 columns=self.columns,
+                                 rows=self.rows,
+                                 spacing=(self.spacing[0], self.spacing[1])
                                  ))
         self.cell = cell
-        self.xlim = self._get_lim(axis=0)
-        self.ylim = self._get_lim(axis=1)
+        self._get_lim(axis=0)
+        self._get_lim(axis=1)
         self.elements = update_positions(self.component.elements,
-                                         self.n_rows, self.n_columns,
-                                         self.spacing_x, self.spacing_y,
+                                         self.rows, self.columns,
+                                         self.spacing[0], self.spacing[1],
                                          self.center)
-        # if not (isinstance(self.component, Element) or
-        #         isinstance(self.component, Sensor)):
-        #     for comp in self.component.components.keys():
-        #         self.get_comp_pos(comp)
 
 
 class Gate:

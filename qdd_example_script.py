@@ -67,36 +67,40 @@ sl_bar4 = unit_cell.add_component('sublattice_barrier_4')
 
 sl_pl1.component = pl_1
 sl_pl1.center = (0, 0)
-sl_pl1.set_rows(2)
-sl_pl1.set_columns(2)
-sl_pl1.set_xspacing(qda.spacing_qd_diag)
-sl_pl1.set_yspacing(qda.spacing_qd_diag)
+sl_pl1.rows = 2
+sl_pl1.columns = 2
+sl_pl1.spacing = (qda.spacing_qd_diag,
+                  qda.spacing_qd_diag)
 
 sl_pl2.component = pl_2
 sl_pl2.center = (0, 0)
-sl_pl2.set_columns(3)
-sl_pl2.set_xspacing(qda.spacing_qd_diag)
-sl_pl2.set_yspacing(qda.spacing_qd_diag)
+sl_pl2.columns = 3
+sl_pl2.spacing = (qda.spacing_qd_diag,
+                  qda.spacing_qd_diag)
 
 sl_bar1.component = bar_qda_2
 sl_bar1.center = (-qda.spacing_qd_diag/4, qda.spacing_qd_diag/4)
-sl_bar1.set_columns(2)
-sl_bar1.set_xspacing(qda.spacing_qd_diag)
+sl_bar1.columns = 2
+sl_bar1.spacing = (qda.spacing_qd_diag,
+                   qda.spacing_qd_diag)
 
 sl_bar2.component = bar_qda_1
 sl_bar2.center = (+qda.spacing_qd_diag/4, qda.spacing_qd_diag/4)
-sl_bar2.set_columns(2)
-sl_bar2.set_xspacing(qda.spacing_qd_diag)
+sl_bar2.columns = 2
+sl_bar2.spacing = (qda.spacing_qd_diag,
+                   qda.spacing_qd_diag)
 
 sl_bar3.component = bar_qda_3
 sl_bar3.center = (+qda.spacing_qd_diag/4, -qda.spacing_qd_diag/4)
-sl_bar3.set_columns(2)
-sl_bar3.set_xspacing(qda.spacing_qd_diag)
+sl_bar3.columns = 2
+sl_bar3.spacing = (qda.spacing_qd_diag,
+                   qda.spacing_qd_diag)
 
 sl_bar4.component = bar_qda_4
 sl_bar4.center = (-qda.spacing_qd_diag/4, -qda.spacing_qd_diag/4)
-sl_bar4.set_columns(2)
-sl_bar4.set_xspacing(qda.spacing_qd_diag)
+sl_bar4.columns = 2
+sl_bar4.spacing = (qda.spacing_qd_diag,
+                   qda.spacing_qd_diag)
 
 sl_pl1.build()
 sl_pl2.build()
@@ -181,10 +185,10 @@ unit_cell.build()
 sl_unitcell = qda.add_component('sublattice_unit_cell')
 sl_unitcell.component = unit_cell
 sl_unitcell.center = (0, 0)
-sl_unitcell.set_rows(1)
-sl_unitcell.set_columns(10)
-sl_unitcell.set_xspacing(2*qda.spacing_qd_diag)
-sl_unitcell.set_yspacing(qda.spacing_qd_diag)
+sl_unitcell.rows = 1
+sl_unitcell.columns = 10
+sl_unitcell.spacing = (2*qda.spacing_qd_diag,
+                       qda.spacing_qd_diag)
 sl_unitcell.build()
 
 # %% Sensor positions
@@ -203,25 +207,6 @@ sl_unitcell.build()
 # sl_sl.component = sensor_left
 # sl_sl.center = (-sensor_pos_x, 0)
 # sl_sl.build()
-
-# %%
-# components_position = {}
-# comp_name = 'sublattice_sensor_top'  # unitcell.component.components.keys()
-# unitcell = sl_unitcell
-
-# position_unitcell = np.array(unitcell.positions)
-# position_comp = np.array(unitcell.component.components[comp_name].positions)
-
-# position_comp_unitcell = np.empty((0, 2))
-# for pos_uc in position_unitcell:
-#     pos_comp_uc = pos_uc + position_comp
-#     position_comp_unitcell = np.append(
-#         position_comp_unitcell, pos_comp_uc, axis=0)
-
-# pcu_sorted = position_comp_unitcell[np.lexsort((position_comp_unitcell[:, 0],
-#                                                 -position_comp_unitcell[:, 1]))]
-
-# components_position[comp_name] = pcu_sorted
 
 # %% Build and save
 
