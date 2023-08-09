@@ -163,8 +163,8 @@ def create_lattice_positions(n_rows, n_columns, spacing_x, spacing_y, center):
 
     for i in range(n_rows):
         for j in range(n_columns):
-            x = j * spacing_x + x_center - (n_columns - 1) * spacing_x / 2
-            y = i * spacing_y + y_center - (n_rows - 1) * spacing_y / 2
+            x = (j * spacing_x + x_center) - (n_columns - 1) * spacing_x / 2
+            y = - (i * spacing_y + y_center) + (n_rows - 1) * spacing_y / 2
             positions.append([x, y])
     return positions
 
@@ -221,6 +221,10 @@ def merge_dicts(dict1, dict2):
 
             # Merge the positions
             merged[key]['positions'] += value['positions']
+
+            # Sort the positions based on y_max and x_min
+            merged[key]['positions'].sort(key=lambda x: (-x[1], x[0]))
+
         else:
             # If the key (name) is not in the merged dictionary, just add the whole item
             merged[key] = value
@@ -379,12 +383,9 @@ class UnitCell:
         self.name = name
         self.elements = {}
         self.components = {}
-        self.components_position = defaultdict(list)
         self.cell = gdstk.Cell(name)
-        self.xmin = None
-        self.xmax = None
-        self.ymin = None
-        self.ymax = None
+        self.xlim = None
+        self.ylim = None
 
     def add_component(self, name):
         """
@@ -400,7 +401,7 @@ class UnitCell:
         self.components[name] = sublattice
         return sublattice
 
-    def get_lim(self, axis=0):
+    def _get_lim(self, axis=0):
         cell_max = 0
         cell_min = 0
         for poly in self.cell.get_polygons():
@@ -409,13 +410,9 @@ class UnitCell:
             cell_max = max(cell_max, poly_max)
             cell_min = min(cell_min, poly_min)
         if axis:
-            self.ymax = cell_max
-            self.ymin = cell_min
+            self.ylim = (cell_min, cell_max)
         else:
-            self.xmax = cell_max
-            self.xmin = cell_min
-
-        return (cell_min, cell_max)
+            self.xlim = (cell_min, cell_max)
 
     def build(self):
         """
@@ -429,22 +426,8 @@ class UnitCell:
             elements = merge_dicts(elements, cell.elements)
         self.elements = elements
         self.cell.flatten()
-        self.xlim = self.get_lim(axis=0)
-        self.ylim = self.get_lim(axis=1)
-        self.get_positions()
-
-    def get_positions(self):
-        """
-        Get the positions of the elements in the sublattice.
-
-        Returns:
-            list: List of element positions as tuples (x, y).
-        """
-        for sublattices in self.components.values():
-            for key, positions in sublattices.components_position.items():
-                self.components_position[key].append(positions)
-
-        return self.components_position
+        self._get_lim(axis=0)
+        self._get_lim(axis=1)
 
 
 class QuantumDotArray:
@@ -477,26 +460,6 @@ class QuantumDotArray:
         sublattice = Sublattice(name)
         self.components[name] = sublattice
         return sublattice
-
-    def get_comp_pos(self, unitcell_name, comp_name):
-        pos_unitcell = np.array(self.components[unitcell_name].positions)
-        if isinstance(self.components[unitcell_name].component, Element):
-            pos_comp = np.zeros((1, 2))
-        else:
-            pos_comp = np.array(
-                self.components[unitcell_name].component.
-                components[comp_name].positions)
-
-        pos_comp_ucs = np.empty((0, 2))
-        for pos_uc in pos_unitcell:
-            pos_comp_uc = pos_uc + pos_comp
-            pos_comp_ucs = np.append(pos_comp_ucs,
-                                     pos_comp_uc, axis=0)
-
-        pcu_sorted = pos_comp_ucs[np.lexsort((pos_comp_ucs[:, 0],
-                                              -pos_comp_ucs[:, 1]))]
-
-        self.components_position[comp_name] = pcu_sorted
 
     def build(self):
         """
@@ -1131,7 +1094,7 @@ class Sublattice:
         self.spacing_y = spacing_y
         self._update_height()
 
-    def get_lim(self, axis=0):
+    def _get_lim(self, axis=0):
         """
         Get the minimum and maximum limits along the specified axis of the
         sublattice cell.
@@ -1224,8 +1187,8 @@ class Sublattice:
                                  spacing=(self.spacing_x, self.spacing_y)
                                  ))
         self.cell = cell
-        self.xlim = self.get_lim(axis=0)
-        self.ylim = self.get_lim(axis=1)
+        self.xlim = self._get_lim(axis=0)
+        self.ylim = self._get_lim(axis=1)
         self.elements = update_positions(self.component.elements,
                                          self.n_rows, self.n_columns,
                                          self.spacing_x, self.spacing_y,
