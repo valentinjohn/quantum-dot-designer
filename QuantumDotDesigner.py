@@ -503,7 +503,6 @@ class Element(ABC):
         self.elements = {name: {'vertices': [],
                                 'positions': [],
                                 'layer': self.layer}}
-        self.polygons = []
         self.cell = None
         self.x = 0
         self.y = 0
@@ -536,7 +535,7 @@ class Plunger(Element):
         self._asymx = self.asym
         self._asymy = 1 / self.asym
 
-    def update_asym(self, asym):
+    def _update_asym(self, asym):
         """
         Update the asymmetry of the plunger.
 
@@ -546,21 +545,11 @@ class Plunger(Element):
         self._asymx = asym
         self._asymy = 1 / asym
 
-    def get_asym(self):
-        """
-        Get the asymmetry of the plunger.
-
-        Returns:
-            tuple: Tuple containing the X and Y asymmetry values.
-        """
-        self.update_asym(self.asym)
-        return (self._asymx,  self._asymy)
-
     def build(self):
         """
         Build the plunger element.
         """
-        self.update_asym(self.asym)
+        self._update_asym(self.asym)
         pl_points = gen_poly(8)
         pl = gdstk.Polygon(pl_points, layer=self.layer)
         pl.scale(0.5 / np.cos(np.pi / 8) * self.diameter)
@@ -588,7 +577,6 @@ class Barrier(Element):
         self.layer = 5
         self.width = None
         self.length = None
-        self.shape = None
 
     def build(self):
         """
