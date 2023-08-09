@@ -24,6 +24,7 @@ Functions:
 
 # %% imports
 
+import math
 import gdstk
 import numpy as np
 import copy
@@ -69,55 +70,162 @@ def gen_poly(n, sp=None):
     return [tuple(co) for co in poly]
 
 
-def generate_clavier_gates(width, length, clavier_width, clavier_length,
-                           num_clavier, spacing, shift, position):
+def rotate_point(point, angle, origin=(0, 0)):
+    """
+    Rotate a point counterclockwise by a given angle around a given origin.
+
+    The angle should be given in radians.
+    """
+    x, y = point
+    ox, oy = origin
+
+    qx = ox + math.cos(angle) * (x - ox) - math.sin(angle) * (y - oy)
+    qy = oy + math.sin(angle) * (x - ox) + math.cos(angle) * (y - oy)
+
+    return qx, qy
+
+
+def generate_clavier_gates(width, length, gate_width, gate_length,
+                           num_clavier, spacing, shift, position, rotation=0):
     vertices = []
 
+    # Convert rotation to radians
+    rotation = math.radians(rotation)
+
     # Calculate the total space occupied by the claviers and the gaps
-    total_clavier_space = (num_clavier * clavier_width +
+    total_clavier_space = (num_clavier * gate_width +
                            (num_clavier - 1) * spacing)
 
     # Calculate the start point of the claviers (centered and shifted)
     start_clavier = (length - total_clavier_space) / 2 + shift
 
     # Start point
-    vertices.append((0 + position[0], 0 + position[1]))
+    vertices.append(rotate_point((0 + position[0], 0 + position[1]), rotation))
 
     # Bottom edge of the rectangle
     for i in range(num_clavier + 1):
         # Before clavier
-        vertices.append((start_clavier + i * (clavier_width + spacing) -
-                         spacing / 2 + position[0], 0 + position[1]))
+        point = (start_clavier + i * (gate_width + spacing) -
+                 spacing / 2 + position[0], 0 + position[1])
+        vertices.append(rotate_point(point, rotation))
 
         # If there is a clavier here
         if i < num_clavier:
             # Move to the clavier
-            vertices.append((start_clavier + i * (clavier_width + spacing) +
-                             position[0], 0 + position[1]))
+            point = (start_clavier + i * (gate_width + spacing) +
+                     position[0], 0 + position[1])
+            vertices.append(rotate_point(point, rotation))
+
             # Traverse the clavier
-            vertices.append((start_clavier + i * (clavier_width + spacing) +
-                             position[0], -clavier_length + position[1]))
-            vertices.append((start_clavier + i * (clavier_width + spacing) +
-                             clavier_width + position[0],
-                             - clavier_length + position[1]))
-            vertices.append((start_clavier + i * (clavier_width + spacing) +
-                             clavier_width + position[0], 0 + position[1]))
+            point = (start_clavier + i * (gate_width + spacing) +
+                     position[0], -gate_length + position[1])
+            vertices.append(rotate_point(point, rotation))
+
+            point = (start_clavier + i * (gate_width + spacing) +
+                     gate_width + position[0],
+                     - gate_length + position[1])
+            vertices.append(rotate_point(point, rotation))
+
+            point = (start_clavier + i * (gate_width + spacing) +
+                     gate_width + position[0], 0 + position[1])
+            vertices.append(rotate_point(point, rotation))
+
             # Return to the rectangle
-            vertices.append((start_clavier + i * (clavier_width + spacing) +
-                             clavier_width + spacing / 2 + position[0],
-                             0 + position[1]))
+            point = (start_clavier + i * (gate_width + spacing) +
+                     gate_width + spacing / 2 + position[0],
+                     0 + position[1])
+            vertices.append(rotate_point(point, rotation))
 
     # Right end of the rectangle
-    vertices.append((length + position[0], 0 + position[1]))
+    point = (length + position[0], 0 + position[1])
+    vertices.append(rotate_point(point, rotation))
 
     # Top edge of the rectangle
-    vertices.append((length + position[0], width + position[1]))
-    vertices.append((0 + position[0], width + position[1]))
+    point = (length + position[0], width + position[1])
+    vertices.append(rotate_point(point, rotation))
+
+    point = (0 + position[0], width + position[1])
+    vertices.append(rotate_point(point, rotation))
 
     # Closing the polygon
-    vertices.append((0 + position[0], 0 + position[1]))
+    point = (0 + position[0], 0 + position[1])
+    vertices.append(rotate_point(point, rotation))
 
     return vertices
+
+
+def create_lattice_positions(n_rows, n_columns, spacing_x, spacing_y, center):
+    """
+    Generate lattice positions based on input parameters.
+    """
+    x_center, y_center = center
+    positions = []
+
+    for i in range(n_rows):
+        for j in range(n_columns):
+            x = j * spacing_x + x_center - (n_columns - 1) * spacing_x / 2
+            y = i * spacing_y + y_center - (n_rows - 1) * spacing_y / 2
+            positions.append([x, y])
+    return positions
+
+
+def apply_sublattice(main_lattice, sub_lattice):
+    """
+    Apply the sub_lattice to each position in the main_lattice.
+    """
+    result = []
+
+    for main_pos in main_lattice:
+        for sub_pos in sub_lattice:
+            result.append([main_pos[0] + sub_pos[0], main_pos[1] + sub_pos[1]])
+
+    return result
+
+
+def update_positions(elements, n_rows, n_columns, spacing_x, spacing_y, center):
+    """
+    Update the positions of elements based on the given lattice parameters.
+    """
+    # Generate lattice positions
+    lattice_positions = create_lattice_positions(
+        n_rows, n_columns, spacing_x, spacing_y, center)
+
+    for key, value in elements.items():
+        # Update the positions of each element in the dictionary
+        value['positions'] = apply_sublattice(lattice_positions,
+                                              value['positions'])
+
+    return elements
+
+
+def merge_dicts(dict1, dict2):
+    """
+    Merge two input dictionaries. If the names match but vertices or layers are different,
+    raise an error. Otherwise, merge by combining the positions.
+    """
+    # Create a copy of the first dictionary to avoid modifying the original
+    merged = dict1.copy()
+
+    for key, value in dict2.items():
+        # If the key (name) is already in the merged dictionary
+        if key in merged:
+            # Check if the vertices are the same
+            if not np.array_equal(merged[key]['vertices'], value['vertices']):
+                raise ValueError(
+                    f"The vertices for key '{key}' are different between the two dictionaries.")
+
+            # Check if the layers are the same
+            if merged[key]['layer'] != value['layer']:
+                raise ValueError(
+                    f"The layers for key '{key}' are different between the two dictionaries.")
+
+            # Merge the positions
+            merged[key]['positions'] += value['positions']
+        else:
+            # If the key (name) is not in the merged dictionary, just add the whole item
+            merged[key] = value
+
+    return merged
 
 
 class QuantumDotArrayElements:
@@ -217,10 +325,41 @@ class QuantumDotArrayElements:
         self.components[name] = sensor
         return sensor
 
+    def add_clavier_gate(self, name):
+        """
+        Add a clavier to the collection.
+
+        Args:
+            name: Name of the clavier.
+
+        Returns:
+            The created clavier.
+
+        """
+        clavier_gate = ClavierGate(name)
+        self.components[name] = clavier_gate
+        return clavier_gate
+
+    def add_clavier(self, name):
+        """
+        Add a clavier to the collection.
+
+        Args:
+            name: Name of the clavier.
+
+        Returns:
+            The created clavier.
+
+        """
+        clavier = Clavier(name, self)
+        self.components[name] = clavier
+        return clavier
+
     def add_copy(self, component, copy_name):
         attributes = copy.copy(vars(component))
         attributes.pop('name')
         attributes.pop('cell')
+        attributes.pop('elements')
         new_element = type(component)(copy_name)
         new_element.__dict__.update(attributes)
         self.components[copy_name] = new_element
@@ -238,6 +377,7 @@ class UnitCell:
         """
 
         self.name = name
+        self.elements = {}
         self.components = {}
         self.components_position = defaultdict(list)
         self.cell = gdstk.Cell(name)
@@ -283,8 +423,11 @@ class UnitCell:
 
         This method adds the sublattices to the unit cell's cell object.
         """
+        elements = {}
         for cell in self.components.values():
             self.cell.add(gdstk.Reference(cell.cell))
+            elements = merge_dicts(elements, cell.elements)
+        self.elements = elements
         self.cell.flatten()
         self.xlim = self.get_lim(axis=0)
         self.ylim = self.get_lim(axis=1)
@@ -316,6 +459,7 @@ class QuantumDotArray:
         """
         self.spacing_qd = 200
         self.spacing_qd_diag = 2**0.5 * self.spacing_qd
+        self.elements = {}
         self.components = {}
         self.components_position = {}
         self.main_cell = gdstk.Cell('MAIN')
@@ -360,13 +504,16 @@ class QuantumDotArray:
 
         This method adds the sublattices and unit cells to the main cell object.
         """
+        elements = {}
         for cell in self.components.values():
+            elements = merge_dicts(elements, cell.elements)
             if isinstance(cell, Sublattice):
                 self.main_cell.add(gdstk.Reference(cell.cell))
             elif isinstance(cell, UnitCell):
                 for c in cell.cells:
                     self.main_cell.add(gdstk.Reference(c.cell))
         self.main_cell.flatten()
+        self.elements = elements
 
     def save_as_gds(self, filename):
         """
@@ -390,6 +537,9 @@ class Element(ABC):
         """
         self.name = name
         self.layer = None
+        self.elements = {name: {'vertices': [],
+                                'positions': [],
+                                'layer': self.layer}}
         self.polygons = []
         self.cell = None
         self.x = 0
@@ -457,6 +607,9 @@ class Plunger(Element):
         pl.fillet(0.02, tolerance=1e-4)
         cell = gdstk.Cell(self.name)
         cell.add(pl)
+        self.elements[self.name]['vertices'] = pl.points
+        self.elements[self.name]['positions'] = [[self.x, self.y]]
+        self.elements[self.name]['layer'] = self.layer
         self.cell = cell
 
 
@@ -492,16 +645,29 @@ class Barrier(Element):
         bar.fillet(self.fillet, tolerance=self.fillet_tolerance)
         cell = gdstk.Cell(self.name)
         cell.add(bar)
+        self.elements[self.name]['vertices'] = bar.points
+        self.elements[self.name]['positions'] = [[self.x, self.y]]
+        self.elements[self.name]['layer'] = self.layer
         self.cell = cell
 
 
 class ScreeningGate(Element):
     def __init__(self, name):
         super().__init__(name)
-        self.shape = None
+        self.layer = 5
+        self.vertices = []
 
     def build(self):
-        print('Build method for Screening gate not implemeneted yet.')
+        screen = gdstk.Polygon(self.vertices,
+                               layer=self.layer)
+        screen.translate(self.x, self.y)
+        screen.fillet(self.fillet, tolerance=self.fillet_tolerance)
+        cell = gdstk.Cell(self.name)
+        cell.add(screen)
+        self.elements[self.name]['vertices'] = screen.points
+        self.elements[self.name]['positions'] = [[self.x, self.y]]
+        self.elements[self.name]['layer'] = self.layer
+        self.cell = cell
 
 
 class Ohmic(Element):
@@ -689,6 +855,184 @@ class Sensor:
         return cell
 
 
+class ClavierGate(Element):
+    def __init__(self, name):
+        """
+        Initialize a Clavier gate object.
+
+        Args:
+            name (str): Name of the clavier gate
+        """
+        super().__init__(name)
+        self.layer = 25
+        self.width = 100
+        self.length = 100*4*10
+        self.gate_width = 100
+        self.gate_length = 300
+        self.n_clav_rep = 10
+        self.spacing = 100*4
+        self.shift = 0
+        self.x = 0
+        self.y = 0
+        self.fillet = 0.02
+        self.fillet_tolerance = 1e-4
+        self.rotation = 0
+
+    def build(self):
+        """
+        Build the clavier gate element.
+        """
+        cl_points = generate_clavier_gates(self.width, self.length,
+                                           self.gate_width,
+                                           self.gate_length,
+                                           self.n_clav_rep, self.spacing,
+                                           self.shift, (-self.length/2, 0),
+                                           self.rotation)
+        cl = gdstk.Polygon(cl_points, layer=self.layer)
+
+        cl.translate(self.x, self.y)
+        cl.fillet(self.fillet, tolerance=self.fillet_tolerance)
+        cell = gdstk.Cell(self.name)
+        cell.add(cl)
+        self.cell = cell
+
+
+class Clavier:
+    def __init__(self, name, qda_elements):
+        self.name = name
+        self.qda_elements = qda_elements
+        # self.qda = None
+        self.cell = None
+        self.clav_dot_size = 100
+        self.clav_gate_gap = 20
+        self.clav_width = 200
+        self._n_clav_gates = 4
+        self.clav_gap = [450, 650]
+        self.clav_layers = [25, 26]
+        self.n_clav_rep = 8
+
+        self.clav_gate_width = self.clav_dot_size
+        self.clav_gate_length = list(np.array(self.clav_gap) +
+                                     self.clav_dot_size)
+        self.clav_length = ((self.clav_gate_width +
+                             self.clav_gate_gap) *
+                            self._n_clav_gates *
+                            (self.n_clav_rep - 1) +
+                            self.clav_gate_width)
+        self.clav_gate_spacing = ((self.clav_length -
+                                   self.clav_gate_width) /
+                                  (self.n_clav_rep-1))
+
+        self.screen_length = (self.clav_length +
+                              (self._n_clav_gates-1) /
+                              self._n_clav_gates *
+                              self.clav_gate_spacing)
+        self.screen_width = 100
+        self.screen_gap = 0
+        self.screen_layer = 3
+
+        self.spacing = ((self._n_clav_gates-1) *
+                        self.clav_gate_width +
+                        self._n_clav_gates * self.clav_gate_gap)
+        self.x = 0
+        self.y = 0
+        self.fillet = 0.02
+        self.fillet_tolerance = 1e-4
+
+    def build(self):
+        # if self.cell == None:
+        #     raise Exception(f'QuantumDotDesigner.Clavier.qda is None. Assign' +
+        #                     'QuantumDotDesigner.Clavier.qda a QuantumDotArray.')
+        # else:
+        #     pass
+
+        cell = UnitCell()
+
+        clavier_gates = {}
+        sl_clavier_gates = {}
+
+        clav_layers_order = self.clav_layers + self.clav_layers[::-1]
+
+        for n in range(int(self._n_clav_gates/2)):
+            clavier_gates[2 *
+                          n] = self.qda_elements.add_clavier_gate(f'clavier_gates_{2*n}')
+            clavier_gates[2*n].layer = clav_layers_order[2*n]
+            clavier_gates[2*n].width = self.clav_width
+            clavier_gates[2*n].length = self.clav_length
+            clavier_gates[2*n].gate_width = self.clav_gate_width
+            clavier_gates[2*n].gate_length = (self.clav_gate_length[n % 2]
+                                              + n * self.clav_gate_width)
+            clavier_gates[2*n].n_clav_rep = self.n_clav_rep
+            clavier_gates[2*n].spacing = self.spacing
+            clavier_gates[2*n].x = ((n - (self._n_clav_gates - 1) / 2) *
+                                    self.clav_gate_spacing / self._n_clav_gates)
+            clavier_gates[2*n].y = (self.y +
+                                    self.clav_gate_length[n % 2]/2 +
+                                    self.clav_gap[n % 2]/2 +
+                                    n*self.clav_gate_width)
+            clavier_gates[2*n].fillet = self.fillet
+            clavier_gates[2*n].fillet_tolerance = self.fillet_tolerance
+            clavier_gates[2*n].build()
+
+            sl_clavier_gates[2 *
+                             n] = cell.add_component(f'sublattice_clavier_gates_{2*n}')
+            sl_clavier_gates[2*n].component = clavier_gates[2*n]
+            sl_clavier_gates[2*n].center = (0, 0)
+            sl_clavier_gates[2*n].build()
+
+            clavier_gates[2*n +
+                          1] = self.qda_elements.add_clavier_gate(f'clavier_gates_{2*n+1}')
+            clavier_gates[2*n+1].layer = clav_layers_order[2*n]
+            clavier_gates[2*n+1].width = self.clav_width
+            clavier_gates[2*n+1].length = self.clav_length
+            clavier_gates[2*n+1].gate_width = self.clav_gate_width
+            clavier_gates[2*n+1].gate_length = (self.clav_gate_length[n % 2] +
+                                                n*self.clav_gate_width)
+            clavier_gates[2*n+1].n_clav_rep = self.n_clav_rep
+            clavier_gates[2*n+1].spacing = self.spacing
+            clavier_gates[2*n+1].rotation = 180
+            clavier_gates[2*n+1].x = ((n+1/2)*self.clav_gate_spacing /
+                                      self._n_clav_gates)
+            clavier_gates[2*n+1].y = -(self.y+self.clav_gate_length[n % 2]/2 +
+                                       self.clav_gap[n % 2]/2 +
+                                       n*self.clav_gate_width)
+            clavier_gates[2*n+1].fillet = self.fillet
+            clavier_gates[2*n+1].fillet_tolerance = self.fillet_tolerance
+            clavier_gates[2*n+1].build()
+
+            sl_clavier_gates[2*n +
+                             1] = cell.add_component(f'sublattice_clavier_gates_{2*n+1}')
+            sl_clavier_gates[2*n+1].component = clavier_gates[2*n+1]
+            sl_clavier_gates[2*n+1].center = (0, 0)
+            sl_clavier_gates[2*n+1].build()
+
+        screen = self.qda_elements.add_screening_gate('screen_clav')
+
+        screen.layer = self.screen_layer
+        screen.vertices = [(-self.screen_length/2, self.screen_width/2),
+                           (self.screen_length/2, self.screen_width/2),
+                           (self.screen_length/2, -self.screen_width/2),
+                           (-self.screen_length/2, -self.screen_width/2)]
+        screen.x = 0
+        screen.y = -((self.clav_gate_length[0] -
+                      self.clav_gap[0] +
+                      self.screen_width)/2 +
+                     self.screen_gap)
+        screen.build()
+
+        sl_clav_screen = cell.add_component(f'sublattice_clav_screen_up')
+        sl_clav_screen.component = screen
+        sl_clav_screen.center = (0, 0)
+        sl_clav_screen.n_rows = 2
+        sl_clav_screen.spacing_y = 2*abs(screen.y)
+        sl_clav_screen.build()
+
+        # cell.add(gdstk.Reference(sl_clav_screen.cell))
+        self.cell = cell.cell
+
+        return cell
+
+
 class Sublattice:
     def __init__(self, name):
         """
@@ -698,8 +1042,10 @@ class Sublattice:
             name (str): Name of the sublattice.
         """
         self.name = name
+        self.elements = {}
         self.component = None
         self.components_position = {}
+        self.elements = {}
         self.n_rows = 1
         self.n_columns = 1
         self.spacing_x = 100
@@ -880,6 +1226,10 @@ class Sublattice:
         self.cell = cell
         self.xlim = self.get_lim(axis=0)
         self.ylim = self.get_lim(axis=1)
+        self.elements = update_positions(self.component.elements,
+                                         self.n_rows, self.n_columns,
+                                         self.spacing_x, self.spacing_y,
+                                         self.center)
         # if not (isinstance(self.component, Element) or
         #         isinstance(self.component, Sensor)):
         #     for comp in self.component.components.keys():
