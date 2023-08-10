@@ -24,6 +24,8 @@ Functions:
 
 # %% imports
 
+# from __future__ import annotations
+from typing import Optional
 import math
 import gdstk
 import numpy as np
@@ -164,7 +166,7 @@ def create_lattice_positions(rows, columns, spacing_x, spacing_y, center):
     for i in range(rows):
         for j in range(columns):
             x = (j * spacing_x + x_center) - (columns - 1) * spacing_x / 2
-            y = - (i * spacing_y + y_center) + (rows - 1) * spacing_y / 2
+            y = (i * spacing_y + y_center) - (rows - 1) * spacing_y / 2
             positions.append([x, y])
     return positions
 
@@ -325,7 +327,7 @@ class QuantumDotArrayElements:
             The created sensor.
 
         """
-        sensor = Sensor(name)
+        sensor = Sensor(name, self)
         self.components[name] = sensor
         return sensor
 
@@ -364,10 +366,43 @@ class QuantumDotArrayElements:
         attributes.pop('name')
         attributes.pop('cell')
         attributes.pop('elements')
-        new_element = type(component)(copy_name)
+        if 'components' in attributes:
+            attributes.pop('components')
+        # Check if 'qda_elements' is an attribute of the component
+        if 'qda_elements' in attributes:
+            qda_elements = attributes.pop('qda_elements')
+            # Create new element using both 'copy_name' and 'qda_elements'
+            new_element = type(component)(copy_name, qda_elements)
+        else:
+            new_element = type(component)(copy_name)
         new_element.__dict__.update(attributes)
         self.components[copy_name] = new_element
         return new_element
+
+    # def add_copy(self, component, copy_name):
+    #     attributes = copy.copy(vars(component))
+    #     attributes.pop('name')
+    #     attributes.pop('cell')
+    #     attributes.pop('elements')
+    #     if 'components' in attributes:
+    #         attributes.pop('components')
+    #     # Check if 'qda_elements' is an attribute of the component
+    #     if 'qda_elements' in attributes:
+    #         qda_elements = attributes.pop('qda_elements')
+    #         # Create new element using both 'copy_name' and 'qda_elements'
+    #         new_element = type(component)(copy_name, qda_elements)
+    #     else:
+    #         new_element = type(component)(copy_name)
+    #     new_element.__dict__.update(attributes)
+    #     if isinstance(component, Sensor):
+    #         new_element.plunger.name = f'{copy_name}_plunger'
+    #         new_element.barrier_source.name = f'{copy_name}_barrier_source'
+    #         new_element.barrier_drain.name = '{copy_name}_barrier_drain'
+    #         new_element.sourcename = f'{copy_name}_source'
+    #         new_element.drainname = f'{copy_name}_barrier_drain'
+    #         new_element.barrier_sepname = f'{copy_name}_barrier_seperation'
+    #     self.components[copy_name] = new_element
+    #     return new_element
 
 
 class UnitCell:
@@ -388,12 +423,14 @@ class UnitCell:
         self.ylim = None
         self._n = 0
 
-    def add_component(self):
+    def add_component(self, component=None, build=False):
         """
         Add a sublattice to the unit cell.
 
         Args:
             name (str): Name of the sublattice.
+            component: You can assign otionally a component in the argument
+            build: Adds and builds at the same time
 
         Returns:
             Sublattice: The created Sublattice object.
@@ -401,6 +438,14 @@ class UnitCell:
         name = f'{self.name}_sublattice_{self._n}'
         self._n = self._n + 1
         sublattice = Sublattice(name)
+        if component is not None:
+            sublattice.component = component
+            if build:
+                sublattice.build()
+            else:
+                pass
+        else:
+            pass
         self.components[name] = sublattice
         return sublattice
 
@@ -449,8 +494,9 @@ class QuantumDotArray:
         self.components = {}
         self.components_position = {}
         self.main_cell = gdstk.Cell('MAIN')
+        self._n = 0
 
-    def add_component(self, name):
+    def add_component(self):
         """
         Add a sublattice to the QuantumDotArray.
 
@@ -460,6 +506,8 @@ class QuantumDotArray:
         Returns:
             Sublattice: The created Sublattice object.
         """
+        name = f'MAIN_sublattice_{self._n}'
+        self._n = self._n + 1
         sublattice = Sublattice(name)
         self.components[name] = sublattice
         return sublattice
@@ -635,24 +683,30 @@ class Ohmic(Element):
         print('Build method for Ohmic not implemeneted yet.')
 
 
-class Sensor:
-    def __init__(self, name):
+class Sensor(UnitCell):
+    def __init__(self, name: str, qda_elements: QuantumDotArrayElements):
         """
         Initialize a Sensor object.
 
         Args:
             name (str): Name of the sensor.
         """
-        self.name = name
-        self.cell = None
+        super().__init__(name)
+        self.qda_elements = qda_elements
+        # self.cell = None
+        # self.elements = {name: {'vertices': [],
+        #                         'positions': [],
+        #                         'layer': self.layer}}
         self.x = 0
         self.y = 0
-        self.plunger = Plunger(f'{name}_plunger')
-        self.barrier_source = Barrier(f'{name}_barrier_source')
-        self.barrier_drain = Barrier(f'{name}_barrier_drain')
+        self.plunger = qda_elements.add_plunger(f'{name}_plunger')
+        self.barrier_source = qda_elements.add_barrier(
+            f'{name}_barrier_source')
+        self.barrier_drain = qda_elements.add_barrier(f'{name}_barrier_drain')
         self.source = Ohmic(f'{name}_source')
-        self.drain = Ohmic(f'{name}_barrier_drain')
-        self.barrier_sep = Barrier(f'{name}_barrier_seperation')
+        self.drain = qda_elements.add_ohmic(f'{name}_barrier_drain')
+        self.barrier_sep = qda_elements.add_barrier(
+            f'{name}_barrier_seperation')
         self.gap_ohmic_pl = 40
         self.gap_sep = 40
         self.source_pos = 'left'
@@ -669,41 +723,24 @@ class Sensor:
         self.sd_position = None
         self.bar_position = None
 
-        self.components = {self.plunger.name: self.plunger,
-                           self.barrier_source.name: self.barrier_source,
-                           self.barrier_drain.name: self.barrier_drain,
-                           self.source.name: self.source,
-                           self.drain.name: self.drain,
-                           self.barrier_sep.name: self.barrier_sep
-                           }
+        # self.components = {self.plunger.name: self.plunger,
+        #                    self.barrier_source.name: self.barrier_source,
+        #                    self.barrier_drain.name: self.barrier_drain,
+        #                    self.source.name: self.source,
+        #                    self.drain.name: self.drain,
+        #                    self.barrier_sep.name: self.barrier_sep
+        #                    }
 
         self.components_position = {}
 
-    def copy(self, copy_name):
-        """
-        Create a copy of the sensor.
-
-        Args:
-            copy_name (str): Name of the copied sensor.
-
-        Returns:
-            Sensor: The copied Sensor object.
-        """
-        attributes = copy.copy(vars(self))
-        attributes.pop('name')
-        attributes.pop('cell')
-        new_element = type(self)(copy_name)
-        new_element.__dict__.update(attributes)
-        return new_element
-
-    def build(self):
+    def build_elements(self):
         """
         Build the sensor element.
 
         Returns:
             gdstk.Cell: The built sensor cell.
         """
-        cell = gdstk.Cell(self.name)
+        # cell = gdstk.Cell(self.name)
         plunger = self.plunger
         bar_source = self.barrier_source
         bar_drain = self.barrier_drain
@@ -738,10 +775,10 @@ class Sensor:
                         self.source_position_offset[1]),
                        (m*(plunger._asymx*plunger.diameter/2 +
                            bar_source.width+source.width/2) +
-                        self.drain_position_offset[0],
-                        n*(plunger._asymy*plunger.diameter/2 +
-                           bar_source.width+source.width/2) +
-                        self.drain_position_offset[1]))
+                       self.drain_position_offset[0],
+                       n*(plunger._asymy*plunger.diameter/2 +
+                          bar_source.width+source.width/2) +
+                       self.drain_position_offset[1]))
 
         bar_position = ((i*(plunger._asymx*plunger.diameter/2 +
                             bar_source.width/2-self.__feature_gap) +
@@ -751,11 +788,11 @@ class Sensor:
                          self.bar_sou_position_offset[1]),
                         (m*(plunger._asymx*plunger.diameter/2 +
                             bar_source.width/2-self.__feature_gap) +
-                         self.bar_dra_position_offset[0],
-                         n*plunger._asymy*(plunger.diameter/2 +
-                                           bar_source.width/2 -
-                                           self.__feature_gap) +
-                         self.bar_dra_position_offset[1]))
+                        self.bar_dra_position_offset[0],
+                        n*plunger._asymy*(plunger.diameter/2 +
+                                          bar_source.width/2 -
+                                          self.__feature_gap) +
+                        self.bar_dra_position_offset[1]))
 
         sep_position = (u*(plunger._asymx*plunger.diameter/2+self.gap_sep/2),
                         v*(plunger._asymy*plunger.diameter/2+self.gap_sep/2))
@@ -798,15 +835,22 @@ class Sensor:
         # self.drain.build()
         self.barrier_sep.build()
 
-        cell.add(gdstk.Reference(plunger.cell))
-        cell.add(gdstk.Reference(bar_source.cell))
-        cell.add(gdstk.Reference(bar_drain.cell))
+        self.add_component(self.plunger, build=True)
+        self.add_component(self.barrier_source, build=True)
+        self.add_component(self.barrier_drain, build=True)
+        self.add_component(self.barrier_sep, build=True)
+
+        # self.build()
+
+        # cell.add(gdstk.Reference(plunger.cell))
+        # cell.add(gdstk.Reference(bar_source.cell))
+        # cell.add(gdstk.Reference(bar_drain.cell))
         # cell.add(gdstk.Reference(source))
         # cell.add(gdstk.Reference(drain))
-        cell.add(gdstk.Reference(bar_sep.cell))
-        self.cell = cell
+        # cell.add(gdstk.Reference(bar_sep.cell))
+        # self.cell = cell
 
-        return cell
+        return self.cell
 
 
 class ClavierGate(Element):

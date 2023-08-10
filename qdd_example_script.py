@@ -32,187 +32,180 @@ pl_hor.build()
 
 # %% define barriers
 
-bar_one_fourths_pi = qda_elements.add_barrier('barrier_one_fourths_pi_rotated')
-bar_one_fourths_pi.width = 30
-bar_one_fourths_pi.length = 70
-bar_one_fourths_pi.layer = 5
-bar_one_fourths_pi.rotate = 1/4*np.pi
+bar_45deg = qda_elements.add_barrier('barrier_45deg_rotated')
+bar_45deg.width = 30
+bar_45deg.length = 70
+bar_45deg.layer = 5
+bar_45deg.rotate = 1/4*np.pi
 
-bar_three_fourths_pi = qda_elements.add_copy(bar_one_fourths_pi,
-                                             'barrier_three_fourths_pi_rotated')
-bar_three_fourths_pi.rotate = 3/4*np.pi
+bar_135deg = qda_elements.add_copy(bar_45deg, 'barrier_135deg_rotated')
+bar_135deg.rotate = 3/4*np.pi
 
-bar_five_fourths_pi = qda_elements.add_copy(bar_one_fourths_pi,
-                                            'barrier_five_fourths_pi_rotated')
-bar_five_fourths_pi.rotate = -3/4*np.pi
+bar_225deg = qda_elements.add_copy(bar_45deg, 'barrier_225deg_rotated')
+bar_225deg.rotate = -3/4*np.pi
 
-bar_seven_fourths_pi = qda_elements.add_copy(bar_one_fourths_pi,
-                                             'barrier_seven_fourths_pi_rotated')
-bar_seven_fourths_pi.rotate = -1/4*np.pi
+bar_315deg = qda_elements.add_copy(bar_45deg, 'barrier_315deg_rotated')
+bar_315deg.rotate = -1/4*np.pi
 
-bar_one_fourths_pi.build()
-bar_three_fourths_pi.build()
-bar_five_fourths_pi.build()
-bar_seven_fourths_pi.build()
+bar_45deg.build()
+bar_135deg.build()
+bar_225deg.build()
+bar_315deg.build()
 
 # %% define unit cell
 
 unit_cell.spacing_qd = 200
 
-sl_pl_ver = unit_cell.add_component()
-sl_pl_hor = unit_cell.add_component()
+uc_pl_ver = unit_cell.add_component()
+uc_pl_hor = unit_cell.add_component()
 
-sl_bar_three_fourths_pi = unit_cell.add_component()
-sl_bar_one_fourths_pi = unit_cell.add_component()
-sl_bar_seven_fourths_pi = unit_cell.add_component()
-sl_bar_five_fourths_pi = unit_cell.add_component()
+uc_bar_45deg = unit_cell.add_component()
+uc_bar_135deg = unit_cell.add_component()
+uc_bar_225deg = unit_cell.add_component()
+uc_bar_315deg = unit_cell.add_component()
 
-sl_pl_ver.component = pl_ver
-sl_pl_ver.center = (0, 0)
-sl_pl_ver.rows = 2
-sl_pl_ver.columns = 2
-sl_pl_ver.spacing = (qda.spacing_qd_diag,
+uc_pl_ver.component = pl_ver
+uc_pl_ver.center = (0, 0)
+uc_pl_ver.rows = 2
+uc_pl_ver.columns = 2
+uc_pl_ver.spacing = (qda.spacing_qd_diag,
                      qda.spacing_qd_diag)
 
-sl_pl_hor.component = pl_hor
-sl_pl_hor.center = (0, 0)
-sl_pl_hor.columns = 3
-sl_pl_hor.spacing = (qda.spacing_qd_diag,
+uc_pl_hor.component = pl_hor
+uc_pl_hor.center = (0, 0)
+uc_pl_hor.columns = 3
+uc_pl_hor.spacing = (qda.spacing_qd_diag,
                      qda.spacing_qd_diag)
 
-sl_bar_one_fourths_pi.component = bar_one_fourths_pi
-sl_bar_one_fourths_pi.center = (+qda.spacing_qd_diag/4,
-                                qda.spacing_qd_diag/4)
-sl_bar_one_fourths_pi.columns = 2
-sl_bar_one_fourths_pi.spacing = (qda.spacing_qd_diag,
-                                 qda.spacing_qd_diag)
+uc_bar_45deg.component = bar_45deg
+uc_bar_45deg.center = (+qda.spacing_qd_diag/4, qda.spacing_qd_diag/4)
+uc_bar_45deg.columns = 2
+uc_bar_45deg.spacing = (qda.spacing_qd_diag, qda.spacing_qd_diag)
 
-sl_bar_three_fourths_pi.component = bar_three_fourths_pi
-sl_bar_three_fourths_pi.center = (-qda.spacing_qd_diag/4,
-                                  qda.spacing_qd_diag/4)
-sl_bar_three_fourths_pi.columns = 2
-sl_bar_three_fourths_pi.spacing = (qda.spacing_qd_diag,
-                                   qda.spacing_qd_diag)
+uc_bar_135deg.component = bar_135deg
+uc_bar_135deg.center = (-qda.spacing_qd_diag/4, qda.spacing_qd_diag/4)
+uc_bar_135deg.columns = 2
+uc_bar_135deg.spacing = (qda.spacing_qd_diag, qda.spacing_qd_diag)
 
-sl_bar_five_fourths_pi.component = bar_five_fourths_pi
-sl_bar_five_fourths_pi.center = (-qda.spacing_qd_diag/4,
-                                 -qda.spacing_qd_diag/4)
-sl_bar_five_fourths_pi.columns = 2
-sl_bar_five_fourths_pi.spacing = (qda.spacing_qd_diag,
-                                  qda.spacing_qd_diag)
+uc_bar_225deg.component = bar_225deg
+uc_bar_225deg.center = (-qda.spacing_qd_diag/4, -qda.spacing_qd_diag/4)
+uc_bar_225deg.columns = 2
+uc_bar_225deg.spacing = (qda.spacing_qd_diag, qda.spacing_qd_diag)
 
-sl_bar_seven_fourths_pi.component = bar_seven_fourths_pi
-sl_bar_seven_fourths_pi.center = (+qda.spacing_qd_diag/4,
-                                  -qda.spacing_qd_diag/4)
-sl_bar_seven_fourths_pi.columns = 2
-sl_bar_seven_fourths_pi.spacing = (qda.spacing_qd_diag,
-                                   qda.spacing_qd_diag)
+uc_bar_315deg.component = bar_315deg
+uc_bar_315deg.center = (+qda.spacing_qd_diag/4, -qda.spacing_qd_diag/4)
+uc_bar_315deg.columns = 2
+uc_bar_315deg.spacing = (qda.spacing_qd_diag, qda.spacing_qd_diag)
 
-sl_pl_ver.build()
-sl_pl_hor.build()
+uc_pl_ver.build()
+uc_pl_hor.build()
 
-sl_bar_three_fourths_pi.build()
-sl_bar_one_fourths_pi.build()
-sl_bar_seven_fourths_pi.build()
-sl_bar_five_fourths_pi.build()
+uc_bar_135deg.build()
+uc_bar_45deg.build()
+uc_bar_315deg.build()
+uc_bar_225deg.build()
 
 # %% define sensor
 
-# qda_elements.spacing_sep = 60
+qda_elements.spacing_sep = 60
 
-# sensor_top = qda_elements.add_sensor('sensor_top')
-# sensor_top.source_pos = 'left'
-# sensor_top.drain_pos = 'right'
-# sensor_top.sep_pos = 'bottom'
-# sensor_top.gap_sep = 60
-# sensor_top.gap_ohmic_pl = 40
+sensor_top = qda_elements.add_sensor('sensor_top')
+sensor_top.source_pos = 'left'
+sensor_top.drain_pos = 'right'
+sensor_top.sep_pos = 'bottom'
+sensor_top.gap_sep = 60
+sensor_top.gap_ohmic_pl = 40
 
-# sensor_top.plunger.diameter = 160
-# sensor_top.plunger.layer = 21
+sensor_top.plunger.diameter = 160
+sensor_top.plunger.layer = 21
 
-# sensor_top.barrier_source.width = 30
-# sensor_top.barrier_source.length = 70
-# sensor_top.barrier_source.layer = 5
+sensor_top.barrier_source.width = 30
+sensor_top.barrier_source.length = 70
+sensor_top.barrier_source.layer = 5
 
-# sensor_top.barrier_drain.width = 30
-# sensor_top.barrier_drain.length = 70
-# sensor_top.barrier_drain.layer = 5
+sensor_top.barrier_drain.width = 30
+sensor_top.barrier_drain.length = 70
+sensor_top.barrier_drain.layer = 5
 
-# sensor_top.barrier_sep.width = 50
-# sensor_top.barrier_sep.length = 60
-# sensor_top.barrier_sep.layer = 5
+sensor_top.barrier_sep.width = 50
+sensor_top.barrier_sep.length = 60
+sensor_top.barrier_sep.layer = 5
 
-# sensor_bottom = qda_elements.add_copy(sensor_top, 'sensor_bottom')
-# sensor_bottom.source_pos = 'right'
-# sensor_bottom.drain_pos = 'left'
-# sensor_bottom.sep_pos = 'top'
+sensor_bottom = qda_elements.add_copy(sensor_top, 'sensor_bottom')
+sensor_bottom.source_pos = 'right'
+sensor_bottom.drain_pos = 'left'
+sensor_bottom.sep_pos = 'top'
 
-# sensor_right = qda_elements.add_copy(sensor_top, 'sensor_right')
-# sensor_right.source_pos = 'top'
-# sensor_right.drain_pos = 'bottom'
-# sensor_right.sep_pos = 'left'
+sensor_right = qda_elements.add_copy(sensor_top, 'sensor_right')
+sensor_right.source_pos = 'top'
+sensor_right.drain_pos = 'bottom'
+sensor_right.sep_pos = 'left'
 
-# sensor_left = qda_elements.add_copy(sensor_top, 'sensor_left')
-# sensor_left.source_pos = 'bottom'
-# sensor_left.drain_pos = 'top'
-# sensor_left.sep_pos = 'right'
+sensor_left = qda_elements.add_copy(sensor_top, 'sensor_left')
+sensor_left.source_pos = 'bottom'
+sensor_left.drain_pos = 'top'
+sensor_left.sep_pos = 'right'
 
-# sensor_top.build()
-# sensor_bottom.build()
-# sensor_right.build()
-# sensor_left.build()
+sensor_top.build_elements()
+sensor_top.build()
+sensor_bottom.build_elements()
+sensor_bottom.build()
+sensor_right.build_elements()
+sensor_right.build()
+sensor_left.build_elements()
+sensor_left.build()
 
 # %% add sensor to unit cell
 
-# unit_cell.ylim = (qda.spacing_qd_diag/2 +
-#                   pl_ver.diameter/2 *
-#                   pl_ver.get_asym()[1])
+unit_cell.ylim = (qda.spacing_qd_diag/2 +
+                  pl_ver.diameter/2 *
+                  pl_ver._asymy)
 
-# sensor_pos_uniy = (unit_cell.ylim+sensor_top.gap_sep +
-#                    sensor_top.plunger.diameter/2 *
-#                    sensor_top.plunger.get_asym()[1])
+sensor_pos_uniy = (unit_cell.ylim+sensor_top.gap_sep +
+                   sensor_top.plunger.diameter/2 *
+                   sensor_top.plunger._asymy)
 
-# sensor_pos_unix = qda.spacing_qd_diag/2
+sensor_pos_unix = qda.spacing_qd_diag/2
 
-# sl_st = unit_cell.add_component('sublattice_sensor_top')
-# sl_st.component = sensor_top
-# sl_st.center = (sensor_pos_unix, sensor_pos_uniy)
-# sl_st.build()
+uc_st = unit_cell.add_component()
+uc_st.component = sensor_top
+uc_st.center = (sensor_pos_unix, sensor_pos_uniy)
+uc_st.build()
 
-# sl_sb = unit_cell.add_component('sublattice_sensor_bottom')
-# sl_sb.component = sensor_bottom
-# sl_sb.center = (-sensor_pos_unix, -sensor_pos_uniy)
-# sl_sb.build()
+uc_sb = unit_cell.add_component()
+uc_sb.component = sensor_bottom
+uc_sb.center = (-sensor_pos_unix, -sensor_pos_uniy)
+uc_sb.build()
 
 # %% Add unit cell to main cell
 
 unit_cell.build()
 
-sl_unitcell = qda.add_component('sublattice_unit_cell')
-sl_unitcell.component = unit_cell
-sl_unitcell.center = (0, 0)
-sl_unitcell.rows = 1
-sl_unitcell.columns = 10
-sl_unitcell.spacing = (2*qda.spacing_qd_diag,
+uc_unitcell = qda.add_component()
+uc_unitcell.component = unit_cell
+uc_unitcell.center = (0, 0)
+uc_unitcell.rows = 1
+uc_unitcell.columns = 10
+uc_unitcell.spacing = (2*qda.spacing_qd_diag,
                        qda.spacing_qd_diag)
-sl_unitcell.build()
+uc_unitcell.build()
 
 # %% Sensor positions
 
-# sensor_pos_x = (sl_unitcell.xlim[1] +
-#                 sensor_right.gap_sep +
-#                 sensor_right.plunger.diameter/2 *
-#                 sensor_right.plunger.get_asym()[0])
+sensor_pos_x = (uc_unitcell.xlim[1] +
+                sensor_right.gap_sep +
+                sensor_right.plunger.diameter/2 *
+                sensor_right.plunger._asymx)
 
-# sl_sr = qda.add_component('sublattice_sensor_right')
-# sl_sr.component = sensor_right
-# sl_sr.center = (sensor_pos_x, 0)
-# sl_sr.build()
+uc_sr = qda.add_component()
+uc_sr.component = sensor_right
+uc_sr.center = (sensor_pos_x, 0)
+uc_sr.build()
 
-# sl_sl = qda.add_component('sublattice_sensor_left')
-# sl_sl.component = sensor_left
-# sl_sl.center = (-sensor_pos_x, 0)
-# sl_sl.build()
+uc_sl = qda.add_component()
+uc_sl.component = sensor_left
+uc_sl.center = (-sensor_pos_x, 0)
+uc_sl.build()
 
 # %% Build and save
 
@@ -223,8 +216,8 @@ qda.save_as_gds('qdd_test_design.gds')
 # %%
 fog = FanoutGenerator()
 
-(P1, P2, P3, P8, P9, P10) = fog.gates(sl_pl_ver)
-(P4, P5, P6, P7) = fog.gates(sl_pl_hor)
+(P1, P2, P3, P8, P9, P10) = fog.gates(uc_pl_ver)
+(P4, P5, P6, P7) = fog.gates(uc_pl_hor)
 
 P1.points
 P1.position
@@ -233,30 +226,30 @@ P1.add_fanout()
 
 # #%% Generate plungers and barriers
 
-# P1 = sl_pl_ver.gates[0]
-# P2 = sl_pl_ver.gates[1]
-# P3 = sl_pl_ver.gates[2]
-# P4 = sl_pl_hor.gates[0]
-# P5 = sl_pl_hor.gates[1]
-# P6 = sl_pl_hor.gates[2]
-# P7 = sl_pl_hor.gates[3]
-# P8 = sl_pl_ver.gates[3]
-# P9 = sl_pl_ver.gates[4]
-# P10 = sl_pl_ver.gates[5]
+# P1 = uc_pl_ver.gates[0]
+# P2 = uc_pl_ver.gates[1]
+# P3 = uc_pl_ver.gates[2]
+# P4 = uc_pl_hor.gates[0]
+# P5 = uc_pl_hor.gates[1]
+# P6 = uc_pl_hor.gates[2]
+# P7 = uc_pl_hor.gates[3]
+# P8 = uc_pl_ver.gates[3]
+# P9 = uc_pl_ver.gates[4]
+# P10 = uc_pl_ver.gates[5]
 
 
-# B1 = sl_bar_three_fourths_pi[0]
-# B2 = sl_bar_one_fourths_pi[0]
-# B3 = sl_bar_three_fourths_pi[1]
-# B4 = sl_bar_one_fourths_pi[1]
-# B5 = sl_bar_three_fourths_pi[2]
-# B6 = sl_bar_one_fourths_pi[2]
-# B7 = sl_bar_seven_fourths_pi[0]
-# B8 = sl_bar_five_fourths_pi[0]
-# B9 = sl_bar_seven_fourths_pi[1]
-# B10 = sl_bar_five_fourths_pi[1]
-# B11 = sl_bar_seven_fourths_pi[2]
-B12 = sl_bar_five_fourths_pi[2]
+# B1 = uc_bar_135deg[0]
+# B2 = uc_bar_45deg[0]
+# B3 = uc_bar_135deg[1]
+# B4 = uc_bar_45deg[1]
+# B5 = uc_bar_135deg[2]
+# B6 = uc_bar_45deg[2]
+# B7 = uc_bar_315deg[0]
+# B8 = uc_bar_225deg[0]
+# B9 = uc_bar_315deg[1]
+# B10 = uc_bar_225deg[1]
+# B11 = uc_bar_315deg[2]
+B12 = uc_bar_225deg[2]
 
 # %% define screening gates
 
