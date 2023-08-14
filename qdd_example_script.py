@@ -19,12 +19,12 @@ qda = qdd.QuantumDotArray()
 
 pl_ver = qda_elements.add_plunger('plunger_vertically_elongated')
 pl_ver.asym = 0.8
-pl_ver.diameter = 150
+pl_ver.diameter = 150e-3
 pl_ver.layer = 21
 
 pl_hor = qda_elements.add_plunger('plunger_horizontally_elongated')
 pl_hor.asym = 1.1
-pl_hor.diameter = 100
+pl_hor.diameter = 100e-3
 pl_hor.layer = 21
 
 pl_ver.build()
@@ -33,8 +33,8 @@ pl_hor.build()
 # %% define barriers
 
 bar_45deg = qda_elements.add_barrier('barrier_45deg_rotated')
-bar_45deg.width = 30
-bar_45deg.length = 70
+bar_45deg.width = 30e-3
+bar_45deg.length = 70e-3
 bar_45deg.layer = 5
 bar_45deg.rotate = 1/4*np.pi
 
@@ -54,7 +54,7 @@ bar_315deg.build()
 
 # %% define unit cell
 
-unit_cell.spacing_qd = 200
+unit_cell.spacing_qd = 200e-3
 
 uc_pl_ver = unit_cell.add_component()
 uc_pl_hor = unit_cell.add_component()
@@ -107,28 +107,28 @@ uc_bar_225deg.build()
 
 # %% define sensor
 
-qda_elements.spacing_sep = 60
+qda_elements.spacing_sep = 60e-3
 
 sensor_top = qda_elements.add_sensor('sensor_top')
 sensor_top.source_pos = 'left'
 sensor_top.drain_pos = 'right'
 sensor_top.sep_pos = 'bottom'
-sensor_top.gap_sep = 60
-sensor_top.gap_ohmic_pl = 40
+sensor_top.gap_sep = 60e-3
+sensor_top.gap_ohmic_pl = 40e-3
 
-sensor_top.plunger.diameter = 160
+sensor_top.plunger.diameter = 160e-3
 sensor_top.plunger.layer = 21
 
-sensor_top.barrier_source.width = 30
-sensor_top.barrier_source.length = 70
+sensor_top.barrier_source.width = 30e-3
+sensor_top.barrier_source.length = 70e-3
 sensor_top.barrier_source.layer = 5
 
-sensor_top.barrier_drain.width = 30
-sensor_top.barrier_drain.length = 70
+sensor_top.barrier_drain.width = 30e-3
+sensor_top.barrier_drain.length = 70e-3
 sensor_top.barrier_drain.layer = 5
 
-sensor_top.barrier_sep.width = 50
-sensor_top.barrier_sep.length = 60
+sensor_top.barrier_sep.width = 50e-3
+sensor_top.barrier_sep.length = 60e-3
 sensor_top.barrier_sep.layer = 5
 
 sensor_bottom = qda_elements.add_copy(sensor_top, 'sensor_bottom')
@@ -185,7 +185,7 @@ uc_unitcell = qda.add_component()
 uc_unitcell.component = unit_cell
 uc_unitcell.center = (0, 0)
 uc_unitcell.rows = 1
-uc_unitcell.columns = 10
+uc_unitcell.columns = 1
 uc_unitcell.spacing = (2*qda.spacing_qd_diag,
                        qda.spacing_qd_diag)
 uc_unitcell.build()
@@ -207,109 +207,45 @@ uc_sl.component = sensor_left
 uc_sl.center = (-sensor_pos_x, 0)
 uc_sl.build()
 
+# %% Fanout Generator
+
+qda.build()
+fog = qdd.FanoutGenerator('fanout', qda)
+
+fog.rect_dims = [(16, 16), (1200, 1200), (2600, 2600)]
+fog.fo_widths = [1, 6, 25]
+fog.fanout_counts = {'top': 10, 'bottom': 10, 'left': 10, 'right': 10}
+fog.spacings = [2, 40, 250]
+fog.fo_fine_coarse_overlap = 3
+fog.bondpad_position = {'top': 3000, 'bottom': 3000,
+                        'left': 3000, 'right': 3000}
+fog.bondpad_size = {'top': (110, 400), 'bottom': (110, 400),
+                    'left': (400, 110), 'right': (400, 110)}
+fog.create_fo_polygons_coarse()
+
+fo_pl_ver_0 = qda_elements.add_fo_line('plunger_vertically_elongated', 0)
+fo_pl_ver_0.fo_direction = 'top'
+fo_pl_ver_0.n_fanout = 0
+fo_pl_ver_0.polygons_coarse = fog.fo_polygons_coarse['top'][0]
+fo_pl_ver_0.build_coarse_fo()
+
+fo_pl_ver_1 = qda_elements.add_fo_line('plunger_vertically_elongated', 1)
+fo_pl_ver_1.fo_direction = 'top'
+fo_pl_ver_1.n_fanout = 1
+fo_pl_ver_1.polygons_coarse = fog.fo_polygons_coarse['top'][1]
+fo_pl_ver_1.build_coarse_fo()
+
+fog.add_component(fo_pl_ver_0)
+fog.add_component(fo_pl_ver_1)
+fog.build()
+
+# %% Add fanout to qda
+
+fo_qda = qda.add_component()
+fo_qda.component = fog
+fo_qda.build()
+
 # %% Build and save
 
 qda.build()
 qda.save_as_gds('qdd_test_design.gds')
-
-
-# %%
-fog = FanoutGenerator()
-
-(P1, P2, P3, P8, P9, P10) = fog.gates(uc_pl_ver)
-(P4, P5, P6, P7) = fog.gates(uc_pl_hor)
-
-P1.points
-P1.position
-P1.layer
-P1.add_fanout()
-
-# #%% Generate plungers and barriers
-
-# P1 = uc_pl_ver.gates[0]
-# P2 = uc_pl_ver.gates[1]
-# P3 = uc_pl_ver.gates[2]
-# P4 = uc_pl_hor.gates[0]
-# P5 = uc_pl_hor.gates[1]
-# P6 = uc_pl_hor.gates[2]
-# P7 = uc_pl_hor.gates[3]
-# P8 = uc_pl_ver.gates[3]
-# P9 = uc_pl_ver.gates[4]
-# P10 = uc_pl_ver.gates[5]
-
-
-# B1 = uc_bar_135deg[0]
-# B2 = uc_bar_45deg[0]
-# B3 = uc_bar_135deg[1]
-# B4 = uc_bar_45deg[1]
-# B5 = uc_bar_135deg[2]
-# B6 = uc_bar_45deg[2]
-# B7 = uc_bar_315deg[0]
-# B8 = uc_bar_225deg[0]
-# B9 = uc_bar_315deg[1]
-# B10 = uc_bar_225deg[1]
-# B11 = uc_bar_315deg[2]
-B12 = uc_bar_225deg[2]
-
-# %% define screening gates
-
-TSC = qda_elements.add_screening_gate()
-RSC = qda_elements.add_screening_gate()
-BSC = qda_elements.add_screening_gate()
-LSC = qda_elements.add_screening_gate()
-
-TLSC = qda_elements.add_screening_gate()
-TRSC = qda_elements.add_screening_gate()
-BRSC = qda_elements.add_screening_gate()
-BLSC = qda_elements.add_screening_gate()
-
-TSC.screened_gates = sensor_top
-RSC.screened_gates = sensor_right
-BSC.screened_gates = sensor_bottom
-LSC.screened_gates = sensor_left
-
-TLSC.screened_gates = [P1, P2]
-TRSC.screened_gates = [P3, P6, P7]
-BRSC.screened_gates = [P9, P10]
-BLSC.screened_gates = [P4, P5, P8]
-
-# %% define fine fan-out
-fog = FanoutGenerator()
-
-fog.fine_fo_window = (4.5e3, 3e3)
-fog.broad_fo_window = (30e3, 30e3)
-
-fog.ohmics = [TOL, TOR, ROT, ROB, BOR, BOL, LOB, LOT]
-fog.assign_top_fo = [B2, P2, B3, P3, TOL,
-                     TBL, S_T, TSC, TBR, TOR, TS, B4, P6, B5]
-fog.assign_right_fo = list()
-fog.assign_bottom_fo = list()
-fog.assign_left_fo = list()
-
-# %% add fine fan-out
-
-P1_via = P1.add_via()
-
-P1_fo = P1.add_fanout()
-P2_fo = P2.add_fanout()
-P3_fo = P3.add_fanout()
-P4_fo = P4.add_fanout()
-
-P1_via.scale = 0.8
-P1_fo.add_relative_points([[0.1, 0.1],
-                           [0.2, 0.5],
-                           [0.4, 0.8]])
-
-
-P2_fo.add_relative_points([[0.1, 0.1],
-                           [0.2, 0.5],
-                           [0.4, 0.8]])
-
-# %% Ideas
-
-# P1 and all other elements should be defined as an object with the following attributes
-P1.position
-P1.points
-P1.raw_def
-P1.add_via
-P1.add_fanout
