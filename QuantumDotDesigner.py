@@ -196,8 +196,14 @@ def update_positions(elements, rows, columns, spacing_x, spacing_y, center):
         # Update the positions of each element in the dictionary
         value['positions'] = apply_sublattice(lattice_positions,
                                               value['positions'])
-
+    elements = sort_positions_in_dict(elements)
     return elements
+
+
+def sort_positions_in_dict(dictionary):
+    for key in dictionary:
+        dictionary[key]['positions'].sort(key=lambda x: (-x[1], x[0]))
+    return dictionary
 
 
 def merge_dicts(dict1, dict2):
@@ -416,6 +422,45 @@ def generate_polygon_for_fanout(direction, fo_line, bondpad_position, bondpad_si
     fo_polys.extend(bondpad)
 
     return fo_polys
+
+
+def perpendicular_vector(v):
+    """Return a 2D vector that's perpendicular to the given 2D vector `v`."""
+    return np.array([-v[1], v[0]])
+
+
+def axis_value(points, axis=0, operation="max"):
+    """
+    Returns the maximum or minimum value along a specified axis for a list of 2D points.
+
+    :param points: List of 2D points.
+    :param axis: Axis along which to find the value (0 or 1).
+    :param operation: Operation to perform ("max" or "min").
+    :return: Maximum or minimum value along the specified axis.
+    """
+    if operation == "max":
+        return max(point[axis] for point in points)
+    elif operation == "min":
+        return min(point[axis] for point in points)
+    else:
+        raise ValueError("Operation must be 'max' or 'min'")
+
+
+def normalize_vector(v):
+    """Return the normalized version of the vector `v`."""
+    magnitude = np.linalg.norm(v)
+    if magnitude == 0:
+        # Avoid division by zero and return the zero vector
+        return v
+    return v / magnitude
+
+
+def perpendicular_vector(v):
+    """Return a normalized 2D vector that's perpendicular to the given 2D vector `v`."""
+    perp_vector = np.array([-v[1], v[0]])
+    return normalize_vector(perp_vector)
+
+
 # %% Quantum Dot Array classes
 
 
@@ -589,19 +634,34 @@ class QuantumDotArrayElements:
     #     self.components[copy_name] = new_element
     #     return new_element
 
-    def add_fo_line(self, element_name, n_element):
-        name = f'fo_line_{element_name}_{n_element}'
-        fo_line = FanOutLine(name)
+    def add_fo_line(self, element_name, n_element,
+                    fo_direction=None, n_fanout=None, fo=None):
+        name_fof = f'fo_line_{element_name}_{n_element}_fine'
+        name_foc = f'fo_line_{element_name}_{n_element}_coarse'
 
-        fo_line.element_name = element_name
-        fo_line.n_element = n_element
+        fo_line_fine = FanOutLine(name_fof)
+        fo_line_coarse = FanOutLine(name_foc)
 
-        fo_line.layer_fine = self.components[element_name].layer
-        fo_line.layer_coarse = fo_line.layer_fine + 20
-        # fo_line.fog = self
-        self.components[name] = fo_line
+        fo_line_fine.element_name = element_name
+        fo_line_fine.n_element = n_element
+        fo_line_fine.fo_direction = fo_direction
+        fo_line_fine.layer = self.components[element_name].layer
 
-        return fo_line
+        fo_line_coarse.element_name = element_name
+        fo_line_coarse.n_element = n_element
+        fo_line_coarse.fo_direction = fo_direction
+        fo_line_coarse.layer = fo_line_fine.layer + 20
+
+        if not any(attr is None for attr in [fo_direction, n_fanout, fo]):
+            fo_line_coarse.polygons = fo.fo_polygons_coarse[fo_direction][n_fanout]
+            fo_line_fine.fo_start = fo.qda_elements[element_name]['positions'][n_element]
+            fo_line_fine.fo_end = fo.get_fo_overlap_points(n_fanout,
+                                                           fo_direction)
+
+        self.components[name_fof] = fo_line_fine
+        self.components[name_foc] = fo_line_coarse
+
+        return [fo_line_fine, fo_line_coarse]
 
 
 class UnitCell:
@@ -1341,13 +1401,19 @@ class FanOutLine:
         self.name = name
         self.element_name = None
         self.n_element = None
-        self.layer_fine = None
-        self.fo_fine_start = None
-        self.fo_fine_end = None
+        # self.layer_fine = None
+        # self.fo_fine_start = None
+        # self.fo_fine_end = None
+        self.fo_width_start = 40e-3
+        self.fo_start = None
+        self.fo_end = None
         self.fo_fine_coarse_overlap = None
-        self.layer_coarse = None
-        self.polygons_fine = None
-        self.polygons_coarse = None
+        self.fo_fine_coarse_overlap_gap = 0.3
+        # self.layer_coarse = None
+        self.layer = None
+        # self.polygons_fine = None
+        # self.polygons_coarse = None
+        self.polygons = None
         self.fo_direction = None
         self.n_fanout = None
         self.fog = None
@@ -1356,7 +1422,7 @@ class FanOutLine:
         self.fillet_tolerance = 1e-3
         self.elements = {name: {'vertices': [],
                                 'positions': [],
-                                'layer': self.layer_fine}}
+                                'layer': self.layer}}
 
     def assign_fanout(self):
         self.polygons_coarse = self.fog.fo_polygons_coarse[self.fo_direction][self.n_fanout]
@@ -1368,22 +1434,155 @@ class FanOutLine:
                             for col in zip(*fo_fine_end_poly)]
         self.polygons_fine = self.fo_fine_start
 
-    def build_coarse_fo(self):
+    def calculate_fine_fo(self, return_type='polygon'):
+        """
+        Calculate a refined path or polygon based on given points.
+
+        Args:
+        - start (list): Starting point in the format [x, y, width].
+        - end (list): Ending point in the format [x, y, width].
+        - points_along_path (list): List of points along the path. Each point can optionally have width and reference type.
+        - return_type (str): Determines what to return. 'polygon' returns the vertices of the polygon.
+                             'path' returns the absolute path points with their widths.
+
+        Returns:
+        - list: Vertices of the polygon if return_type is 'polygon'. Path points with their widths if return_type is 'path'.
+        """
+
+        start = self.fo_start.copy()
+        start.append(self.fo_width_start)
+        end = self.fo_end[1]
+        points_along_path = self.points_along_path.copy()
+        points_along_path.append([1, 0.95, self.fo_end[0][2], 'dif'])
+        points_along_path.append(self.fo_end[0])
+
+        points_along_path
+
+        if return_type not in ['polygon', 'path']:
+            raise ValueError("return_type must be either 'polygon' or 'path'.")
+
+        path_points = [start]  # Starting with the start point
+        current_point = np.array(start[:2])
+        prev_width = float(start[2])
+        for point in points_along_path:
+            x, y = point[0], point[1]
+            if len(point) == 3:
+                # If the third element is a float, it's the width
+                if isinstance(point[2], (float, int)):
+                    width = float(point[2])
+                    reference = 'abs'
+                # Otherwise, it's the reference
+                else:
+                    reference = point[2]
+                    width = prev_width
+            elif len(point) == 4:
+                # Check which entry is the float and which is the string
+                if isinstance(point[2], (float, int)):
+                    width = float(point[2])
+                    reference = point[3]
+                else:
+                    width = point[3]
+                    reference = point[2]
+            else:
+                width = prev_width
+                reference = 'abs'
+
+            prev_width = width  # Update the previous width
+
+            if reference in ['absolute', 'abs', 'a']:
+                next_point = np.array([x, y])
+            elif reference in ['relative_to_start', 'start', 's']:
+                next_point = np.array(start[:2]) + [x, y]
+            elif reference in ['relative_to_previous', 'prev', 'p']:
+                next_point = current_point + [x, y]
+            elif reference in ['relative_to_difference', 'dif', 'd']:
+                delta = np.array(self.fo_end[0][:2]) - np.array(start[:2])
+                next_point = np.array(start[:2]) + delta * np.array([x, y])
+            else:
+                raise ValueError(f"Unknown reference type: {reference}")
+
+            path_points.append([next_point[0], next_point[1], width])
+            current_point = next_point
+
+        path_points.append(end)  # Add the end point to the path
+
+        if return_type == 'path':
+            return path_points
+
+        vertices_left = []
+        vertices_right = []
+        for i in range(len(path_points) - 1):
+            direction_current = np.array(
+                path_points[i+1][:2], dtype=float) - np.array(path_points[i][:2], dtype=float)
+            norm_current = np.linalg.norm(direction_current)
+            if norm_current != 0:
+                direction_current /= norm_current
+            if i == 0:
+                bisector_direction = direction_current
+            else:
+                direction_prev = np.array(
+                    path_points[i][:2], dtype=float) - np.array(path_points[i-1][:2], dtype=float)
+                norm_prev = np.linalg.norm(direction_prev)
+                if norm_prev != 0:
+                    direction_prev /= norm_prev
+                bisector_direction = direction_current + direction_prev
+                norm_bisector = np.linalg.norm(bisector_direction)
+                if norm_bisector != 0:
+                    bisector_direction /= norm_bisector
+            normal = perpendicular_vector(bisector_direction)
+            width = path_points[i][2]
+            v1 = np.array(path_points[i][:2], dtype=float) + width/2 * normal
+            v2 = np.array(path_points[i][:2], dtype=float) - width/2 * normal
+            vertices_left.append((v1[0], v1[1]))
+            vertices_right.append((v2[0], v2[1]))
+        direction_end = np.array(end[:2], dtype=float) - \
+            np.array(path_points[-2][:2], dtype=float)
+        normal_end = perpendicular_vector(direction_end)
+        print(normal)
+        print(normal_end)
+        v1 = np.array(end[:2], dtype=float) + end[2]/2 * normal_end
+        v2 = np.array(end[:2], dtype=float) - end[2]/2 * normal_end
+        vertices_left.append((v1[0], v1[1]))
+        vertices_right.append((v2[0], v2[1]))
+
+        poly_vertices = vertices_left + vertices_right[::-1]
+        self.polygons = poly_vertices
+
+        return poly_vertices
+
+    def build_fo(self):
         """
         Build the coarse fanout line element.
         """
-        fo_line = gdstk.Polygon(self.polygons_coarse, layer=self.layer_coarse)
+        fo_line = gdstk.Polygon(self.polygons, layer=self.layer)
         fo_line.fillet(self.fillet, tolerance=self.fillet_tolerance)
         fo_line.fillet(0.02, tolerance=1e-4)
 
         self.elements[self.name]['vertices'] = fo_line.points
         self.elements[self.name]['positions'] = [0, 0]
-        self.elements[self.name]['layer'] = self.layer_coarse
+        self.elements[self.name]['layer'] = self.layer
 
         self.cell.add(fo_line)
 
+# class FanOutLineCoarse(FanOutLine):
+#     def __init__(self, name):
+#         """
+#         Initialize a Plunger object.
+
+#         Args:
+#             name (str): Name of the plunger.
+#         """
+#         super().__init__(name)
+#         self.layer = 21
+#         self.diameter = None
+#         self.asym = 1.0
+#         self._asymx = self.asym
+#         self._asymy = 1 / self.asym
+
+#     def _update_asym(self, asym):
 
 # %% Fanout Generator
+
 
 class FanoutGenerator():
     def __init__(self, name, qda):
@@ -1430,12 +1629,14 @@ class FanoutGenerator():
         self.bondpad_size = {'top': (110, 400), 'bottom': (110, 400),
                              'left': (400, 110), 'right': (400, 110)}
         self._n = 0
+        self.fanout_positions = None
 
     def create_fo_polygons_coarse(self):
         polygons = {}
         fanout_positions = compute_fanout_positions(self.rect_dims,
                                                     self.fanout_counts,
                                                     self.spacings)
+        self.fanout_positions = fanout_positions
         fo_lines = get_fo_lines(fanout_positions,
                                 self.fanout_counts, self.rect_dims)
         for direction in self._all_directions:
@@ -1448,6 +1649,31 @@ class FanoutGenerator():
                                    for n_fo in range(self.fanout_counts[direction])]
 
         self.fo_polygons_coarse = polygons
+
+    def get_fo_overlap_points(self, n_fanout, direction):
+        multiplier = 1
+        if direction in ['bottom', 'left']:
+            multiplier = -1
+        if direction in ['top', 'bottom']:
+            overlap_start = multiplier * \
+                (self.rect_dims[0][1] - self.fo_fine_coarse_overlap)
+            overlap_end = self.rect_dims[0][1]
+            fanout_positions = self.fanout_positions['device'][direction][n_fanout]
+            fo_end_width = self.fo_widths[0]
+
+            fo_end_points = [[fanout_positions, overlap_start, fo_end_width],
+                             [fanout_positions, overlap_end, fo_end_width]]
+        else:
+            overlap_start = multiplier * \
+                (self.rect_dims[0][0] - self.fo_fine_coarse_overlap)
+            overlap_end = self.rect_dims[0][0]
+            fanout_positions = - \
+                self.fanout_positions['device'][direction][n_fanout]
+            fo_end_width = self.fo_widths[0]
+
+            fo_end_points = [[overlap_start, fanout_positions, fo_end_width],
+                             [overlap_end, fanout_positions, fo_end_width]]
+        return fo_end_points
 
     # def create_fine_fo_polygons(self):
 

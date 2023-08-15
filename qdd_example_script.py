@@ -210,39 +210,62 @@ uc_sl.build()
 # %% Fanout Generator
 
 qda.build()
-fog = qdd.FanoutGenerator('fanout', qda)
+fo = qdd.FanoutGenerator('fanout', qda)
 
-fog.rect_dims = [(16, 16), (1200, 1200), (2600, 2600)]
-fog.fo_widths = [1, 6, 25]
-fog.fanout_counts = {'top': 10, 'bottom': 10, 'left': 10, 'right': 10}
-fog.spacings = [2, 40, 250]
-fog.fo_fine_coarse_overlap = 3
-fog.bondpad_position = {'top': 3000, 'bottom': 3000,
-                        'left': 3000, 'right': 3000}
-fog.bondpad_size = {'top': (110, 400), 'bottom': (110, 400),
-                    'left': (400, 110), 'right': (400, 110)}
-fog.create_fo_polygons_coarse()
+fo.rect_dims = [(16, 16), (1200, 1200), (2600, 2600)]
+fo.fo_widths = [1, 6, 25]
+fo.fanout_counts = {'top': 10, 'bottom': 10, 'left': 10, 'right': 10}
+fo.spacings = [2, 40, 250]
+fo.fo_fine_coarse_overlap = 3
+fo.bondpad_position = {'top': 3000, 'bottom': 3000,
+                       'left': 3000, 'right': 3000}
+fo.bondpad_size = {'top': (110, 400), 'bottom': (110, 400),
+                   'left': (400, 110), 'right': (400, 110)}
+fo.create_fo_polygons_coarse()
 
-fo_pl_ver_0 = qda_elements.add_fo_line('plunger_vertically_elongated', 0)
-fo_pl_ver_0.fo_direction = 'top'
-fo_pl_ver_0.n_fanout = 0
-fo_pl_ver_0.polygons_coarse = fog.fo_polygons_coarse['top'][0]
-fo_pl_ver_0.build_coarse_fo()
 
-fo_pl_ver_1 = qda_elements.add_fo_line('plunger_vertically_elongated', 1)
-fo_pl_ver_1.fo_direction = 'top'
-fo_pl_ver_1.n_fanout = 1
-fo_pl_ver_1.polygons_coarse = fog.fo_polygons_coarse['top'][1]
-fo_pl_ver_1.build_coarse_fo()
+# %% Fanout plunger ver 0
+fo_pl_ver_0 = qda_elements.add_fo_line('plunger_vertically_elongated', 0,
+                                       fo_direction='top', n_fanout=0, fo=fo)
 
-fog.add_component(fo_pl_ver_0)
-fog.add_component(fo_pl_ver_1)
-fog.build()
+# Fine fan-out
+fof_pl_ver_0 = fo_pl_ver_0[0]
+fof_pl_ver_0.fo_width_start = 40e-3
+fof_pl_ver_0.points_along_path = [[-0.15, 0.3, 'start'],
+                                  [-0.3, 0.7, 'start']]
+fof_pl_ver_0.calculate_fine_fo()
+fof_pl_ver_0.build_fo()
+fo.add_component(fof_pl_ver_0)
 
-# %% Add fanout to qda
+# Coarse fan-out
+foc_pl_ver_0 = fo_pl_ver_0[1]
+foc_pl_ver_0.build_fo()
+fo.add_component(foc_pl_ver_0)
 
+# %% Fanout plunger ver 1
+fo_pl_ver_1 = qda_elements.add_fo_line('plunger_vertically_elongated', 1,
+                                       fo_direction='top', n_fanout=1, fo=fo)
+
+# Fine fan-out
+fof_pl_ver_1 = fo_pl_ver_1[0]
+fof_pl_ver_1.fo_width_start = 40e-3
+fof_pl_ver_1.points_along_path = [[-qda.spacing_qd_diag/2, 0, 'start'],
+                                  [0, pl_ver.diameter/2, 'prev'],
+                                  [-0.2, 0.5, 'prev']]
+fof_pl_ver_1.calculate_fine_fo()
+fof_pl_ver_1.build_fo()
+fo.add_component(fof_pl_ver_1)
+
+# Coarse fan-out
+foc_pl_ver_1 = fo_pl_ver_1[1]
+foc_pl_ver_1.build_fo()
+fo.add_component(foc_pl_ver_1)
+
+# %% Build and Add fanout to qda
+
+fo.build()
 fo_qda = qda.add_component()
-fo_qda.component = fog
+fo_qda.component = fo
 fo_qda.build()
 
 # %% Build and save
