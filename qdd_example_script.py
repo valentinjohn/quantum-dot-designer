@@ -33,19 +33,19 @@ pl_hor.build()
 # %% define barriers
 
 bar_45deg = qda_elements.add_barrier('barrier_45deg_rotated')
-bar_45deg.width = 30e-3
+bar_45deg.width = 40e-3
 bar_45deg.length = 70e-3
 bar_45deg.layer = 5
-bar_45deg.rotate = 1/4*np.pi
+bar_45deg.rotate = 1/4*np.pi + 1/16*np.pi
 
 bar_135deg = qda_elements.add_copy(bar_45deg, 'barrier_135deg_rotated')
-bar_135deg.rotate = 3/4*np.pi
+bar_135deg.rotate = 3/4*np.pi - 1/16*np.pi
 
 bar_225deg = qda_elements.add_copy(bar_45deg, 'barrier_225deg_rotated')
-bar_225deg.rotate = -3/4*np.pi
+bar_225deg.rotate = -3/4*np.pi + 1/16*np.pi
 
 bar_315deg = qda_elements.add_copy(bar_45deg, 'barrier_315deg_rotated')
-bar_315deg.rotate = -1/4*np.pi
+bar_315deg.rotate = -1/4*np.pi - 1/16*np.pi
 
 bar_45deg.build()
 bar_135deg.build()
@@ -78,22 +78,22 @@ uc_pl_hor.spacing = (qda.spacing_qd_diag,
                      qda.spacing_qd_diag)
 
 uc_bar_45deg.component = bar_45deg
-uc_bar_45deg.center = (+qda.spacing_qd_diag/4, qda.spacing_qd_diag/4)
+uc_bar_45deg.center = (1.15*qda.spacing_qd_diag/4, qda.spacing_qd_diag/4)
 uc_bar_45deg.columns = 2
 uc_bar_45deg.spacing = (qda.spacing_qd_diag, qda.spacing_qd_diag)
 
 uc_bar_135deg.component = bar_135deg
-uc_bar_135deg.center = (-qda.spacing_qd_diag/4, qda.spacing_qd_diag/4)
+uc_bar_135deg.center = (-1.15*qda.spacing_qd_diag/4, qda.spacing_qd_diag/4)
 uc_bar_135deg.columns = 2
 uc_bar_135deg.spacing = (qda.spacing_qd_diag, qda.spacing_qd_diag)
 
 uc_bar_225deg.component = bar_225deg
-uc_bar_225deg.center = (-qda.spacing_qd_diag/4, -qda.spacing_qd_diag/4)
+uc_bar_225deg.center = (-1.15*qda.spacing_qd_diag/4, -qda.spacing_qd_diag/4)
 uc_bar_225deg.columns = 2
 uc_bar_225deg.spacing = (qda.spacing_qd_diag, qda.spacing_qd_diag)
 
 uc_bar_315deg.component = bar_315deg
-uc_bar_315deg.center = (+qda.spacing_qd_diag/4, -qda.spacing_qd_diag/4)
+uc_bar_315deg.center = (+1.15*qda.spacing_qd_diag/4, -qda.spacing_qd_diag/4)
 uc_bar_315deg.columns = 2
 uc_bar_315deg.spacing = (qda.spacing_qd_diag, qda.spacing_qd_diag)
 
@@ -212,13 +212,14 @@ uc_sl.build()
 qda.build()
 fo = qdd.FanoutGenerator('fanout', qda)
 
-fo.rect_dims = [(16, 16), (1200, 1200), (2600, 2600)]
-fo.fo_widths = [1, 6, 25]
 fo.fanout_counts = {'top': 10, 'bottom': 10, 'left': 10, 'right': 10}
-fo.spacings = [2, 40, 250]
-fo.fo_fine_coarse_overlap = 3
-fo.bondpad_position = {'top': 3000, 'bottom': 3000,
-                       'left': 3000, 'right': 3000}
+
+fo.fo_stages = [(16, 16), (500, 530), (1200, 1200)]
+fo.bondpad_position = {'top':  1500, 'bottom': 1500,
+                       'left': 1500, 'right': 1500}
+fo.fo_widths = [1, 6, 25]
+fo.spacings = [2, 80, 250]
+
 fo.bondpad_size = {'top': (110, 400), 'bottom': (110, 400),
                    'left': (400, 110), 'right': (400, 110)}
 fo.create_fo_polygons_coarse()
@@ -232,7 +233,7 @@ fo_pl_ver_0 = qda_elements.add_fo_line('plunger_vertically_elongated', 0,
 fof_pl_ver_0 = fo_pl_ver_0[0]
 fof_pl_ver_0.fo_width_start = 40e-3
 fof_pl_ver_0.points_along_path = [[-0.15, 0.3, 'start'],
-                                  [-0.3, 0.7, 'start']]
+                                  [-0.4, 0.7, 'start']]
 fof_pl_ver_0.calculate_fine_fo()
 fof_pl_ver_0.build_fo()
 fo.add_component(fof_pl_ver_0)
@@ -244,7 +245,7 @@ fo.add_component(foc_pl_ver_0)
 
 # %% Fanout plunger ver 1
 fo_pl_ver_1 = qda_elements.add_fo_line('plunger_vertically_elongated', 1,
-                                       fo_direction='top', n_fanout=1, fo=fo)
+                                       fo_direction='top', n_fanout=2, fo=fo)
 
 # Fine fan-out
 fof_pl_ver_1 = fo_pl_ver_1[0]
@@ -261,6 +262,26 @@ foc_pl_ver_1 = fo_pl_ver_1[1]
 foc_pl_ver_1.build_fo()
 fo.add_component(foc_pl_ver_1)
 
+# %% Fanout bar 45deg 0
+fo_bar_45deg_0 = qda_elements.add_fo_line('barrier_45deg_rotated', 0,
+                                          fo_direction='top', n_fanout=1, fo=fo)
+
+# Fine fan-out
+fof_bar_45deg_0 = fo_bar_45deg_0[0]
+fof_bar_45deg_0.fo_width_start = 40e-3
+fof_bar_45deg_0.points_along_path = [[0.01, 0.015, 'start'],
+                                     [0.01, 0.05, 'start'],
+                                     [0, 0.08, 'prev'],
+                                     [-0.15, 0.3, 'prev']]
+fof_bar_45deg_0.calculate_fine_fo()
+fof_bar_45deg_0.build_fo()
+fo.add_component(fof_bar_45deg_0)
+
+# Coarse fan-out
+foc_bar_45deg_0 = fo_bar_45deg_0[1]
+foc_bar_45deg_0.build_fo()
+fo.add_component(foc_bar_45deg_0)
+
 # %% Build and Add fanout to qda
 
 fo.build()
@@ -271,4 +292,5 @@ fo_qda.build()
 # %% Build and save
 
 qda.build()
+layout = qda.add_chip_layout()
 qda.save_as_gds('qdd_test_design.gds')

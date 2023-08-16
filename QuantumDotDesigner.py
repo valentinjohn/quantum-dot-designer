@@ -245,12 +245,12 @@ def compute_positions(length, n_lines, spacing):
     return [start + i * spacing for i in range(n_lines)]
 
 
-def compute_fanout_positions(rect_dims, fanout_counts, spacings):
+def compute_fanout_positions(fo_stages, fanout_counts, spacings):
     """
     Computes the positions of the fanout lines for each rectangle.
 
     Parameters:
-    - rect_dims: A list of tuples, where each tuple contains the dimensions (length, width) of a rectangle.
+    - fo_stages: A list of tuples, where each tuple contains the dimensions (length, width) of a rectangle.
     - fanout_counts: A dictionary with keys 'top', 'bottom', 'left', 'right' and values being the fanout counts.
     - spacings: A list of spacings for each rectangle.
 
@@ -258,7 +258,7 @@ def compute_fanout_positions(rect_dims, fanout_counts, spacings):
     A dictionary containing the fanout positions for each side of each rectangle.
     """
 
-    device_rect, intermediate_rect, bondpad_square = rect_dims
+    device_rect, intermediate_rect, bondpad_square = fo_stages
     device_spacing, intermediate_spacing, bondpad_spacing = spacings
 
     # Compute positions for each rectangle and side
@@ -286,47 +286,47 @@ def compute_fanout_positions(rect_dims, fanout_counts, spacings):
     return fanout_positions
 
 
-def get_fo_lines(fanout_positions, fanout_counts, rect_dims):
+def get_fo_lines(fanout_positions, fanout_counts, fo_stages):
     fo_lines = {'top': [],
                 'bottom': [],
                 'right': [],
                 'left': []}
     for n_fo in range(fanout_counts['top']):
         fo_line = [[fanout_positions['device']['top'][n_fo],
-                    rect_dims[0][1]],
+                    fo_stages[0][1]],
                    [fanout_positions['intermediate']['top'][n_fo],
-                    rect_dims[1][1]],
+                    fo_stages[1][1]],
                    [fanout_positions['bondpad']['top'][n_fo],
-                    rect_dims[2][1]]
+                    fo_stages[2][1]]
                    ]
         fo_lines['top'].append(fo_line)
 
     for n_fo in range(fanout_counts['bottom']):
         fo_line = [[fanout_positions['device']['bottom'][n_fo],
-                    -rect_dims[0][1]],
+                    -fo_stages[0][1]],
                    [fanout_positions['intermediate']['bottom'][n_fo],
-                    -rect_dims[1][1]],
+                    -fo_stages[1][1]],
                    [fanout_positions['bondpad']['bottom'][n_fo],
-                    -rect_dims[2][1]]
+                    -fo_stages[2][1]]
                    ]
         fo_lines['bottom'].append(fo_line)
 
     for n_fo in range(fanout_counts['right']):
-        fo_line = [[rect_dims[0][0],
+        fo_line = [[fo_stages[0][0],
                     -fanout_positions['device']['right'][n_fo]],
-                   [rect_dims[1][0],
+                   [fo_stages[1][0],
                     -fanout_positions['intermediate']['right'][n_fo]],
-                   [rect_dims[2][0],
+                   [fo_stages[2][0],
                     -fanout_positions['bondpad']['right'][n_fo]]
                    ]
         fo_lines['right'].append(fo_line)
 
     for n_fo in range(fanout_counts['left']):
-        fo_line = [[-rect_dims[0][0],
+        fo_line = [[-fo_stages[0][0],
                     -fanout_positions['device']['left'][n_fo]],
-                   [-rect_dims[1][0],
+                   [-fo_stages[1][0],
                     -fanout_positions['intermediate']['left'][n_fo]],
-                   [-rect_dims[2][0],
+                   [-fo_stages[2][0],
                     -fanout_positions['bondpad']['left'][n_fo]]
                    ]
         fo_lines['left'].append(fo_line)
@@ -606,41 +606,32 @@ class QuantumDotArrayElements:
         else:
             new_element = type(component)(copy_name)
         new_element.__dict__.update(attributes)
+
+        if isinstance(component, Sensor):
+            new_element.cell = new_element.cell.copy(copy_name)
+            new_element.plunger = component.plunger.copy(
+                f'{copy_name}_plunger')
+            new_element.barrier_source = component.barrier_source.copy(
+                f'{copy_name}_barrier_source')
+            new_element.barrier_drain = component.barrier_drain.copy(
+                f'{copy_name}_barrier_drain')
+            new_element.source = component.source.copy(
+                f'{copy_name}_source')
+            new_element.drain = component.drain.copy(
+                f'{copy_name}_barrier_drain')
+            new_element.barrier_sep = component.barrier_sep.copy(
+                f'{copy_name}_barrier_seperation')
+
         self.components[copy_name] = new_element
         return new_element
-
-    # def add_copy(self, component, copy_name):
-    #     attributes = copy.copy(vars(component))
-    #     attributes.pop('name')
-    #     attributes.pop('cell')
-    #     attributes.pop('elements')
-    #     if 'components' in attributes:
-    #         attributes.pop('components')
-    #     # Check if 'qda_elements' is an attribute of the component
-    #     if 'qda_elements' in attributes:
-    #         qda_elements = attributes.pop('qda_elements')
-    #         # Create new element using both 'copy_name' and 'qda_elements'
-    #         new_element = type(component)(copy_name, qda_elements)
-    #     else:
-    #         new_element = type(component)(copy_name)
-    #     new_element.__dict__.update(attributes)
-    #     if isinstance(component, Sensor):
-    #         new_element.plunger.name = f'{copy_name}_plunger'
-    #         new_element.barrier_source.name = f'{copy_name}_barrier_source'
-    #         new_element.barrier_drain.name = '{copy_name}_barrier_drain'
-    #         new_element.sourcename = f'{copy_name}_source'
-    #         new_element.drainname = f'{copy_name}_barrier_drain'
-    #         new_element.barrier_sepname = f'{copy_name}_barrier_seperation'
-    #     self.components[copy_name] = new_element
-    #     return new_element
 
     def add_fo_line(self, element_name, n_element,
                     fo_direction=None, n_fanout=None, fo=None):
         name_fof = f'fo_line_{element_name}_{n_element}_fine'
         name_foc = f'fo_line_{element_name}_{n_element}_coarse'
 
-        fo_line_fine = FanOutLine(name_fof)
-        fo_line_coarse = FanOutLine(name_foc)
+        fo_line_fine = FanOutLineFine(name_fof)
+        fo_line_coarse = FanOutLineCoarse(name_foc)
 
         fo_line_fine.element_name = element_name
         fo_line_fine.n_element = n_element
@@ -754,6 +745,7 @@ class QuantumDotArray:
         self.components_position = {}
         self.main_cell = gdstk.Cell('MAIN')
         self._n = 0
+        self.chip_layout_path = "chip_layout.gds"
 
     def add_component(self):
         """
@@ -770,6 +762,14 @@ class QuantumDotArray:
         sublattice = Sublattice(name)
         self.components[name] = sublattice
         return sublattice
+
+    def add_chip_layout(self):
+        layout = gdstk.read_rawcells(self.chip_layout_path)
+
+        self.main_cell.add(gdstk.Reference(layout['TOP']))
+        self.main_cell.flatten()
+
+        return layout
 
     def build(self):
         """
@@ -796,7 +796,7 @@ class QuantumDotArray:
             filename (str): Name of the output GDS file.
         """
         lib = gdstk.Library()
-        lib.add(self.main_cell)
+        lib.add(self.main_cell, *self.main_cell.dependencies(True))
         lib.write_gds(filename)
 
 # %% Elements
@@ -821,6 +821,19 @@ class Element(ABC):
         self.rotate = 0.0
         self.fillet = 0
         self.fillet_tolerance = 1e-3
+
+    # default attributes to skip for Element
+    _skip_copy_attrs = {'name', 'cell', 'elements'}
+
+    def copy(self, copy_name):
+        # Use the same class as the current instance
+        copied_obj = self.__class__(copy_name)
+
+        for attr, value in self.__dict__.items():
+            if attr not in self._skip_copy_attrs:
+                setattr(copied_obj, attr, value)
+
+        return copied_obj
 
     @abstractmethod
     def build(self):
@@ -856,6 +869,37 @@ class Plunger(Element):
         """
         self._asymx = asym
         self._asymy = 1 / asym
+
+    # def copy(self, copy_name):
+    #     copied_plunger = Plunger(copy_name)
+
+    #     # Attributes not to be copied or handled differently
+    #     # Add other attributes to exclude if necessary
+    #     exclude_attrs = {'name', 'cell', 'elements'}
+
+    #     for attr, value in self.__dict__.items():
+    #         if attr not in exclude_attrs:
+    #             setattr(copied_plunger, attr, value)
+
+    #     # Handle special attributes (like cell) here if needed
+    #     # For example, if you want to re-initialize cell:
+    #     # copied_plunger.cell = "Some new cell value"  # Replace with actual initialization logic
+
+    #     return copied_plunger
+
+    # def copy(self, copy_name):
+    #     # Create a new plunger instance with the desired modifications
+    #     copied_plunger = Plunger(copy_name)
+    #     copied_plunger.x = self.x
+    #     copied_plunger.y = self.y
+    #     copied_plunger.rotate = self.rotate
+    #     copied_plunger.fillet = self.fillet
+    #     copied_plunger.fillet_tolerance = self.fillet_tolerance
+    #     copied_plunger.layer = self.layer
+    #     copied_plunger.diameter = self.diameter
+    #     copied_plunger.asym = self.asym
+
+    #     return copied_plunger
 
     def build(self):
         """
@@ -1390,33 +1434,17 @@ class Gate:
         self.layer = None
 
 
-class FanOutLine:
+class FanOutLineBase:
     def __init__(self, name):
-        """
-        Initialize a FanOutLine object.
-
-        Args:
-            name (str): Name of the fanout line.
-        """
         self.name = name
         self.element_name = None
         self.n_element = None
-        # self.layer_fine = None
-        # self.fo_fine_start = None
-        # self.fo_fine_end = None
-        self.fo_width_start = 40e-3
-        self.fo_start = None
-        self.fo_end = None
         self.fo_fine_coarse_overlap = None
         self.fo_fine_coarse_overlap_gap = 0.3
-        # self.layer_coarse = None
         self.layer = None
-        # self.polygons_fine = None
-        # self.polygons_coarse = None
         self.polygons = None
         self.fo_direction = None
         self.n_fanout = None
-        self.fog = None
         self.cell = gdstk.Cell(self.name)
         self.fillet = 0
         self.fillet_tolerance = 1e-3
@@ -1424,15 +1452,24 @@ class FanOutLine:
                                 'positions': [],
                                 'layer': self.layer}}
 
-    def assign_fanout(self):
-        self.polygons_coarse = self.fog.fo_polygons_coarse[self.fo_direction][self.n_fanout]
-        self.fo_fine_start = self.fog.qda_elements[self.element_name]['positions'][self.n_fanout]
-        fo_fine_end_poly = self.fog.fo_polygons_coarse[self.fo_direction][self.n_fanout][3:5]
-        self.fo_fine_coarse_overlap = self.fog.fo_polygons_coarse[
-            self.fo_direction][self.n_fanout][2:6]
-        self.fo_fine_end = [int(sum(col) / len(col))
-                            for col in zip(*fo_fine_end_poly)]
-        self.polygons_fine = self.fo_fine_start
+    def build_fo(self):
+        fo_line = gdstk.Polygon(self.polygons, layer=self.layer)
+        fo_line.fillet(self.fillet, tolerance=self.fillet_tolerance)
+        fo_line.fillet(0.02, tolerance=1e-4)
+
+        self.elements[self.name]['vertices'] = fo_line.points
+        self.elements[self.name]['positions'] = [0, 0]
+        self.elements[self.name]['layer'] = self.layer
+
+        self.cell.add(fo_line)
+
+
+class FanOutLineFine(FanOutLineBase):
+    def __init__(self, name):
+        super().__init__(name)
+        self.fo_width_start = 40e-3
+        self.fo_start = None
+        self.fo_end = None
 
     def calculate_fine_fo(self, return_type='polygon'):
         """
@@ -1443,7 +1480,7 @@ class FanOutLine:
         - end (list): Ending point in the format [x, y, width].
         - points_along_path (list): List of points along the path. Each point can optionally have width and reference type.
         - return_type (str): Determines what to return. 'polygon' returns the vertices of the polygon.
-                             'path' returns the absolute path points with their widths.
+                              'path' returns the absolute path points with their widths.
 
         Returns:
         - list: Vertices of the polygon if return_type is 'polygon'. Path points with their widths if return_type is 'path'.
@@ -1538,8 +1575,6 @@ class FanOutLine:
         direction_end = np.array(end[:2], dtype=float) - \
             np.array(path_points[-2][:2], dtype=float)
         normal_end = perpendicular_vector(direction_end)
-        print(normal)
-        print(normal_end)
         v1 = np.array(end[:2], dtype=float) + end[2]/2 * normal_end
         v2 = np.array(end[:2], dtype=float) - end[2]/2 * normal_end
         vertices_left.append((v1[0], v1[1]))
@@ -1550,67 +1585,15 @@ class FanOutLine:
 
         return poly_vertices
 
-    def build_fo(self):
-        """
-        Build the coarse fanout line element.
-        """
-        fo_line = gdstk.Polygon(self.polygons, layer=self.layer)
-        fo_line.fillet(self.fillet, tolerance=self.fillet_tolerance)
-        fo_line.fillet(0.02, tolerance=1e-4)
 
-        self.elements[self.name]['vertices'] = fo_line.points
-        self.elements[self.name]['positions'] = [0, 0]
-        self.elements[self.name]['layer'] = self.layer
+class FanOutLineCoarse(FanOutLineBase):
+    pass
 
-        self.cell.add(fo_line)
-
-# class FanOutLineCoarse(FanOutLine):
-#     def __init__(self, name):
-#         """
-#         Initialize a Plunger object.
-
-#         Args:
-#             name (str): Name of the plunger.
-#         """
-#         super().__init__(name)
-#         self.layer = 21
-#         self.diameter = None
-#         self.asym = 1.0
-#         self._asymx = self.asym
-#         self._asymy = 1 / self.asym
-
-#     def _update_asym(self, asym):
 
 # %% Fanout Generator
 
-
 class FanoutGenerator():
     def __init__(self, name, qda):
-        # self.layer_dict = None
-        # self.fo_width = 0.03
-        # self.fo_spacing_north = 0.07
-        # self.fo_spacing_east = 0.07
-        # self.fo_spacing_south = 0.07
-        # self.fo_spacing_west = 0.07
-        # self.fo_xoffset_north = 0
-        # self.fo_xoffset_south = 0
-        # self.fo_yoffset_east = 0
-        # self.fo_yoffset_west = 0
-        # self.fo2device_buffer = 0.2
-        # self.layers_fo_north_dict = {0: list(np.arange(16, dtype=int))}
-        # self.layers_fo_east_dict = {0: list(np.arange(16, dtype=int))}
-        # self.layers_fo_south_dict = {0: list(np.arange(16, dtype=int))}
-        # self.layers_fo_west_dict = {0: list(np.arange(16, dtype=int))}
-        # self.chip_width = 4000
-        # self.margin = 300
-        # self.bondpad_spacing = 100
-        # self.bondpad_length = 400
-        # self.fan_width = 25
-        # self.int_spacing = 1
-        # self.int_width = 2
-        # self.use_width = self.chip_width - 2 * self.margin - \
-        #     2 * self.bondpad_length - self.bondpad_spacing/2
-        # self.use_height = self.chip_width - 2 * self.margin
         self.name = name
         self.qda_elements = qda.elements
         self.elements = {}
@@ -1619,13 +1602,13 @@ class FanoutGenerator():
         self.fo_lines = {}
         self._all_directions = ['top', 'bottom', 'right', 'left']
         self.fo_polygons_coarse = None
-        self.rect_dims = [(30, 30), (1500, 1500), (2600, 2600)]
+        self.fo_stages = [(16, 16), (500, 530), (1200, 1200)]
         self.fo_widths = [1, 6, 25]
         self.fanout_counts = {'top': 14, 'bottom': 14, 'left': 13, 'right': 13}
-        self.spacings = [2, 40, 160]
+        self.spacings = [2, 80, 200]
         self.fo_fine_coarse_overlap = 3
-        self.bondpad_position = {'top': 3000, 'bottom': 3000,
-                                 'left': 3000, 'right': 3000}
+        self.bondpad_position = {'top':  1500, 'bottom': 1500,
+                                 'left': 1500, 'right': 1500}
         self.bondpad_size = {'top': (110, 400), 'bottom': (110, 400),
                              'left': (400, 110), 'right': (400, 110)}
         self._n = 0
@@ -1633,12 +1616,12 @@ class FanoutGenerator():
 
     def create_fo_polygons_coarse(self):
         polygons = {}
-        fanout_positions = compute_fanout_positions(self.rect_dims,
+        fanout_positions = compute_fanout_positions(self.fo_stages,
                                                     self.fanout_counts,
                                                     self.spacings)
         self.fanout_positions = fanout_positions
         fo_lines = get_fo_lines(fanout_positions,
-                                self.fanout_counts, self.rect_dims)
+                                self.fanout_counts, self.fo_stages)
         for direction in self._all_directions:
             polygons[direction] = [generate_polygon_for_fanout(direction,
                                                                fo_lines[direction][n_fo],
@@ -1656,8 +1639,8 @@ class FanoutGenerator():
             multiplier = -1
         if direction in ['top', 'bottom']:
             overlap_start = multiplier * \
-                (self.rect_dims[0][1] - self.fo_fine_coarse_overlap)
-            overlap_end = self.rect_dims[0][1]
+                (self.fo_stages[0][1] - self.fo_fine_coarse_overlap)
+            overlap_end = self.fo_stages[0][1]
             fanout_positions = self.fanout_positions['device'][direction][n_fanout]
             fo_end_width = self.fo_widths[0]
 
@@ -1665,8 +1648,8 @@ class FanoutGenerator():
                              [fanout_positions, overlap_end, fo_end_width]]
         else:
             overlap_start = multiplier * \
-                (self.rect_dims[0][0] - self.fo_fine_coarse_overlap)
-            overlap_end = self.rect_dims[0][0]
+                (self.fo_stages[0][0] - self.fo_fine_coarse_overlap)
+            overlap_end = self.fo_stages[0][0]
             fanout_positions = - \
                 self.fanout_positions['device'][direction][n_fanout]
             fo_end_width = self.fo_widths[0]
@@ -1674,23 +1657,6 @@ class FanoutGenerator():
             fo_end_points = [[overlap_start, fanout_positions, fo_end_width],
                              [overlap_end, fanout_positions, fo_end_width]]
         return fo_end_points
-
-    # def create_fine_fo_polygons(self):
-
-    # def add_fanout_line(self, name):
-    #     """
-    #     Add a fanout element to the collection.
-
-    #     Args:
-    #         name: Name of the fanout element.
-
-    #     Returns:
-    #         The created fanout element.
-
-    #     """
-    #     fanout_line = FanOutLine(name)
-    #     self.components[name] = fanout_line
-    #     return fanout_line
 
     def add_component(self, component=None, build=False):
         """
