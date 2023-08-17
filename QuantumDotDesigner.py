@@ -32,6 +32,7 @@ import numpy as np
 import copy
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from copy import deepcopy
 
 # %% definitions
 
@@ -188,16 +189,17 @@ def update_positions(elements, rows, columns, spacing_x, spacing_y, center):
     """
     Update the positions of elements based on the given lattice parameters.
     """
+    elements_updated = deepcopy(elements)
     # Generate lattice positions
     lattice_positions = create_lattice_positions(
         rows, columns, spacing_x, spacing_y, center)
 
-    for key, value in elements.items():
+    for key, value in elements_updated.items():
         # Update the positions of each element in the dictionary
         value['positions'] = apply_sublattice(lattice_positions,
                                               value['positions'])
-    elements = sort_positions_in_dict(elements)
-    return elements
+    elements_updated = sort_positions_in_dict(elements_updated)
+    return elements_updated
 
 
 def sort_positions_in_dict(dictionary):
@@ -229,6 +231,41 @@ def merge_dicts(dict1, dict2):
 
             # Merge the positions
             merged[key]['positions'] += value['positions']
+
+            # Sort the positions based on y_max and x_min
+            merged[key]['positions'].sort(key=lambda x: (-x[1], x[0]))
+
+        else:
+            # If the key (name) is not in the merged dictionary, just add the whole item
+            merged[key] = value
+
+    return merged
+
+
+def add_positions(dict1, dict2):
+    """
+    Add positions from dict2 to dict1 for matching keys. If the names match but vertices or layers are different,
+    raise an error. Otherwise, add the positions.
+    """
+    # Create a copy of the first dictionary to avoid modifying the original
+    merged = dict1.copy()
+
+    for key, value in dict2.items():
+        # If the key (name) is already in the merged dictionary
+        if key in merged:
+            # Check if the vertices are the same
+            if not np.array_equal(merged[key]['vertices'], value['vertices']):
+                raise ValueError(
+                    f"The vertices for key '{key}' are different between the two dictionaries.")
+
+            # Check if the layers are the same
+            if merged[key]['layer'] != value['layer']:
+                raise ValueError(
+                    f"The layers for key '{key}' are different between the two dictionaries.")
+
+            # Add the positions
+            merged[key]['positions'] = merged[key]['positions'] + \
+                value['positions']
 
             # Sort the positions based on y_max and x_min
             merged[key]['positions'].sort(key=lambda x: (-x[1], x[0]))
@@ -622,6 +659,14 @@ class QuantumDotArrayElements:
             new_element.barrier_sep = component.barrier_sep.copy(
                 f'{copy_name}_barrier_seperation')
 
+        if isinstance(component, Clavier):
+            new_element.cell = new_element.cell.copy(copy_name)
+            new_element.screen = component.screen.copy(
+                f'{copy_name}_screen_clav')
+            for element_name, clav_gate in component.clavier_gates.copy().items():
+                new_element.clavier_gates[copy_name] = clav_gate.copy(
+                    f'{copy_name}_{element_name}')
+
         self.components[copy_name] = new_element
         return new_element
 
@@ -672,6 +717,7 @@ class UnitCell:
         self.xlim = None
         self.ylim = None
         self._n = 0
+        self._built = False
 
     def add_component(self, component=None, build=False):
         """
@@ -689,6 +735,8 @@ class UnitCell:
         self._n = self._n + 1
         sublattice = Sublattice(name)
         if component is not None:
+            if component._built == False:
+                component.build()
             sublattice.component = component
             if build:
                 sublattice.build()
@@ -721,11 +769,12 @@ class UnitCell:
         elements = {}
         for cell in self.components.values():
             self.cell.add(gdstk.Reference(cell.cell))
-            elements = merge_dicts(elements, cell.elements)
+            elements = add_positions(elements, cell.elements)
         self.elements = elements
         self.cell.flatten()
         self._get_lim(axis=0)
         self._get_lim(axis=1)
+        self._built = True
 
 
 class QuantumDotArray:
@@ -821,6 +870,7 @@ class Element(ABC):
         self.rotate = 0.0
         self.fillet = 0
         self.fillet_tolerance = 1e-3
+        self._built = False
 
     # default attributes to skip for Element
     _skip_copy_attrs = {'name', 'cell', 'elements'}
@@ -870,37 +920,6 @@ class Plunger(Element):
         self._asymx = asym
         self._asymy = 1 / asym
 
-    # def copy(self, copy_name):
-    #     copied_plunger = Plunger(copy_name)
-
-    #     # Attributes not to be copied or handled differently
-    #     # Add other attributes to exclude if necessary
-    #     exclude_attrs = {'name', 'cell', 'elements'}
-
-    #     for attr, value in self.__dict__.items():
-    #         if attr not in exclude_attrs:
-    #             setattr(copied_plunger, attr, value)
-
-    #     # Handle special attributes (like cell) here if needed
-    #     # For example, if you want to re-initialize cell:
-    #     # copied_plunger.cell = "Some new cell value"  # Replace with actual initialization logic
-
-    #     return copied_plunger
-
-    # def copy(self, copy_name):
-    #     # Create a new plunger instance with the desired modifications
-    #     copied_plunger = Plunger(copy_name)
-    #     copied_plunger.x = self.x
-    #     copied_plunger.y = self.y
-    #     copied_plunger.rotate = self.rotate
-    #     copied_plunger.fillet = self.fillet
-    #     copied_plunger.fillet_tolerance = self.fillet_tolerance
-    #     copied_plunger.layer = self.layer
-    #     copied_plunger.diameter = self.diameter
-    #     copied_plunger.asym = self.asym
-
-    #     return copied_plunger
-
     def build(self):
         """
         Build the plunger element.
@@ -919,6 +938,7 @@ class Plunger(Element):
         self.elements[self.name]['positions'] = [[self.x, self.y]]
         self.elements[self.name]['layer'] = self.layer
         self.cell = cell
+        self._built = True
 
 
 class Barrier(Element):
@@ -956,6 +976,7 @@ class Barrier(Element):
         self.elements[self.name]['positions'] = [[self.x, self.y]]
         self.elements[self.name]['layer'] = self.layer
         self.cell = cell
+        self._built = True
 
 
 class ScreeningGate(Element):
@@ -975,6 +996,7 @@ class ScreeningGate(Element):
         self.elements[self.name]['positions'] = [[self.x, self.y]]
         self.elements[self.name]['layer'] = self.layer
         self.cell = cell
+        self._built = True
 
 
 class Ohmic(Element):
@@ -998,18 +1020,14 @@ class Sensor(UnitCell):
         """
         super().__init__(name)
         self.qda_elements = qda_elements
-        # self.cell = None
-        # self.elements = {name: {'vertices': [],
-        #                         'positions': [],
-        #                         'layer': self.layer}}
         self.x = 0
         self.y = 0
         self.plunger = qda_elements.add_plunger(f'{name}_plunger')
         self.barrier_source = qda_elements.add_barrier(
             f'{name}_barrier_source')
         self.barrier_drain = qda_elements.add_barrier(f'{name}_barrier_drain')
-        self.source = Ohmic(f'{name}_source')
-        self.drain = qda_elements.add_ohmic(f'{name}_barrier_drain')
+        self.source = qda_elements.add_ohmic(f'{name}_source')
+        self.drain = qda_elements.add_ohmic(f'{name}_drain')
         self.barrier_sep = qda_elements.add_barrier(
             f'{name}_barrier_seperation')
         self.gap_ohmic_pl = 40
@@ -1027,15 +1045,6 @@ class Sensor(UnitCell):
         self.__feature_gap = None
         self.sd_position = None
         self.bar_position = None
-
-        # self.components = {self.plunger.name: self.plunger,
-        #                    self.barrier_source.name: self.barrier_source,
-        #                    self.barrier_drain.name: self.barrier_drain,
-        #                    self.source.name: self.source,
-        #                    self.drain.name: self.drain,
-        #                    self.barrier_sep.name: self.barrier_sep
-        #                    }
-
         self.components_position = {}
 
     def build_elements(self):
@@ -1145,17 +1154,11 @@ class Sensor(UnitCell):
         self.add_component(self.barrier_drain, build=True)
         self.add_component(self.barrier_sep, build=True)
 
-        # self.build()
-
-        # cell.add(gdstk.Reference(plunger.cell))
-        # cell.add(gdstk.Reference(bar_source.cell))
-        # cell.add(gdstk.Reference(bar_drain.cell))
-        # cell.add(gdstk.Reference(source))
-        # cell.add(gdstk.Reference(drain))
-        # cell.add(gdstk.Reference(bar_sep.cell))
-        # self.cell = cell
-
         return self.cell
+
+    def build(self):
+        self.build_elements()
+        super().build()
 
 
 class ClavierGate(Element):
@@ -1197,20 +1200,25 @@ class ClavierGate(Element):
         cl.fillet(self.fillet, tolerance=self.fillet_tolerance)
         cell = gdstk.Cell(self.name)
         cell.add(cl)
+        self.elements[self.name]['vertices'] = cl.points
+        self.elements[self.name]['positions'] = [[self.x, self.y]]
+        self.elements[self.name]['layer'] = self.layer
         self.cell = cell
+        self._built = True
 
 
-class Clavier:
+class Clavier(UnitCell):
     def __init__(self, name, qda_elements):
-        self.name = name
+        super().__init__(name)
         self.qda_elements = qda_elements
-        # self.qda = None
-        self.cell = None
-        self.clav_dot_size = 100
-        self.clav_gate_gap = 20
-        self.clav_width = 200
+        self.clavier_gates = {}
+        self.screen = None
+        self.screen_position = 200e-3
+        self.clav_dot_size = 100e-3
+        self.clav_gate_gap = 20e-3
+        self.clav_width = 200e-3
         self._n_clav_gates = 4
-        self.clav_gap = [450, 650]
+        self.clav_gap = [0.450, 0.650]
         self.clav_layers = [25, 26]
         self.n_clav_rep = 8
 
@@ -1241,99 +1249,94 @@ class Clavier:
         self.y = 0
         self.fillet = 0.02
         self.fillet_tolerance = 1e-4
+        self.rotation = 0
+        self.mirror = False
 
     def build(self):
-        # if self.cell == None:
-        #     raise Exception(f'QuantumDotDesigner.Clavier.qda is None. Assign' +
-        #                     'QuantumDotDesigner.Clavier.qda a QuantumDotArray.')
-        # else:
-        #     pass
-
-        cell = UnitCell()
-
-        clavier_gates = {}
         sl_clavier_gates = {}
 
         clav_layers_order = self.clav_layers + self.clav_layers[::-1]
 
         for n in range(int(self._n_clav_gates/2)):
-            clavier_gates[2 *
-                          n] = self.qda_elements.add_clavier_gate(f'clavier_gates_{2*n}')
-            clavier_gates[2*n].layer = clav_layers_order[2*n]
-            clavier_gates[2*n].width = self.clav_width
-            clavier_gates[2*n].length = self.clav_length
-            clavier_gates[2*n].gate_width = self.clav_gate_width
-            clavier_gates[2*n].gate_length = (self.clav_gate_length[n % 2]
-                                              + n * self.clav_gate_width)
-            clavier_gates[2*n].n_clav_rep = self.n_clav_rep
-            clavier_gates[2*n].spacing = self.spacing
-            clavier_gates[2*n].x = ((n - (self._n_clav_gates - 1) / 2) *
-                                    self.clav_gate_spacing / self._n_clav_gates)
-            clavier_gates[2*n].y = (self.y +
-                                    self.clav_gate_length[n % 2]/2 +
-                                    self.clav_gap[n % 2]/2 +
-                                    n*self.clav_gate_width)
-            clavier_gates[2*n].fillet = self.fillet
-            clavier_gates[2*n].fillet_tolerance = self.fillet_tolerance
-            clavier_gates[2*n].build()
+            name = f'{self.name}_gate_{2*n}'
 
-            sl_clavier_gates[2 *
-                             n] = cell.add_component(f'sublattice_clavier_gates_{2*n}')
-            sl_clavier_gates[2*n].component = clavier_gates[2*n]
-            sl_clavier_gates[2*n].center = (0, 0)
-            sl_clavier_gates[2*n].build()
+            y = (self.y + self.clav_gate_length[n % 2]/2 +
+                 self.clav_gap[n % 2]/2 + n*self.clav_gate_width)
+            if self.mirror:
+                self.rotation = 180
+                y = - y
 
-            clavier_gates[2*n +
-                          1] = self.qda_elements.add_clavier_gate(f'clavier_gates_{2*n+1}')
-            clavier_gates[2*n+1].layer = clav_layers_order[2*n]
-            clavier_gates[2*n+1].width = self.clav_width
-            clavier_gates[2*n+1].length = self.clav_length
-            clavier_gates[2*n+1].gate_width = self.clav_gate_width
-            clavier_gates[2*n+1].gate_length = (self.clav_gate_length[n % 2] +
-                                                n*self.clav_gate_width)
-            clavier_gates[2*n+1].n_clav_rep = self.n_clav_rep
-            clavier_gates[2*n+1].spacing = self.spacing
-            clavier_gates[2*n+1].rotation = 180
-            clavier_gates[2*n+1].x = ((n+1/2)*self.clav_gate_spacing /
-                                      self._n_clav_gates)
-            clavier_gates[2*n+1].y = -(self.y+self.clav_gate_length[n % 2]/2 +
-                                       self.clav_gap[n % 2]/2 +
-                                       n*self.clav_gate_width)
-            clavier_gates[2*n+1].fillet = self.fillet
-            clavier_gates[2*n+1].fillet_tolerance = self.fillet_tolerance
-            clavier_gates[2*n+1].build()
+            self.clavier_gates[name] = self.qda_elements.add_clavier_gate(name)
+            self.clavier_gates[name].layer = clav_layers_order[2*n]
+            self.clavier_gates[name].width = self.clav_width
+            self.clavier_gates[name].length = self.clav_length
+            self.clavier_gates[name].gate_width = self.clav_gate_width
+            self.clavier_gates[name].gate_length = (self.clav_gate_length[n % 2]
+                                                    + n * self.clav_gate_width)
+            self.clavier_gates[name].n_clav_rep = self.n_clav_rep
+            self.clavier_gates[name].spacing = self.spacing
+            self.clavier_gates[name].rotation = self.rotation
+            self.clavier_gates[name].x = (self.x + (n - (self._n_clav_gates - 1) / 2) *
+                                          self.clav_gate_spacing / self._n_clav_gates)
+            self.clavier_gates[name].y = y
+            self.clavier_gates[name].fillet = self.fillet
+            self.clavier_gates[name].fillet_tolerance = self.fillet_tolerance
+            self.clavier_gates[name].build()
 
-            sl_clavier_gates[2*n +
-                             1] = cell.add_component(f'sublattice_clavier_gates_{2*n+1}')
-            sl_clavier_gates[2*n+1].component = clavier_gates[2*n+1]
-            sl_clavier_gates[2*n+1].center = (0, 0)
-            sl_clavier_gates[2*n+1].build()
+            sl_name = f'sublattice_{self.name}_gate_{2*n}'
+            sl_clavier_gates[sl_name] = self.add_component()
+            sl_clavier_gates[sl_name].component = self.clavier_gates[name]
+            sl_clavier_gates[sl_name].center = (0, 0)
+            sl_clavier_gates[sl_name].build()
 
-        screen = self.qda_elements.add_screening_gate('screen_clav')
+            name_odd = f'{self.name}_gate_{2*n+1}'
+            self.clavier_gates[name_odd] = self.qda_elements.add_clavier_gate(
+                name_odd)
+            self.clavier_gates[name_odd].layer = clav_layers_order[2*n]
+            self.clavier_gates[name_odd].width = self.clav_width
+            self.clavier_gates[name_odd].length = self.clav_length
+            self.clavier_gates[name_odd].gate_width = self.clav_gate_width
+            self.clavier_gates[name_odd].gate_length = (self.clav_gate_length[n % 2] +
+                                                        n*self.clav_gate_width)
+            self.clavier_gates[name_odd].n_clav_rep = self.n_clav_rep
+            self.clavier_gates[name_odd].spacing = self.spacing
+            self.clavier_gates[name_odd].rotation = 180 + self.rotation
+            self.clavier_gates[name_odd].x = (self.x + (n+1/2)*self.clav_gate_spacing /
+                                              self._n_clav_gates)
+            self.clavier_gates[name_odd].y = -y
+            self.clavier_gates[name_odd].fillet = self.fillet
+            self.clavier_gates[name_odd].fillet_tolerance = self.fillet_tolerance
+            self.clavier_gates[name_odd].build()
 
-        screen.layer = self.screen_layer
-        screen.vertices = [(-self.screen_length/2, self.screen_width/2),
-                           (self.screen_length/2, self.screen_width/2),
-                           (self.screen_length/2, -self.screen_width/2),
-                           (-self.screen_length/2, -self.screen_width/2)]
-        screen.x = 0
-        screen.y = -((self.clav_gate_length[0] -
-                      self.clav_gap[0] +
-                      self.screen_width)/2 +
-                     self.screen_gap)
-        screen.build()
+            sl_name_odd = f'sublattice_{self.name}_gate_{2*n+1}'
+            sl_clavier_gates[sl_name_odd] = self.add_component()
+            sl_clavier_gates[sl_name_odd].component = self.clavier_gates[name_odd]
+            sl_clavier_gates[sl_name_odd].center = (0, 0)
 
-        sl_clav_screen = cell.add_component(f'sublattice_clav_screen_up')
-        sl_clav_screen.component = screen
+            sl_clavier_gates[sl_name_odd].build()
+
+        self.screen = self.qda_elements.add_screening_gate(
+            f'{self.name}_screen')
+
+        self.screen.layer = self.screen_layer
+        self.screen.vertices = [(self.x-self.screen_length/2, self.y+self.screen_width/2),
+                                (self.x+self.screen_length/2,
+                                 self.y+self.screen_width/2),
+                                (self.x+self.screen_length/2,
+                                 self.y-self.screen_width/2),
+                                (self.x-self.screen_length/2, self.y-self.screen_width/2)]
+        self.screen.build()
+
+        sl_clav_screen = self.add_component()
+        sl_clav_screen.component = self.screen
         sl_clav_screen.center = (0, 0)
         sl_clav_screen.rows = 2
-        sl_clav_screen.spacing_y = 2*abs(screen.y)
+        sl_clav_screen.spacing = (0, self.screen_position)
         sl_clav_screen.build()
 
-        # cell.add(gdstk.Reference(sl_clav_screen.cell))
-        self.cell = cell.cell
+        super().build()
 
-        return cell
+        return self.cell
 
 
 class Sublattice:
@@ -1356,6 +1359,7 @@ class Sublattice:
         self.ylim = None
         self._width = (self.columns-1) * self.spacing[0]
         self._height = (self.rows-1) * self.spacing[1]
+        self._built = False
 
     def _update_width(self):
         """
@@ -1414,6 +1418,7 @@ class Sublattice:
                                  spacing=(self.spacing[0], self.spacing[1])
                                  ))
         self.cell = cell
+        self._built = True
         self._get_lim(axis=0)
         self._get_lim(axis=1)
         # only update elements attribute if it exists
@@ -1451,8 +1456,9 @@ class FanOutLineBase:
         self.elements = {name: {'vertices': [],
                                 'positions': [],
                                 'layer': self.layer}}
+        self._built = False
 
-    def build_fo(self):
+    def build(self):
         fo_line = gdstk.Polygon(self.polygons, layer=self.layer)
         fo_line.fillet(self.fillet, tolerance=self.fillet_tolerance)
         fo_line.fillet(0.02, tolerance=1e-4)
@@ -1462,6 +1468,7 @@ class FanOutLineBase:
         self.elements[self.name]['layer'] = self.layer
 
         self.cell.add(fo_line)
+        self._built = True
 
 
 class FanOutLineFine(FanOutLineBase):
@@ -1585,6 +1592,10 @@ class FanOutLineFine(FanOutLineBase):
 
         return poly_vertices
 
+    def build(self):
+        self.calculate_fine_fo()
+        super().build()
+
 
 class FanOutLineCoarse(FanOutLineBase):
     pass
@@ -1640,7 +1651,7 @@ class FanoutGenerator():
         if direction in ['top', 'bottom']:
             overlap_start = multiplier * \
                 (self.fo_stages[0][1] - self.fo_fine_coarse_overlap)
-            overlap_end = self.fo_stages[0][1]
+            overlap_end = multiplier*self.fo_stages[0][1]
             fanout_positions = self.fanout_positions['device'][direction][n_fanout]
             fo_end_width = self.fo_widths[0]
 
@@ -1649,7 +1660,7 @@ class FanoutGenerator():
         else:
             overlap_start = multiplier * \
                 (self.fo_stages[0][0] - self.fo_fine_coarse_overlap)
-            overlap_end = self.fo_stages[0][0]
+            overlap_end = multiplier*self.fo_stages[0][0]
             fanout_positions = - \
                 self.fanout_positions['device'][direction][n_fanout]
             fo_end_width = self.fo_widths[0]
