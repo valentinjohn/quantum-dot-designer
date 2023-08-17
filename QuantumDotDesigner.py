@@ -75,9 +75,21 @@ def gen_poly(n, sp=None):
 
 def rotate_point(point, angle, origin=(0, 0)):
     """
-    Rotate a point counterclockwise by a given angle around a given origin.
+    Rotate a point counterclockwise around a specified origin.
 
-    The angle should be given in radians.
+    Given a point, an angle (in radians), and an optional origin of rotation, this function calculates the new coordinates of the point after it has been rotated counterclockwise by the given angle around the origin.
+
+    Parameters:
+    - point (tuple of float): The (x, y) coordinates of the point to be rotated.
+    - angle (float): The angle of rotation in radians. Positive values result in counterclockwise rotation.
+    - origin (tuple of float, optional): The (x, y) coordinates of the origin of rotation. Defaults to (0, 0).
+
+    Returns:
+    - tuple of float: The (x, y) coordinates of the rotated point.
+
+    Example:
+    Given point (1, 0), rotation angle of pi/2 (90 degrees) around origin (0, 0):
+    Output: (0, 1)
     """
     x, y = point
     ox, oy = origin
@@ -90,6 +102,26 @@ def rotate_point(point, angle, origin=(0, 0)):
 
 def generate_clavier_gates(width, length, gate_width, gate_length,
                            num_clavier, spacing, shift, position, rotation=0):
+    """
+    Generate the vertices for a rectangle with notches (claviers) on its bottom edge
+
+    Parameters:
+    - width (float): The width of the main rectangle.
+    - length (float): The length of the main rectangle.
+    - gate_width (float): The width of each clavier.
+    - gate_length (float): The length (or depth) of each clavier.
+    - num_clavier (int): The number of claviers.
+    - spacing (float): The space between each clavier.
+    - shift (float): The horizontal shift applied to the claviers (used to adjust their position).
+    - position (tuple): A tuple of (x,y) coordinates representing the position offset for the entire shape.
+    - rotation (float, optional): The angle of rotation applied to the entire shape (default is 0).
+
+    Returns:
+    - list: A list of (x, y) tuples representing the vertices of the shape.
+
+    Note:
+    The `rotate_point` function is not provided in the original code. This function would be responsible for rotating a given point around the origin by a specified rotation angle.
+    """
     vertices = []
 
     # Convert rotation to radians
@@ -159,7 +191,23 @@ def generate_clavier_gates(width, length, gate_width, gate_length,
 
 def create_lattice_positions(rows, columns, spacing_x, spacing_y, center):
     """
-    Generate lattice positions based on input parameters.
+    Generate a lattice of positions in a 2D grid.
+
+    This function creates a lattice of positions in a 2D grid, taking into account the specified number of rows and columns, the spacing between the points in both  x and y directions, and a specified center point. The lattice is centered on the provided center point.
+
+    Parameters:
+    - rows (int): The number of rows in the lattice.
+    - columns (int): The number of columns in the lattice.
+    - spacing_x (float): The horizontal spacing between consecutive points.
+    - spacing_y (float): The vertical spacing between consecutive points.
+    - center (tuple of float): The (x, y) coordinates of the center of the lattice.
+
+    Returns:
+    - list of list: A list of [x, y] coordinates representing the positions in the lattice.
+
+    Example:
+    Given rows=2, columns=2, spacing_x=1, spacing_y=1, and center=(0, 0):
+    Output: [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]]
     """
     x_center, y_center = center
     positions = []
@@ -174,7 +222,20 @@ def create_lattice_positions(rows, columns, spacing_x, spacing_y, center):
 
 def apply_sublattice(main_lattice, sub_lattice):
     """
-    Apply the sub_lattice to each position in the main_lattice.
+    Combine a main lattice with a sub-lattice by adding each sub-lattice position to every main lattice position.
+
+    Given a main lattice of positions and a sub-lattice, this function generates a new set of positions by adding each sub-lattice position to every position in the main lattice. This operation effectively combines the two lattices, creating a dense set of points by superimposing the sub-lattice onto each point of the main lattice.
+
+    Parameters:
+    - main_lattice (list of list): A list of [x, y] coordinates representing the positions in the main lattice.
+    - sub_lattice (list of list): A list of [x, y] coordinates representing the positions in the sub-lattice.
+
+    Returns:
+    - list of list: A list of [x, y] coordinates representing the positions resulting from combining the main lattice with the sub-lattice.
+
+    Example:
+    Given main_lattice=[[0, 0], [1, 1]] and sub_lattice=[[0, 0], [0.5, 0.5]]:
+    Output: [[0, 0], [0.5, 0.5], [1, 1], [1.5, 1.5]]
     """
     result = []
 
@@ -187,7 +248,26 @@ def apply_sublattice(main_lattice, sub_lattice):
 
 def update_positions(elements, rows, columns, spacing_x, spacing_y, center):
     """
-    Update the positions of elements based on the given lattice parameters.
+    Update the positions of elements based on a specified lattice grid and optionally a sub-lattice.
+
+    Given a dictionary of elements, each with an associated list of positions (potentially representing a sub-lattice), this function recalculates the positions based on a main lattice defined by the number of rows, columns, spacings, and a center point. The sub-lattice positions of each element are then superimposed onto the main lattice.
+
+    Parameters:
+    - elements (dict): A dictionary where each key represents an element, and each value is another dictionary containing a 'positions' key. The 'positions' key corresponds to a list of [x, y] coordinates that represent a the positions of the elements before placing them on the lattice grid.
+    - rows (int): The number of rows in the main lattice.
+    - columns (int): The number of columns in the main lattice.
+    - spacing_x (float): The horizontal spacing between consecutive points in the main lattice.
+    - spacing_y (float): The vertical spacing between consecutive points in the main lattice.
+    - center (tuple of float): The (x, y) coordinates of the center of the main lattice.
+
+    Returns:
+    - dict: An updated dictionary where each element's 'positions' list has been recalculated based on the lattice grid.
+
+    Example:
+    Given elements = {'A': {'positions': [[0, 0], [0.5, 0.5]]}},
+    rows=2, columns=2, spacing_x=1, spacing_y=1, and center=(0, 0):
+    Output: {'A': {'positions': [[-0.5, -0.5], [0, 0], [0.5, -0.5], [1, 0],
+                                 [-0.5, 0.5], [0, 1], [0.5, 0.5], [1, 1]]}}
     """
     elements_updated = deepcopy(elements)
     # Generate lattice positions
@@ -203,15 +283,66 @@ def update_positions(elements, rows, columns, spacing_x, spacing_y, center):
 
 
 def sort_positions_in_dict(dictionary):
+    """
+    Sort the 'positions' list within each dictionary value based on the y-coordinate in descending order, and then by the x-coordinate in ascending order.
+
+    Parameters:
+    - dictionary (dict): A dictionary where each value is another dictionary containing a 'positions' key. The 'positions' key corresponds to a list of (x, y) tuples.
+
+    Returns:
+    - dict: The input dictionary with the 'positions' lists sorted for each value.
+
+    Example:
+    Input: 
+    {
+      'A': {'positions': [(2, 3), (1, 4), (2, 4)]},
+      'B': {'positions': [(3, 2), (3, 3)]}
+    }
+    Output: 
+    {
+      'A': {'positions': [(1, 4), (2, 4), (2, 3)]},
+      'B': {'positions': [(3, 3), (3, 2)]}
+    }
+    """
     for key in dictionary:
         dictionary[key]['positions'].sort(key=lambda x: (-x[1], x[0]))
     return dictionary
 
 
-def merge_dicts(dict1, dict2):
+def merge_device_positions(dict1, dict2):
     """
-    Merge two input dictionaries. If the names match but vertices or layers are different,
-    raise an error. Otherwise, merge by combining the positions.
+    Merge two dictionaries containing semiconductor device information by combining their positions.
+
+    This function merges two dictionaries by combining the 'positions' lists of elements with the same keys. If two elements (from dict1 and dict2) have the same key but different 'vertices' or 'layers', the function raises an error. If the key only exists in one of the dictionaries, the element is added to the merged result.
+
+    Parameters:
+    - dict1 (dict): The first dictionary where each key is a device name and each value is a dictionary containing 'vertices', 'layer', and 'positions' keys.
+    - dict2 (dict): The second dictionary with a similar structure as dict1.
+
+    Returns:
+    - dict: A merged dictionary with combined 'positions' for elements with the same keys.
+
+    Raises:
+    - ValueError: If the 'vertices' or 'layers' of an element with the same key in both dictionaries don't match.
+
+    Example:
+    Given
+    dict1={'A': {'vertices': [[0, 0]],
+                 'layer': 1,
+                 'positions': [[1, 1]]}}
+    and dict2={'A': {'vertices': [[0, 0]],
+                     'layer': 1,
+                     'positions': [[2, 2]]},
+               'B': {'vertices': [[0, 0]],
+                     'layer': 1,
+                     'positions': [[3, 3]]}},
+    Output:
+    {'A': {'vertices': [[0, 0]],
+           'layer': 1,
+           'positions': [[1, 1], [2, 2]]},
+     'B': {'vertices': [[0, 0]],
+           'layer': 1,
+           'positions': [[3, 3]]}}
     """
     # Create a copy of the first dictionary to avoid modifying the original
     merged = dict1.copy()
@@ -242,57 +373,47 @@ def merge_dicts(dict1, dict2):
     return merged
 
 
-def add_positions(dict1, dict2):
+def compute_positions(n_lines, spacing):
     """
-    Add positions from dict2 to dict1 for matching keys. If the names match but vertices or layers are different,
-    raise an error. Otherwise, add the positions.
+    Compute the starting positions for a given number of lines, considering their spacing.
+
+    The function calculates the starting positions of equidistant lines. The lines are centered around zero, ensuring that the middle line (or the gap between two middle lines if an even number) aligns with the zero position. The spacing between adjacent lines is constant and defined by the `spacing` parameter.
+
+    Parameters:
+    - n_lines (int): The total number of lines to be positioned.
+    - spacing (float): The distance between adjacent lines.
+
+    Returns:
+    - list of float: A list of starting positions for each line.
+
+    Example:
+    Given n_lines=3 and spacing=2:
+    Output: [-2.0, 0.0, 2.0]
     """
-    # Create a copy of the first dictionary to avoid modifying the original
-    merged = dict1.copy()
-
-    for key, value in dict2.items():
-        # If the key (name) is already in the merged dictionary
-        if key in merged:
-            # Check if the vertices are the same
-            if not np.array_equal(merged[key]['vertices'], value['vertices']):
-                raise ValueError(
-                    f"The vertices for key '{key}' are different between the two dictionaries.")
-
-            # Check if the layers are the same
-            if merged[key]['layer'] != value['layer']:
-                raise ValueError(
-                    f"The layers for key '{key}' are different between the two dictionaries.")
-
-            # Add the positions
-            merged[key]['positions'] = merged[key]['positions'] + \
-                value['positions']
-
-            # Sort the positions based on y_max and x_min
-            merged[key]['positions'].sort(key=lambda x: (-x[1], x[0]))
-
-        else:
-            # If the key (name) is not in the merged dictionary, just add the whole item
-            merged[key] = value
-
-    return merged
-
-
-def compute_positions(length, n_lines, spacing):
     start = - (n_lines - 1) * spacing / 2
     return [start + i * spacing for i in range(n_lines)]
 
 
 def compute_fanout_positions(fo_stages, fanout_counts, spacings):
     """
-    Computes the positions of the fanout lines for each rectangle.
+    Computes the fanout line positions for various stages of rectangles in a semiconductor layout.
+
+    This function calculates the positions of fanout lines for each side (top, bottom, left, right) of three distinct stages of rectangles: device, intermediate, and bondpad. The positions are determined based on the fanout counts and spacings provided.
 
     Parameters:
-    - fo_stages: A list of tuples, where each tuple contains the dimensions (length, width) of a rectangle.
-    - fanout_counts: A dictionary with keys 'top', 'bottom', 'left', 'right' and values being the fanout counts.
-    - spacings: A list of spacings for each rectangle.
+    - fo_stages (list of tuple): A list of three tuples, representing the dimensions (length, width) of the device, intermediate, and bondpad rectangles, respectively.
+    - fanout_counts (dict): A dictionary specifying the number of fanout lines for each side. Keys are 'top', 'bottom', 'left', and 'right', and values are integers representing fanout counts.
+    - spacings (list of float): A list of three floats representing the spacings for the device, intermediate, and bondpad rectangles, respectively.
 
     Returns:
-    A dictionary containing the fanout positions for each side of each rectangle.
+    - dict: A nested dictionary where the outer keys are the rectangle stages ('device', 'intermediate', 'bondpad'), and the inner keys are the sides ('top', 'bottom', 'left', 'right'). The values are lists of float values, representing the computed positions for fanout lines.
+
+    Example:
+    Given
+    fo_stages=[(16, 16), (500, 530), (1200, 1200)],
+    fanout_counts={'top': 3, 'bottom': 3, 'left': 2, 'right': 2},
+    and spacings=[2, 80, 200],
+    Output will have computed positions for each side of each rectangle stage based on the spacings and fanout counts.
     """
 
     device_rect, intermediate_rect, bondpad_square = fo_stages
@@ -301,22 +422,22 @@ def compute_fanout_positions(fo_stages, fanout_counts, spacings):
     # Compute positions for each rectangle and side
     fanout_positions = {
         'device': {
-            'top': compute_positions(device_rect[0], fanout_counts['top'], device_spacing),
-            'bottom': compute_positions(device_rect[0], fanout_counts['bottom'], device_spacing),
-            'left': compute_positions(device_rect[1], fanout_counts['left'], device_spacing),
-            'right': compute_positions(device_rect[1], fanout_counts['right'], device_spacing)
+            'top': compute_positions(fanout_counts['top'], device_spacing),
+            'bottom': compute_positions(fanout_counts['bottom'], device_spacing),
+            'left': compute_positions(fanout_counts['left'], device_spacing),
+            'right': compute_positions(fanout_counts['right'], device_spacing)
         },
         'intermediate': {
-            'top': compute_positions(intermediate_rect[0], fanout_counts['top'], intermediate_spacing),
-            'bottom': compute_positions(intermediate_rect[0], fanout_counts['bottom'], intermediate_spacing),
-            'left': compute_positions(intermediate_rect[1], fanout_counts['left'], intermediate_spacing),
-            'right': compute_positions(intermediate_rect[1], fanout_counts['right'], intermediate_spacing)
+            'top': compute_positions(fanout_counts['top'], intermediate_spacing),
+            'bottom': compute_positions(fanout_counts['bottom'], intermediate_spacing),
+            'left': compute_positions(fanout_counts['left'], intermediate_spacing),
+            'right': compute_positions(fanout_counts['right'], intermediate_spacing)
         },
         'bondpad': {
-            'top': compute_positions(bondpad_square[0], fanout_counts['top'], bondpad_spacing),
-            'bottom': compute_positions(bondpad_square[0], fanout_counts['bottom'], bondpad_spacing),
-            'left': compute_positions(bondpad_square[1], fanout_counts['left'], bondpad_spacing),
-            'right': compute_positions(bondpad_square[1], fanout_counts['right'], bondpad_spacing)
+            'top': compute_positions(fanout_counts['top'], bondpad_spacing),
+            'bottom': compute_positions(fanout_counts['bottom'], bondpad_spacing),
+            'left': compute_positions(fanout_counts['left'], bondpad_spacing),
+            'right': compute_positions(fanout_counts['right'], bondpad_spacing)
         }
     }
 
@@ -324,6 +445,19 @@ def compute_fanout_positions(fo_stages, fanout_counts, spacings):
 
 
 def get_fo_lines(fanout_positions, fanout_counts, fo_stages):
+    """
+    Compute the coordinates for fanout lines for various stages of rectangles in a semiconductor layout.
+
+    This function generates the line segments representing the fanout paths for each side (top, bottom, left, right) of three distinct stages of rectangles: device, intermediate, and bondpad. The fanout paths are determined based on the fanout positions, counts, and the dimensions of each stage.
+
+    Parameters:
+    - fanout_positions (dict): A nested dictionary where the outer keys are the rectangle stages ('device', 'intermediate', 'bondpad'), and the inner keys are the sides ('top', 'bottom', 'left', 'right'). The values are lists of float values, representing the computed positions for fanout lines.
+    - fanout_counts (dict): A dictionary specifying the number of fanout lines for each side. Keys are 'top', 'bottom', 'left', and 'right', and values are integers representing fanout counts.
+    - fo_stages (list of tuple): A list of three tuples, representing the dimensions (length, width) of the device, intermediate, and bondpad rectangles, respectively.
+
+    Returns:
+    - dict: A dictionary where the keys are the sides ('top', 'bottom', 'left', 'right') and the values are lists of line segments representing the fanout paths for that side. Each line segment consists of start and end coordinates.
+    """
     fo_lines = {'top': [],
                 'bottom': [],
                 'right': [],
@@ -769,7 +903,7 @@ class UnitCell:
         elements = {}
         for cell in self.components.values():
             self.cell.add(gdstk.Reference(cell.cell))
-            elements = add_positions(elements, cell.elements)
+            elements = merge_device_positions(elements, cell.elements)
         self.elements = elements
         self.cell.flatten()
         self._get_lim(axis=0)
@@ -828,7 +962,7 @@ class QuantumDotArray:
         """
         elements = {}
         for cell in self.components.values():
-            elements = merge_dicts(elements, cell.elements)
+            elements = merge_device_positions(elements, cell.elements)
             if isinstance(cell, Sublattice):
                 self.main_cell.add(gdstk.Reference(cell.cell))
             elif isinstance(cell, UnitCell):
@@ -1699,6 +1833,7 @@ class FanoutGenerator():
         elements = {}
         for cell in self.components.values():
             self.cell.add(gdstk.Reference(cell.component.cell))
-            elements = merge_dicts(elements, cell.component.elements)
+            elements = merge_device_positions(
+                elements, cell.component.elements)
         self.elements = elements
         self.cell.flatten()
