@@ -33,6 +33,8 @@ import copy
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from copy import deepcopy
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 
 # %% definitions
 
@@ -293,12 +295,12 @@ def sort_positions_in_dict(dictionary):
     - dict: The input dictionary with the 'positions' lists sorted for each value.
 
     Example:
-    Input: 
+    Input:
     {
       'A': {'positions': [(2, 3), (1, 4), (2, 4)]},
       'B': {'positions': [(3, 2), (3, 3)]}
     }
-    Output: 
+    Output:
     {
       'A': {'positions': [(1, 4), (2, 4), (2, 3)]},
       'B': {'positions': [(3, 3), (3, 2)]}
@@ -631,6 +633,68 @@ def perpendicular_vector(v):
     perp_vector = np.array([-v[1], v[0]])
     return normalize_vector(perp_vector)
 
+# %% Mixin
+
+
+class PlotMixin:
+    def plot(self, ax=None):
+        # If no axis is provided, create one
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        # Collect unique layers
+        unique_layers = list({el['layer'] for el in self.elements.values()})
+
+        # Create a colormap with enough colors for each layer
+        colors = plt.cm.jet(np.linspace(0, 1, len(unique_layers)))
+
+        # Create a dictionary to map layer values to colors
+        layer_to_color = dict(zip(unique_layers, colors))
+
+        all_x_positions = []  # Collect all x positions to set the x-axis limits
+        all_y_positions = []  # Collect all y positions to set the y-axis limits
+
+        max_polygon_size = 0  # To store the maximum size of the polygon
+
+        # Plot each element
+        for _, el in self.elements.items():
+            vertices = el['vertices']
+            positions = el['positions']
+
+            combined_vertices = apply_sublattice(positions, vertices)
+
+            # Calculate the size of the polygon
+            x_positions, y_positions = zip(*vertices)
+            polygon_width = max(x_positions) - min(x_positions)
+            polygon_height = max(y_positions) - min(y_positions)
+            polygon_size = max(polygon_width, polygon_height)
+            max_polygon_size = max(max_polygon_size, polygon_size)
+
+            for i in range(0, len(combined_vertices), len(vertices)):
+                polygon_vertices = combined_vertices[i:i+len(vertices)]
+                polygon = plt.Polygon(
+                    polygon_vertices, color=layer_to_color[el['layer']])
+                ax.add_patch(polygon)
+
+                # Extract x and y coordinates for axes limits
+                x_positions, y_positions = zip(*polygon_vertices)
+                all_x_positions.extend(x_positions)
+                all_y_positions.extend(y_positions)
+
+        # Set the axes limits with the maximum size of the polygon as margin
+        ax.set_xlim(min(all_x_positions) - max_polygon_size,
+                    max(all_x_positions) + max_polygon_size)
+        ax.set_ylim(min(all_y_positions) - max_polygon_size,
+                    max(all_y_positions) + max_polygon_size)
+
+        ax.set_xlabel(r'width ($\mathrm{\mu m}$)')
+        ax.set_ylabel(r'height ($\mathrm{\mu m}$)')
+        ax.set_title(self.name)
+        ax.set_aspect('equal', adjustable='box')
+
+        if ax is None:
+            plt.show()
+
 
 # %% Quantum Dot Array classes
 
@@ -834,7 +898,7 @@ class QuantumDotArrayElements:
         return [fo_line_fine, fo_line_coarse]
 
 
-class UnitCell:
+class UnitCell(PlotMixin):
     def __init__(self, name):
         """
         Initialize a UnitCell object.
@@ -911,7 +975,7 @@ class UnitCell:
         self._built = True
 
 
-class QuantumDotArray:
+class QuantumDotArray(PlotMixin):
     def __init__(self):
         """
         Initialize a QuantumDotArray object.
@@ -921,6 +985,7 @@ class QuantumDotArray:
             unitcell_instance (UnitCell): An optional UnitCell instance to use
             for the array.
         """
+        self.name = 'Quantum_Dot_Array'
         self.spacing_qd = 200e-3
         self.spacing_qd_diag = 2**0.5 * self.spacing_qd
         self.elements = {}
@@ -985,7 +1050,7 @@ class QuantumDotArray:
 # %% Elements
 
 
-class Element(ABC):
+class Element(ABC, PlotMixin):
     def __init__(self, name):
         """
         Initialize an Element object.
@@ -1179,103 +1244,82 @@ class Sensor(UnitCell):
         self.__feature_gap = None
         self.sd_position = None
         self.bar_position = None
+        self.sep_position = None
         self.components_position = {}
+        self._orientation_dict = {'top': (0, 1), 'right': (1, 0),
+                                  'bottom': (0, -1), 'left': (-1, 0),
+                                  'top-right': (2**0.5/2, 2**0.5/2),
+                                  'bottom-right': (2**0.5/2, -2**0.5/2),
+                                  'bottom-left': (-2**0.5/2, -2**0.5/2),
+                                  'top-left': (-2**0.5/2, 2**0.5/2)}
 
-    def build_elements(self):
-        """
-        Build the sensor element.
+        self._bar_angle_dict = {'top': np.pi, 'right': -np.pi/2,
+                                'bottom': np.pi, 'left': +np.pi/2,
+                                'top-right': -np.pi/4,
+                                'bottom-right': np.pi/4,
+                                'bottom-left': 3*np.pi/4,
+                                'top-left': -3*np.pi/4}
 
-        Returns:
-            gdstk.Cell: The built sensor cell.
-        """
-        # cell = gdstk.Cell(self.name)
+    def _calculate_positions(self):
+        (i, j) = self._orientation_dict[self.source_pos]
+        (m, n) = self._orientation_dict[self.drain_pos]
+        (u, v) = self._orientation_dict[self.sep_pos]
+
         plunger = self.plunger
         bar_source = self.barrier_source
         bar_drain = self.barrier_drain
         source = self.source
         drain = self.drain
+
+        self.sd_position = (
+            (i*(plunger._asymx*plunger.diameter/2 +
+                bar_source.width+source.width/2) +
+             self.source_position_offset[0],
+             j*(plunger._asymy*plunger.diameter/2 +
+                bar_source.width+source.width/2) +
+             self.source_position_offset[1]),
+            (m*(plunger._asymx*plunger.diameter/2 +
+                bar_drain.width+drain.width/2) +
+             self.drain_position_offset[0],
+             n*(plunger._asymy*plunger.diameter/2 +
+                bar_drain.width+drain.width/2) +
+             self.drain_position_offset[1]))
+
+        self.bar_position = (
+            (i*(plunger._asymx*plunger.diameter/2 +
+                bar_source.width/2-self.__feature_gap) +
+             self.bar_sou_position_offset[0],
+             j*(plunger._asymy*plunger.diameter/2 +
+                bar_source.width/2-self.__feature_gap) +
+             self.bar_sou_position_offset[1]),
+            (m*(plunger._asymx*plunger.diameter/2 +
+                bar_drain.width/2-self.__feature_gap) +
+             self.bar_dra_position_offset[0],
+             n*(plunger._asymy*plunger.diameter/2 +
+                bar_drain.width/2 - self.__feature_gap) +
+             self.bar_dra_position_offset[1]))
+
+        self.sep_position = (u*(plunger._asymx*plunger.diameter/2+self.gap_sep/2),
+                             v*(plunger._asymy*plunger.diameter/2+self.gap_sep/2))
+
+    def _set_barrier_properties(self):
+        bar_source = self.barrier_source
+        bar_drain = self.barrier_drain
         bar_sep = self.barrier_sep
-        self.__feature_gap = self.barrier_source.width - self.gap_ohmic_pl
 
-        orientation_dict = {'top': (0, 1), 'right': (1, 0),
-                            'bottom': (0, -1), 'left': (-1, 0),
-                            'top-right': (2**0.5/2, 2**0.5/2),
-                            'bottom-right': (2**0.5/2, -2**0.5/2),
-                            'bottom-left': (-2**0.5/2, -2**0.5/2),
-                            'top-left': (-2**0.5/2, 2**0.5/2)}
+        bar_source.rotate = self._bar_angle_dict[self.source_pos]
+        # bar_source.x = self.bar_position[0][0]
+        # bar_source.y = self.bar_position[0][1]
 
-        bar_angle_dict = {'top': np.pi, 'right': -np.pi/2,
-                          'bottom': np.pi, 'left': +np.pi/2,
-                          'top-right': -np.pi/4,
-                          'bottom-right': np.pi/4,
-                          'bottom-left': 3*np.pi/4,
-                          'top-left': -3*np.pi/4}
+        bar_drain.rotate = -self._bar_angle_dict[self.drain_pos]
+        # bar_drain.x = self.bar_position[1][0]
+        # bar_drain.y = self.bar_position[1][1]
 
-        (i, j) = orientation_dict[self.source_pos]
-        (m, n) = orientation_dict[self.drain_pos]
-        (u, v) = orientation_dict[self.sep_pos]
+        bar_sep.rotate = self._bar_angle_dict[self.sep_pos]
+        # bar_sep.x = self.sep_position[0]
+        # bar_sep.y = self.sep_position[1]
 
-        sd_position = ((i*(plunger._asymx*plunger.diameter/2 +
-                           bar_source.width+source.width/2) +
-                        self.source_position_offset[0],
-                        j*(plunger._asymy*plunger.diameter/2 +
-                           bar_source.width+source.width/2) +
-                        self.source_position_offset[1]),
-                       (m*(plunger._asymx*plunger.diameter/2 +
-                           bar_source.width+source.width/2) +
-                       self.drain_position_offset[0],
-                       n*(plunger._asymy*plunger.diameter/2 +
-                          bar_source.width+source.width/2) +
-                       self.drain_position_offset[1]))
-
-        bar_position = ((i*(plunger._asymx*plunger.diameter/2 +
-                            bar_source.width/2-self.__feature_gap) +
-                         self.bar_sou_position_offset[0],
-                         j*(plunger._asymy*plunger.diameter/2 +
-                            bar_source.width/2-self.__feature_gap) +
-                         self.bar_sou_position_offset[1]),
-                        (m*(plunger._asymx*plunger.diameter/2 +
-                            bar_source.width/2-self.__feature_gap) +
-                        self.bar_dra_position_offset[0],
-                        n*plunger._asymy*(plunger.diameter/2 +
-                                          bar_source.width/2 -
-                                          self.__feature_gap) +
-                        self.bar_dra_position_offset[1]))
-
-        sep_position = (u*(plunger._asymx*plunger.diameter/2+self.gap_sep/2),
-                        v*(plunger._asymy*plunger.diameter/2+self.gap_sep/2))
-
-        self.sd_position = sd_position
-        self.bar_position = bar_position
-
-        bar_source.rotate = bar_angle_dict[self.source_pos]
-        bar_source.x = bar_position[0][0]
-        bar_source.y = bar_position[0][1]
-
-        bar_drain.rotate = -bar_angle_dict[self.drain_pos]
-        bar_drain.x = bar_position[1][0]
-        bar_drain.y = bar_position[1][1]
-
-        bar_sep.rotate = bar_angle_dict[self.sep_pos]
-        bar_sep.x = sep_position[0]
-        bar_sep.y = sep_position[1]
-
-        self.components_position = {self.plunger.name:
-                                    (self.plunger.x, self.plunger.y),
-                                    self.barrier_source.name:
-                                    (self.barrier_source.x,
-                                     self.barrier_source.y),
-                                    self.barrier_drain.name:
-                                    (self.barrier_drain.x,
-                                     self.barrier_drain.y),
-                                    self.source.name:
-                                    (self.source.x, self.source.y),
-                                    self.drain.name:
-                                    (self.drain.x, self.drain.y),
-                                    self.barrier_sep.name:
-                                    (self.barrier_sep.x, self.barrier_sep.y),
-                                    }
-
+    def _build_and_add_elements(self):
         self.plunger.build()
         self.barrier_source.build()
         self.barrier_drain.build()
@@ -1284,9 +1328,36 @@ class Sensor(UnitCell):
         self.barrier_sep.build()
 
         self.add_component(self.plunger, build=True)
-        self.add_component(self.barrier_source, build=True)
-        self.add_component(self.barrier_drain, build=True)
-        self.add_component(self.barrier_sep, build=True)
+
+        sl_bs = self.add_component(self.barrier_source)
+        sl_bs.center = self.bar_position[0]
+        sl_bs.build()
+
+        sl_bd = self.add_component(self.barrier_drain)
+        sl_bd.center = self.bar_position[1]
+        sl_bd.build()
+
+        sl_bsep = self.add_component(self.barrier_sep)
+        sl_bsep.center = self.sep_position
+        sl_bsep.build()
+
+    def build_elements(self):
+        self.__feature_gap = self.barrier_source.width - self.gap_ohmic_pl
+
+        self._calculate_positions()
+
+        self._set_barrier_properties()
+
+        self.components_position = {
+            self.plunger.name: (self.plunger.x, self.plunger.y),
+            self.barrier_source.name: (self.barrier_source.x, self.barrier_source.y),
+            self.barrier_drain.name: (self.barrier_drain.x, self.barrier_drain.y),
+            self.source.name: (self.source.x, self.source.y),
+            self.drain.name: (self.drain.x, self.drain.y),
+            self.barrier_sep.name: (self.barrier_sep.x, self.barrier_sep.y),
+        }
+
+        self._build_and_add_elements()
 
         return self.cell
 
@@ -1386,79 +1457,82 @@ class Clavier(UnitCell):
         self.rotation = 0
         self.mirror = False
 
-    def build(self):
-        sl_clavier_gates = {}
+    def _initialize_clavier_gates(self):
+        self._sl_clavier_gates = {}
+        self._clav_layers_order = self.clav_layers + self.clav_layers[::-1]
 
-        clav_layers_order = self.clav_layers + self.clav_layers[::-1]
+    def _build_even_clavier_gates(self, n):
+        name = f'{self.name}_gate_{2*n}'
+        x = (self.x + (n - (self._n_clav_gates - 1) / 2) *
+             self.clav_gate_spacing / self._n_clav_gates)
+        y = (self.y + self.clav_gate_length[n % 2]/2 +
+             self.clav_gap[n % 2]/2 + n*self.clav_gate_width)
 
-        for n in range(int(self._n_clav_gates/2)):
-            name = f'{self.name}_gate_{2*n}'
+        if self.mirror:
+            self.rotation = 180
+            y = - y
 
-            y = (self.y + self.clav_gate_length[n % 2]/2 +
-                 self.clav_gap[n % 2]/2 + n*self.clav_gate_width)
-            if self.mirror:
-                self.rotation = 180
-                y = - y
+        self.clavier_gates[name] = self.qda_elements.add_clavier_gate(name)
+        self.clavier_gates[name].layer = self._clav_layers_order[2*n]
+        self.clavier_gates[name].width = self.clav_width
+        self.clavier_gates[name].length = self.clav_length
+        self.clavier_gates[name].gate_width = self.clav_gate_width
+        self.clavier_gates[name].gate_length = (self.clav_gate_length[n % 2]
+                                                + n * self.clav_gate_width)
+        self.clavier_gates[name].n_clav_rep = self.n_clav_rep
+        self.clavier_gates[name].spacing = self.spacing
+        self.clavier_gates[name].rotation = self.rotation
+        self.clavier_gates[name].fillet = self.fillet
+        self.clavier_gates[name].fillet_tolerance = self.fillet_tolerance
+        self.clavier_gates[name].build()
 
-            self.clavier_gates[name] = self.qda_elements.add_clavier_gate(name)
-            self.clavier_gates[name].layer = clav_layers_order[2*n]
-            self.clavier_gates[name].width = self.clav_width
-            self.clavier_gates[name].length = self.clav_length
-            self.clavier_gates[name].gate_width = self.clav_gate_width
-            self.clavier_gates[name].gate_length = (self.clav_gate_length[n % 2]
-                                                    + n * self.clav_gate_width)
-            self.clavier_gates[name].n_clav_rep = self.n_clav_rep
-            self.clavier_gates[name].spacing = self.spacing
-            self.clavier_gates[name].rotation = self.rotation
-            self.clavier_gates[name].x = (self.x + (n - (self._n_clav_gates - 1) / 2) *
-                                          self.clav_gate_spacing / self._n_clav_gates)
-            self.clavier_gates[name].y = y
-            self.clavier_gates[name].fillet = self.fillet
-            self.clavier_gates[name].fillet_tolerance = self.fillet_tolerance
-            self.clavier_gates[name].build()
+        sl_name = f'sublattice_{self.name}_gate_{2*n}'
+        self._sl_clavier_gates[sl_name] = self.add_component()
+        self._sl_clavier_gates[sl_name].component = self.clavier_gates[name]
+        self._sl_clavier_gates[sl_name].center = (x, y)
+        self._sl_clavier_gates[sl_name].build()
 
-            sl_name = f'sublattice_{self.name}_gate_{2*n}'
-            sl_clavier_gates[sl_name] = self.add_component()
-            sl_clavier_gates[sl_name].component = self.clavier_gates[name]
-            sl_clavier_gates[sl_name].center = (0, 0)
-            sl_clavier_gates[sl_name].build()
+    def _build_odd_clavier_gates(self, n):
+        name_odd = f'{self.name}_gate_{2*n+1}'
+        x = (self.x + (n+1/2)*self.clav_gate_spacing / self._n_clav_gates)
+        y = (self.y + self.clav_gate_length[n % 2]/2 +
+             self.clav_gap[n % 2]/2 + n*self.clav_gate_width)
+        if not self.mirror:
+            y = - y
 
-            name_odd = f'{self.name}_gate_{2*n+1}'
-            self.clavier_gates[name_odd] = self.qda_elements.add_clavier_gate(
-                name_odd)
-            self.clavier_gates[name_odd].layer = clav_layers_order[2*n]
-            self.clavier_gates[name_odd].width = self.clav_width
-            self.clavier_gates[name_odd].length = self.clav_length
-            self.clavier_gates[name_odd].gate_width = self.clav_gate_width
-            self.clavier_gates[name_odd].gate_length = (self.clav_gate_length[n % 2] +
-                                                        n*self.clav_gate_width)
-            self.clavier_gates[name_odd].n_clav_rep = self.n_clav_rep
-            self.clavier_gates[name_odd].spacing = self.spacing
-            self.clavier_gates[name_odd].rotation = 180 + self.rotation
-            self.clavier_gates[name_odd].x = (self.x + (n+1/2)*self.clav_gate_spacing /
-                                              self._n_clav_gates)
-            self.clavier_gates[name_odd].y = -y
-            self.clavier_gates[name_odd].fillet = self.fillet
-            self.clavier_gates[name_odd].fillet_tolerance = self.fillet_tolerance
-            self.clavier_gates[name_odd].build()
+        self.clavier_gates[name_odd] = self.qda_elements.add_clavier_gate(
+            name_odd)
+        self.clavier_gates[name_odd].layer = self._clav_layers_order[2*n]
+        self.clavier_gates[name_odd].width = self.clav_width
+        self.clavier_gates[name_odd].length = self.clav_length
+        self.clavier_gates[name_odd].gate_width = self.clav_gate_width
+        self.clavier_gates[name_odd].gate_length = (self.clav_gate_length[n % 2] +
+                                                    n*self.clav_gate_width)
+        self.clavier_gates[name_odd].n_clav_rep = self.n_clav_rep
+        self.clavier_gates[name_odd].spacing = self.spacing
+        self.clavier_gates[name_odd].rotation = 180 + self.rotation
+        self.clavier_gates[name_odd].fillet = self.fillet
+        self.clavier_gates[name_odd].fillet_tolerance = self.fillet_tolerance
+        self.clavier_gates[name_odd].build()
 
-            sl_name_odd = f'sublattice_{self.name}_gate_{2*n+1}'
-            sl_clavier_gates[sl_name_odd] = self.add_component()
-            sl_clavier_gates[sl_name_odd].component = self.clavier_gates[name_odd]
-            sl_clavier_gates[sl_name_odd].center = (0, 0)
+        sl_name_odd = f'sublattice_{self.name}_gate_{2*n+1}'
+        self._sl_clavier_gates[sl_name_odd] = self.add_component()
+        self._sl_clavier_gates[sl_name_odd].component = self.clavier_gates[name_odd]
+        self._sl_clavier_gates[sl_name_odd].center = (x, y)
+        self._sl_clavier_gates[sl_name_odd].build()
 
-            sl_clavier_gates[sl_name_odd].build()
-
+    def _build_screening_gate(self):
         self.screen = self.qda_elements.add_screening_gate(
             f'{self.name}_screen')
-
         self.screen.layer = self.screen_layer
-        self.screen.vertices = [(self.x-self.screen_length/2, self.y+self.screen_width/2),
+        self.screen.vertices = [(self.x-self.screen_length/2,
+                                 self.y+self.screen_width/2),
                                 (self.x+self.screen_length/2,
                                  self.y+self.screen_width/2),
                                 (self.x+self.screen_length/2,
                                  self.y-self.screen_width/2),
-                                (self.x-self.screen_length/2, self.y-self.screen_width/2)]
+                                (self.x-self.screen_length/2,
+                                 self.y-self.screen_width/2)]
         self.screen.build()
 
         sl_clav_screen = self.add_component()
@@ -1468,12 +1542,21 @@ class Clavier(UnitCell):
         sl_clav_screen.spacing = (0, self.screen_position)
         sl_clav_screen.build()
 
+    def build(self):
+        self._initialize_clavier_gates()
+
+        for n in range(int(self._n_clav_gates/2)):
+            self._build_even_clavier_gates(n)
+            self._build_odd_clavier_gates(n)
+
+        self._build_screening_gate()
+
         super().build()
 
         return self.cell
 
 
-class Sublattice:
+class Sublattice(PlotMixin):
     def __init__(self, name):
         """
         Initialize a Sublattice object.
@@ -1573,7 +1656,7 @@ class Gate:
         self.layer = None
 
 
-class FanOutLineBase:
+class FanOutLineBase(PlotMixin):
     def __init__(self, name):
         self.name = name
         self.element_name = None

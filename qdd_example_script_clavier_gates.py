@@ -9,6 +9,7 @@ Created on Thu Jul 27 16:28:10 2023
 
 import numpy as np
 import QuantumDotDesigner as qdd
+import matplotlib.pyplot as plt
 
 # %% Init
 
@@ -126,6 +127,7 @@ uc_st.build()
 # %% Add unit cell to main cell
 
 unit_cell.build()
+unit_cell.plot()
 
 uc_unitcell = qda.add_component()
 uc_unitcell.component = unit_cell
