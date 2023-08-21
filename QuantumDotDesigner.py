@@ -241,8 +241,8 @@ def apply_sublattice(main_lattice, sub_lattice):
     """
     result = []
 
-    for main_pos in main_lattice:
-        for sub_pos in sub_lattice:
+    for main_pos in list(main_lattice):
+        for sub_pos in list(sub_lattice):
             result.append([main_pos[0] + sub_pos[0], main_pos[1] + sub_pos[1]])
 
     return result
@@ -825,6 +825,21 @@ class QuantumDotArrayElements:
         self.components[name] = clavier
         return clavier
 
+    def add_fo_line_fine(self, name):
+        fanout_line = FanOutLineFine(name)
+        self.components[name] = fanout_line
+        return fanout_line
+
+    def add_fo_line_coarse(self, name):
+        fanout_line = FanOutLineCoarse(name)
+        self.components[name] = fanout_line
+        return fanout_line
+
+    def add_fo_line(self, element_name, element_number):
+        fanout_line = FanOutLine(element_name, element_number, self)
+        self.components[f'fo_{element_name}_{element_number}'] = fanout_line
+        return fanout_line
+
     def add_copy(self, component, copy_name):
         attributes = copy.copy(vars(component))
         attributes.pop('name')
@@ -868,34 +883,34 @@ class QuantumDotArrayElements:
         self.components[copy_name] = new_element
         return new_element
 
-    def add_fo_line(self, element_name, n_element,
-                    fo_direction=None, n_fanout=None, fo=None):
-        name_fof = f'fo_line_{element_name}_{n_element}_fine'
-        name_foc = f'fo_line_{element_name}_{n_element}_coarse'
+    # def add_fo_line(self, element_name, element_number,
+    #                 fo_direction=None, n_fanout=None, fo=None):
+    #     name_fof = f'fo_line_{element_name}_{element_number}_fine'
+    #     name_foc = f'fo_line_{element_name}_{element_number}_coarse'
 
-        fo_line_fine = FanOutLineFine(name_fof)
-        fo_line_coarse = FanOutLineCoarse(name_foc)
+    #     fo_line_fine = FanOutLineFine(name_fof)
+    #     fo_line_coarse = FanOutLineCoarse(name_foc)
 
-        fo_line_fine.element_name = element_name
-        fo_line_fine.n_element = n_element
-        fo_line_fine.fo_direction = fo_direction
-        fo_line_fine.layer = self.components[element_name].layer
+    #     fo_line_fine.element_name = element_name
+    #     fo_line_fine.element_number = element_number
+    #     fo_line_fine.fo_direction = fo_direction
+    #     fo_line_fine.layer = self.components[element_name].layer
 
-        fo_line_coarse.element_name = element_name
-        fo_line_coarse.n_element = n_element
-        fo_line_coarse.fo_direction = fo_direction
-        fo_line_coarse.layer = fo_line_fine.layer + 20
+    #     fo_line_coarse.element_name = element_name
+    #     fo_line_coarse.element_number = element_number
+    #     fo_line_coarse.fo_direction = fo_direction
+    #     fo_line_coarse.layer = fo_line_fine.layer + 20
 
-        if not any(attr is None for attr in [fo_direction, n_fanout, fo]):
-            fo_line_coarse.polygons = fo.fo_polygons_coarse[fo_direction][n_fanout]
-            fo_line_fine.fo_start = fo.qda_elements[element_name]['positions'][n_element]
-            fo_line_fine.fo_end = fo.get_fo_overlap_points(n_fanout,
-                                                           fo_direction)
+    #     if not any(attr is None for attr in [fo_direction, n_fanout, fo]):
+    #         fo_line_coarse.polygons = fo.fo_polygons_coarse[fo_direction][n_fanout]
+    #         fo_line_fine.fo_start = fo.qda_elements[element_name]['positions'][element_number]
+    #         fo_line_fine.fo_end = fo.get_fo_overlap_points(n_fanout,
+    #                                                        fo_direction)
 
-        self.components[name_fof] = fo_line_fine
-        self.components[name_foc] = fo_line_coarse
+    #     self.components[name_fof] = fo_line_fine
+    #     self.components[name_foc] = fo_line_coarse
 
-        return [fo_line_fine, fo_line_coarse]
+    #     return [fo_line_fine, fo_line_coarse]
 
 
 class UnitCell(PlotMixin):
@@ -1046,6 +1061,110 @@ class QuantumDotArray(PlotMixin):
         lib = gdstk.Library()
         lib.add(self.main_cell, *self.main_cell.dependencies(True))
         lib.write_gds(filename)
+
+# %% Fanout Generator
+
+
+class FanoutGenerator():
+    def __init__(self, name, qda):
+        self.name = name
+        self.qda_elements = qda.elements
+        self.elements = {}
+        self.cell = gdstk.Cell(name)
+        self.components = {}
+        self.fo_lines = {}
+        self._all_directions = ['top', 'bottom', 'right', 'left']
+        self.fo_polygons_coarse = None
+        self.fo_stages = [(16, 16), (500, 530), (1200, 1200)]
+        self.fo_widths = [1, 6, 25]
+        self.fanout_counts = {'top': 14, 'bottom': 14, 'left': 13, 'right': 13}
+        self.spacings = [2, 80, 200]
+        self.fo_fine_coarse_overlap = 3
+        self.bondpad_position = {'top':  1500, 'bottom': 1500,
+                                 'left': 1500, 'right': 1500}
+        self.bondpad_size = {'top': (110, 400), 'bottom': (110, 400),
+                             'left': (400, 110), 'right': (400, 110)}
+        self._n = 0
+        self.fanout_positions = None
+
+    def create_fo_polygons_coarse(self):
+        polygons = {}
+        fanout_positions = compute_fanout_positions(self.fo_stages,
+                                                    self.fanout_counts,
+                                                    self.spacings)
+        self.fanout_positions = fanout_positions
+        fo_lines = get_fo_lines(fanout_positions,
+                                self.fanout_counts, self.fo_stages)
+        for direction in self._all_directions:
+            polygons[direction] = [generate_polygon_for_fanout(direction,
+                                                               fo_lines[direction][n_fo],
+                                                               self.bondpad_position,
+                                                               self.bondpad_size,
+                                                               self.fo_widths,
+                                                               self.fo_fine_coarse_overlap)
+                                   for n_fo in range(self.fanout_counts[direction])]
+
+        self.fo_polygons_coarse = polygons
+
+    def get_fo_overlap_points(self, n_fanout, direction):
+        multiplier = 1
+        if direction in ['bottom', 'left']:
+            multiplier = -1
+        if direction in ['top', 'bottom']:
+            overlap_start = multiplier * \
+                (self.fo_stages[0][1] - self.fo_fine_coarse_overlap)
+            overlap_end = multiplier*self.fo_stages[0][1]
+            fanout_positions = self.fanout_positions['device'][direction][n_fanout]
+            fo_end_width = self.fo_widths[0]
+
+            fo_end_points = [[fanout_positions, overlap_start, fo_end_width],
+                             [fanout_positions, overlap_end, fo_end_width]]
+        else:
+            overlap_start = multiplier * \
+                (self.fo_stages[0][0] - self.fo_fine_coarse_overlap)
+            overlap_end = multiplier*self.fo_stages[0][0]
+            fanout_positions = - \
+                self.fanout_positions['device'][direction][n_fanout]
+            fo_end_width = self.fo_widths[0]
+
+            fo_end_points = [[overlap_start, fanout_positions, fo_end_width],
+                             [overlap_end, fanout_positions, fo_end_width]]
+        return fo_end_points
+
+    def add_component(self, component=None, build=False):
+        """
+        Add a sublattice to the unit cell.
+
+        Args:
+            name (str): Name of the sublattice.
+            component: You can assign otionally a component in the argument
+            build: Adds and builds at the same time
+
+        Returns:
+            Sublattice: The created Sublattice object.
+        """
+        name = f'{self.name}_sublattice_{self._n}'
+        self._n = self._n + 1
+        sublattice = Sublattice(name)
+        if component is not None:
+            sublattice.component = component
+            if build:
+                sublattice.build()
+            else:
+                pass
+        else:
+            pass
+        self.components[name] = sublattice
+        return sublattice
+
+    def build(self):
+        elements = {}
+        for cell in self.components.values():
+            self.cell.add(gdstk.Reference(cell.component.cell))
+            elements = merge_device_positions(
+                elements, cell.component.elements)
+        self.elements = elements
+        self.cell.flatten()
 
 # %% Elements
 
@@ -1639,7 +1758,7 @@ class Sublattice(PlotMixin):
         self._get_lim(axis=0)
         self._get_lim(axis=1)
         # only update elements attribute if it exists
-        if not isinstance(self.component, FanoutGenerator):
+        if not isinstance(self.component, FanOutLineBase):
             self.elements = update_positions(self.component.elements,
                                              self.rows, self.columns,
                                              self.spacing[0], self.spacing[1],
@@ -1660,7 +1779,7 @@ class FanOutLineBase(PlotMixin):
     def __init__(self, name):
         self.name = name
         self.element_name = None
-        self.n_element = None
+        self.element_number = None
         self.fo_fine_coarse_overlap = None
         self.fo_fine_coarse_overlap_gap = 0.3
         self.layer = None
@@ -1670,9 +1789,9 @@ class FanOutLineBase(PlotMixin):
         self.cell = gdstk.Cell(self.name)
         self.fillet = 0
         self.fillet_tolerance = 1e-3
-        self.elements = {name: {'vertices': [],
-                                'positions': [],
-                                'layer': self.layer}}
+        self.elements = {self.name: {'vertices': [],
+                                     'positions': [],
+                                     'layer': self.layer}}
         self._built = False
 
     def build(self):
@@ -1694,6 +1813,7 @@ class FanOutLineFine(FanOutLineBase):
         self.fo_width_start = 40e-3
         self.fo_start = None
         self.fo_end = None
+        self.points_along_path = []
 
     def calculate_fine_fo(self, return_type='polygon'):
         """
@@ -1818,105 +1938,83 @@ class FanOutLineCoarse(FanOutLineBase):
     pass
 
 
-# %% Fanout Generator
-
-class FanoutGenerator():
-    def __init__(self, name, qda):
-        self.name = name
-        self.qda_elements = qda.elements
+class FanOutLine(UnitCell):
+    def __init__(self, element_name: str, element_number: int,
+                 qda_elements: QuantumDotArrayElements):
+        super().__init__(f'fo_{element_name}_{element_number}')
+        self.qda_elements = qda_elements
+        self.fo = None
+        name_coarse = f'fo_coarse_{element_name}_{element_number}'
+        self.fo_line_coarse = qda_elements.add_fo_line_coarse(name_coarse)
+        name_fine = f'fo_line_{element_name}_{element_number}'
+        self.fo_line_fine = qda_elements.add_fo_line_fine(name_fine)
+        self.element_name = element_name
+        self.element_number = element_number
+        # self.fo_fine_coarse_overlap = None
+        # self.fo_fine_coarse_overlap_gap = 0.3
+        self.layer = qda_elements.components[element_name].layer
+        self.polygons = None
+        self.fo_direction = None
+        self.n_fanout = None
+        self.cell = gdstk.Cell(self.name)
+        self.fillet = 0
+        self.fillet_tolerance = 1e-3
         self.elements = {}
-        self.cell = gdstk.Cell(name)
-        self.components = {}
-        self.fo_lines = {}
-        self._all_directions = ['top', 'bottom', 'right', 'left']
-        self.fo_polygons_coarse = None
-        self.fo_stages = [(16, 16), (500, 530), (1200, 1200)]
-        self.fo_widths = [1, 6, 25]
-        self.fanout_counts = {'top': 14, 'bottom': 14, 'left': 13, 'right': 13}
-        self.spacings = [2, 80, 200]
-        self.fo_fine_coarse_overlap = 3
-        self.bondpad_position = {'top':  1500, 'bottom': 1500,
-                                 'left': 1500, 'right': 1500}
-        self.bondpad_size = {'top': (110, 400), 'bottom': (110, 400),
-                             'left': (400, 110), 'right': (400, 110)}
-        self._n = 0
-        self.fanout_positions = None
+        # self.fine_fo_width_start = 40e-3
+        # self.fine_fo_start = None
+        # self.fine_fo_end = None
+        # self.points_along_path = []
+        self._built = False
 
-    def create_fo_polygons_coarse(self):
-        polygons = {}
-        fanout_positions = compute_fanout_positions(self.fo_stages,
-                                                    self.fanout_counts,
-                                                    self.spacings)
-        self.fanout_positions = fanout_positions
-        fo_lines = get_fo_lines(fanout_positions,
-                                self.fanout_counts, self.fo_stages)
-        for direction in self._all_directions:
-            polygons[direction] = [generate_polygon_for_fanout(direction,
-                                                               fo_lines[direction][n_fo],
-                                                               self.bondpad_position,
-                                                               self.bondpad_size,
-                                                               self.fo_widths,
-                                                               self.fo_fine_coarse_overlap)
-                                   for n_fo in range(self.fanout_counts[direction])]
+        self.fo_line_fine.element_name = self.element_name
+        self.fo_line_fine.element_number = self.element_number
 
-        self.fo_polygons_coarse = polygons
+        self.fo_line_coarse.element_name = self.element_name
+        self.fo_line_coarse.element_number = self.element_number
 
-    def get_fo_overlap_points(self, n_fanout, direction):
-        multiplier = 1
-        if direction in ['bottom', 'left']:
-            multiplier = -1
-        if direction in ['top', 'bottom']:
-            overlap_start = multiplier * \
-                (self.fo_stages[0][1] - self.fo_fine_coarse_overlap)
-            overlap_end = multiplier*self.fo_stages[0][1]
-            fanout_positions = self.fanout_positions['device'][direction][n_fanout]
-            fo_end_width = self.fo_widths[0]
+    # def update_properties(self):
+    #     self.element_name =
 
-            fo_end_points = [[fanout_positions, overlap_start, fo_end_width],
-                             [fanout_positions, overlap_end, fo_end_width]]
-        else:
-            overlap_start = multiplier * \
-                (self.fo_stages[0][0] - self.fo_fine_coarse_overlap)
-            overlap_end = multiplier*self.fo_stages[0][0]
-            fanout_positions = - \
-                self.fanout_positions['device'][direction][n_fanout]
-            fo_end_width = self.fo_widths[0]
+    def add_coarse_fo_line(self):
 
-            fo_end_points = [[overlap_start, fanout_positions, fo_end_width],
-                             [overlap_end, fanout_positions, fo_end_width]]
-        return fo_end_points
+        # self.fo_line_coarse.name = name
+        # self.fo_line_coarse.cell.name = name
+        self.elements[self.fo_line_coarse.name] = {'vertices': [],
+                                                   'positions': [],
+                                                   'layer': self.fo_line_coarse.layer}
+        # self.fo_line_coarse = self.qda_elements.add_fo_line_coarse(name)
 
-    def add_component(self, component=None, build=False):
-        """
-        Add a sublattice to the unit cell.
+        self.fo_line_coarse.fo_direction = self.fo_direction
+        self.fo_line_coarse.layer = self.qda_elements.components[self.element_name].layer + 20
 
-        Args:
-            name (str): Name of the sublattice.
-            component: You can assign otionally a component in the argument
-            build: Adds and builds at the same time
+        if not any(attr is None for attr in [self.fo_direction, self.n_fanout, self.fo]):
+            self.fo_line_coarse.polygons = self.fo.fo_polygons_coarse[
+                self.fo_direction][self.n_fanout]
 
-        Returns:
-            Sublattice: The created Sublattice object.
-        """
-        name = f'{self.name}_sublattice_{self._n}'
-        self._n = self._n + 1
-        sublattice = Sublattice(name)
-        if component is not None:
-            sublattice.component = component
-            if build:
-                sublattice.build()
-            else:
-                pass
-        else:
-            pass
-        self.components[name] = sublattice
-        return sublattice
+        # self.components[name] = self.fo_line_coarse
+        self.add_component(self.fo_line_coarse, build=True)
+
+    def add_fine_fo_line(self):
+        # name = f'fo_line_{self.element_name}_{self.element_number}_fine'
+        # self.fo_line_fine.name = name
+        # self.fo_line_fine.cell.name = name
+        self.elements[self.fo_line_fine.name] = {'vertices': [],
+                                                 'positions': [],
+                                                 'layer': self.fo_line_fine.layer}
+
+        self.fo_line_fine.fo_direction = self.fo_direction
+        self.fo_line_fine.layer = self.qda_elements.components[self.element_name].layer
+
+        if not any(attr is None for attr in [self.fo_direction, self.n_fanout, self.fo]):
+            self.fo_line_fine.fo_start = self.fo.qda_elements[
+                self.element_name]['positions'][self.element_number]
+            self.fo_line_fine.fo_end = self.fo.get_fo_overlap_points(self.n_fanout,
+                                                                     self.fo_direction)
+
+        # self.components[name] = self.fo_line_fine
+        self.add_component(self.fo_line_fine, build=True)
 
     def build(self):
-        elements = {}
-        for cell in self.components.values():
-            self.cell.add(gdstk.Reference(cell.component.cell))
-            elements = merge_device_positions(
-                elements, cell.component.elements)
-        self.elements = elements
-        self.cell.flatten()
+        self.add_coarse_fo_line()
+        self.add_fine_fo_line()
+        super().build()

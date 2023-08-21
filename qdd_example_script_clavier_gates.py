@@ -193,266 +193,219 @@ fo.bondpad_size = {'top': (110, 400), 'bottom': (110, 400),
                    'left': (400, 110), 'right': (400, 110)}
 fo.create_fo_polygons_coarse()
 
-# %% Fanout plunger 0
-fo_pl_0 = qda_elements.add_fo_line('plunger', 0,
-                                   fo_direction='top', n_fanout=8, fo=fo)
+# %%% Fanout plungers
+# %%%% Fanout plunger 0
 
-# Fine fan-out
-fof_pl_0 = fo_pl_0[0]
-fof_pl_0.fo_width_start = 40e-3
-fof_pl_0.points_along_path = [[0.25, 0.15, 'start'],
-                              [0.15, 0.8, 'prev']]
-fof_pl_0.build()
-fo.add_component(fof_pl_0)
+fo_pl_0 = qda_elements.add_fo_line('plunger', 0)
 
-# Coarse fan-out
-foc_pl_0 = fo_pl_0[1]
-foc_pl_0.build()
-fo.add_component(foc_pl_0)
+fo_pl_0.fo = fo
+fo_pl_0.fo_direction = 'top'
+fo_pl_0.n_fanout = 8
 
-# %% Fanout plunger 1
-fo_pl_1 = qda_elements.add_fo_line('plunger', 1,
-                                   fo_direction='bottom', n_fanout=4, fo=fo)
+fo_pl_0.fo_line_fine.fine_fo_width_start = 40e-3
+fo_pl_0.fo_line_fine.points_along_path = [[0.25, 0.15, 'start'],
+                                          [0.15, 0.8, 'prev']]
 
-# Fine fan-out
-fof_pl_1 = fo_pl_1[0]
-fof_pl_1.fo_width_start = 40e-3
-fof_pl_1.points_along_path = [[0, -0.1, 'start'],
-                              [0, -0.7, 'prev']]
-fof_pl_1.build()
-fo.add_component(fof_pl_1)
+fo_pl_0.build()
 
-# Coarse fan-out
-foc_pl_1 = fo_pl_1[1]
-foc_pl_1.build()
-fo.add_component(foc_pl_1)
+fo.add_component(fo_pl_0)
 
-# %% Fanout plunger 2
-fo_pl_2 = qda_elements.add_fo_line('plunger', 2,
-                                   fo_direction='bottom', n_fanout=6, fo=fo)
+# %%%% Fanout plunger 1
+fo_pl_1 = qda_elements.add_fo_line('plunger', 1)
 
-# Fine fan-out
-fof_pl_2 = fo_pl_2[0]
-fof_pl_2.fo_width_start = 40e-3
-fof_pl_2.points_along_path = [[0, -0.1, 'start'],
-                              [0, -0.7, 'prev']]
-fof_pl_2.build()
-fo.add_component(fof_pl_2)
+fo_pl_1.fo = fo
+fo_pl_1.fo_direction = 'bottom'
+fo_pl_1.n_fanout = 4
 
-# Coarse fan-out
-foc_pl_2 = fo_pl_2[1]
-foc_pl_2.build()
-fo.add_component(foc_pl_2)
+fo_pl_1.fo_line_fine.fo_width_start = 40e-3
+fo_pl_1.fo_line_fine.points_along_path = [[0, -0.1, 'start'],
+                                          [0, -0.7, 'prev']]
+fo_pl_1.build()
+fo.add_component(fo_pl_1)
 
-# %% Fanout bar 1
-fo_bar_1 = qda_elements.add_fo_line('barrier_1', 0,
-                                    fo_direction='bottom', n_fanout=5, fo=fo)
+# %%%% Fanout plunger 2
+fo_pl_2 = qda_elements.add_fo_line('plunger', 2)
 
-# Fine fan-out
-fof_bar_1 = fo_bar_1[0]
-fof_bar_1.fo_width_start = 40e-3
-fof_bar_1.points_along_path = [[0, -0.5, 'start'],
-                               # [-0.1, 0.1, 'prev'],
-                               # [0, 0.3, 'prev'],
-                               # [-0.15, 0.3, 'prev']
-                               ]
-fof_bar_1.build()
-fo.add_component(fof_bar_1)
+fo_pl_2.fo_direction = 'bottom'
+fo_pl_2.n_fanout = 6
+fo_pl_2.fo = fo
 
-# Coarse fan-out
-foc_bar_1 = fo_bar_1[1]
-foc_bar_1.build()
-fo.add_component(foc_bar_1)
+fo_pl_2.fo_line_fine.fo_width_start = 40e-3
+fo_pl_2.fo_line_fine.points_along_path = [[0, -0.1, 'start'],
+                                          [0, -0.7, 'prev']]
+fo_pl_2.build()
+fo.add_component(fo_pl_2)
 
-# %% Fanout bar 2
-fo_bar_2 = qda_elements.add_fo_line('barrier_2', 0,
-                                    fo_direction='top', n_fanout=1, fo=fo)
+# %%% Fanout barriers
+# %%%% Fanout bar 1
+fo_bar_1 = qda_elements.add_fo_line('barrier_1', 0)
 
-# Fine fan-out
-fof_bar_2 = fo_bar_2[0]
-fof_bar_2.fo_width_start = 40e-3
-fof_bar_2.points_along_path = [[-0.1, 0.1, 'start'],
-                               [-0.15, 0.05, 'prev'],
-                               [-0.1, 0.25, 'prev'],
-                               [0, 0.5, 'prev'],
-                               # [-0.15, 0.3, 'prev']
-                               ]
-fof_bar_2.build()
-fo.add_component(fof_bar_2)
 
-# Coarse fan-out
-foc_bar_2 = fo_bar_2[1]
-foc_bar_2.build()
-fo.add_component(foc_bar_2)
+fo_bar_1.fo_direction = 'bottom'
+fo_bar_1.n_fanout = 5
+fo_bar_1.fo = fo
 
-# %% Fanout bar 3
-fo_bar_3 = qda_elements.add_fo_line('barrier_3', 0,
-                                    fo_direction='top', n_fanout=9, fo=fo)
+fo_bar_1.fo_line_fine.fo_width_start = 40e-3
+fo_bar_1.fo_line_fine.points_along_path = [[0, -0.5, 'start'],
+                                           # [-0.1, 0.1, 'prev'],
+                                           # [0, 0.3, 'prev'],
+                                           # [-0.15, 0.3, 'prev']
+                                           ]
+fo_bar_1.build()
+fo.add_component(fo_bar_1)
 
-# Fine fan-out
-fof_bar_3 = fo_bar_3[0]
-fof_bar_3.fo_width_start = 40e-3
-fof_bar_3.points_along_path = [[0.1, 0.1, 'start'],
-                               [0.15, 0.05, 'prev'],
-                               [0.1, 0.25, 'prev'],
-                               [0, 0.3, 'prev'],
-                               [0.15, 0.3, 'prev']
-                               ]
-fof_bar_3.build()
-fo.add_component(fof_bar_3)
+# %%%% Fanout bar 2
+fo_bar_2 = qda_elements.add_fo_line('barrier_2', 0)
 
-# Coarse fan-out
-foc_bar_3 = fo_bar_3[1]
-foc_bar_3.build()
-fo.add_component(foc_bar_3)
+fo_bar_2.fo_direction = 'top'
+fo_bar_2.n_fanout = 1
+fo_bar_2.fo = fo
 
-# %% Fanout sensor plunger top
-fo_sens_pl_top = qda_elements.add_fo_line('sensor_top_plunger', 0,
-                                          fo_direction='top', n_fanout=5, fo=fo)
+fo_bar_2.fo_line_fine.fo_width_start = 40e-3
+fo_bar_2.fo_line_fine.points_along_path = [[-0.1, 0.1, 'start'],
+                                           [-0.15, 0.05, 'prev'],
+                                           [-0.1, 0.25, 'prev'],
+                                           [0, 0.5, 'prev'],
+                                           # [-0.15, 0.3, 'prev']
+                                           ]
+fo_bar_2.build()
+fo.add_component(fo_bar_2)
 
-# Fine fan-out
-fof_sens_pl_top = fo_sens_pl_top[0]
-fof_sens_pl_top.fo_width_start = 40e-3
-fof_sens_pl_top.points_along_path = [[0, 0.8, 'start'],
-                                     # [0, pl_ver.diameter/2, 'prev'],
-                                     # [-0.2, 0.5, 'prev']
-                                     ]
-fof_sens_pl_top.build()
-fo.add_component(fof_sens_pl_top)
+# %%%% Fanout bar 3
+fo_bar_3 = qda_elements.add_fo_line('barrier_3', 0)
 
-# Coarse fan-out
-foc_sens_pl_top = fo_sens_pl_top[1]
-foc_sens_pl_top.build()
-fo.add_component(foc_sens_pl_top)
+fo_bar_3.fo_direction = 'top'
+fo_bar_3.n_fanout = 9
+fo_bar_3.fo = fo
 
-# %% Fanout bar sens source
-fo_sens_top_sou = qda_elements.add_fo_line('sensor_top_barrier_source', 0,
-                                           fo_direction='top', n_fanout=4, fo=fo)
+fo_bar_3.fo_line_fine.fo_width_start = 40e-3
+fo_bar_3.fo_line_fine.points_along_path = [[0.1, 0.1, 'start'],
+                                           [0.15, 0.05, 'prev'],
+                                           [0.1, 0.25, 'prev'],
+                                           [0, 0.3, 'prev'],
+                                           [0.15, 0.3, 'prev']
+                                           ]
+fo_bar_3.build()
+fo.add_component(fo_bar_3)
 
-# Fine fan-out
-fof_sens_top_sou = fo_sens_top_sou[0]
-fof_sens_top_sou.fo_width_start = 40e-3
-fof_sens_top_sou.points_along_path = [[0, 0.1, 'start'],
-                                      [0, 0.8, 'prev'],
-                                      # [0, 0.3, 'prev'],
-                                      # [-0.15, 0.3, 'prev']
-                                      ]
-fof_sens_top_sou.build()
-fo.add_component(fof_sens_top_sou)
+# %%% Fanout sensor
+# %%%% Fanout sensor plunger top
+fo_sens_pl_top = qda_elements.add_fo_line('sensor_top_plunger', 0)
 
-# Coarse fan-out
-foc_sens_top_sou = fo_sens_top_sou[1]
-foc_sens_top_sou.build()
-fo.add_component(foc_sens_top_sou)
+fo_sens_pl_top.fo_direction = 'top'
+fo_sens_pl_top.n_fanout = 5
+fo_sens_pl_top.fo = fo
 
-# %% Fanout bar sens drain
-fo_sens_top_dra = qda_elements.add_fo_line('sensor_top_barrier_drain', 0,
-                                           fo_direction='top', n_fanout=6, fo=fo)
+fo_sens_pl_top.fo_line_fine.fo_width_start = 40e-3
+fo_sens_pl_top.fo_line_fine.points_along_path = [[0, 0.8, 'start'],
+                                                 # [0, pl_ver.diameter/2, 'prev'],
+                                                 # [-0.2, 0.5, 'prev']
+                                                 ]
+fo_sens_pl_top.build()
+fo.add_component(fo_sens_pl_top)
 
-# Fine fan-out
-fof_sens_top_dra = fo_sens_top_dra[0]
-fof_sens_top_dra.fo_width_start = 40e-3
-fof_sens_top_dra.points_along_path = [[0, 0.7, 'start'],
-                                      # [0, 0.8, 'prev'],
-                                      # [0, 0.3, 'prev'],
-                                      # [-0.15, 0.3, 'prev']
-                                      ]
-fof_sens_top_dra.build()
-fo.add_component(fof_sens_top_dra)
+# %%%% Fanout bar sens source
+fo_sens_top_sou = qda_elements.add_fo_line('sensor_top_barrier_source', 0)
 
-# Coarse fan-out
-foc_sens_top_dra = fo_sens_top_dra[1]
-foc_sens_top_dra.build()
-fo.add_component(foc_sens_top_dra)
+fo_sens_top_sou.fo_direction = 'top'
+fo_sens_top_sou.n_fanout = 4
+fo_sens_top_sou.fo = fo
 
-# %% Fanout bar sens top sep
-fo_sens_top_sep = qda_elements.add_fo_line('sensor_top_barrier_seperation', 0,
-                                           fo_direction='top', n_fanout=2, fo=fo)
+fo_sens_top_sou.fo_line_fine.fo_width_start = 40e-3
+fo_sens_top_sou.fo_line_fine.points_along_path = [[0, 0.1, 'start'],
+                                                  [0, 0.8, 'prev'],
+                                                  # [0, 0.3, 'prev'],
+                                                  # [-0.15, 0.3, 'prev']
+                                                  ]
+fo_sens_top_sou.build()
+fo.add_component(fo_sens_top_sou)
 
-# Fine fan-out
-fof_sens_top_sep = fo_sens_top_sep[0]
-fof_sens_top_sep.fo_width_start = 40e-3
-fof_sens_top_sep.points_along_path = [[-0.2, 0, 'start'],
-                                      [-0.1, 0.1, 'prev'],
-                                      [0, 0.6, 'prev'],
-                                      # [-0.15, 0.3, 'prev']
-                                      ]
-fof_sens_top_sep.calculate_fine_fo()
-fof_sens_top_sep.build()
-fo.add_component(fof_sens_top_sep)
+# %%%% Fanout bar sens drain
+fo_sens_top_dra = qda_elements.add_fo_line('sensor_top_barrier_drain', 0)
 
-# Coarse fan-out
-foc_sens_top_sep = fo_sens_top_sep[1]
-foc_sens_top_sep.build()
-fo.add_component(foc_sens_top_sep)
+fo_sens_top_dra.fo_direction = 'top'
+fo_sens_top_dra.n_fanout = 6
+fo_sens_top_dra.fo = fo
 
-# %% Fanout clavier gate top 1
-fo_clav_gate_1 = qda_elements.add_fo_line('clavier_gate_0', 0,
-                                          fo_direction='top', n_fanout=2, fo=fo)
+fo_sens_top_dra.fo_line_fine.fo_width_start = 40e-3
+fo_sens_top_dra.fo_line_fine.points_along_path = [[0, 0.7, 'start'],
+                                                  # [0, 0.8, 'prev'],
+                                                  # [0, 0.3, 'prev'],
+                                                  # [-0.15, 0.3, 'prev']
+                                                  ]
+fo_sens_top_dra.build()
+fo.add_component(fo_sens_top_dra)
 
-# Fine fan-out
-fof_clav_gate_1 = fo_clav_gate_1[0]
-fof_clav_gate_1.fo_width_start = 100e-3
-fof_clav_gate_1.points_along_path = [[0, 1, 'start'],
-                                     [-0.4, 0.7, 'prev']]
-fof_clav_gate_1.build()
-fo.add_component(fof_clav_gate_1)
 
-# Coarse fan-out
-foc_clav_gate_1 = fo_clav_gate_1[1]
-foc_clav_gate_1.build()
-fo.add_component(foc_clav_gate_1)
+# %%%% Fanout bar sens top sep
+fo_sens_top_sep = qda_elements.add_fo_line('sensor_top_barrier_seperation', 0)
 
-# %% Fanout clavier gate top 2
-fo_clav_gate_1 = qda_elements.add_fo_line('clavier_gate_2', 0,
-                                          fo_direction='top', n_fanout=3, fo=fo)
+fo_sens_top_sep.fo_direction = 'top'
+fo_sens_top_sep.n_fanout = 2
+fo_sens_top_sep.fo = fo
 
-# Fine fan-out
-fof_clav_gate_1 = fo_clav_gate_1[0]
-fof_clav_gate_1.fo_width_start = 100e-3
-fof_clav_gate_1.points_along_path = [[0, 2, 'start']]
-fof_clav_gate_1.build()
-fo.add_component(fof_clav_gate_1)
+fo_sens_top_sep.fo_line_fine.fo_width_start = 40e-3
+fo_sens_top_sep.fo_line_fine.points_along_path = [[-0.2, 0, 'start'],
+                                                  [-0.1, 0.1, 'prev'],
+                                                  [0, 0.6, 'prev'],
+                                                  # [-0.15, 0.3, 'prev']
+                                                  ]
+fo_sens_top_sep.build()
+fo.add_component(fo_sens_top_sep)
 
-# Coarse fan-out
-foc_clav_gate_1 = fo_clav_gate_1[1]
-foc_clav_gate_1.build()
-fo.add_component(foc_clav_gate_1)
+# %%% Fanout clavier
+# %%%% Fanout clavier gate top 1
+fo_clav_gate_1 = qda_elements.add_fo_line('clavier_gate_0', 0)
 
-# %% Fanout clavier gate bottom 1
-fo_clav_gate_1 = qda_elements.add_fo_line('clavier_gate_1', 0,
-                                          fo_direction='bottom', n_fanout=0, fo=fo)
+fo_clav_gate_1.fo_direction = 'top'
+fo_clav_gate_1.n_fanout = 2
+fo_clav_gate_1.fo = fo
 
-# Fine fan-out
-fof_clav_gate_1 = fo_clav_gate_1[0]
-fof_clav_gate_1.fo_width_start = 100e-3
-fof_clav_gate_1.points_along_path = [[0, -1, 'start'],
-                                     [-0.4, -0.7, 'prev']]
-fof_clav_gate_1.build()
-fo.add_component(fof_clav_gate_1)
+fo_clav_gate_1.fo_line_fine.fo_width_start = 100e-3
+fo_clav_gate_1.fo_line_fine.points_along_path = [[0, 1, 'start'],
+                                                 [-0.4, 0.7, 'prev']]
+fo_clav_gate_1.build()
+fo.add_component(fo_clav_gate_1)
 
-# Coarse fan-out
-foc_clav_gate_1 = fo_clav_gate_1[1]
-foc_clav_gate_1.build()
-fo.add_component(foc_clav_gate_1)
+# %%%% Fanout clavier gate top 2
+fo_clav_gate_1 = qda_elements.add_fo_line('clavier_gate_2', 0)
 
-# %% Fanout clavier gate bottom 2
-fo_clav_gate_1 = qda_elements.add_fo_line('clavier_gate_3', 0,
-                                          fo_direction='bottom', n_fanout=4, fo=fo)
+fo_clav_gate_1.fo_direction = 'top'
+fo_clav_gate_1.n_fanout = 3
+fo_clav_gate_1.fo = fo
 
-# Fine fan-out
-fof_clav_gate_1 = fo_clav_gate_1[0]
-fof_clav_gate_1.fo_width_start = 100e-3
-fof_clav_gate_1.points_along_path = [[0, -2, 'start']]
-fof_clav_gate_1.build()
-fo.add_component(fof_clav_gate_1)
+fo_clav_gate_1.fo_line_fine.fo_width_start = 100e-3
+fo_clav_gate_1.fo_line_fine.points_along_path = [[0, 2, 'start']]
+fo_clav_gate_1.build()
+fo.add_component(fo_clav_gate_1)
 
-# Coarse fan-out
-foc_clav_gate_1 = fo_clav_gate_1[1]
-foc_clav_gate_1.build()
-fo.add_component(foc_clav_gate_1)
+# %%%% Fanout clavier gate bottom 1
+fo_clav_gate_1 = qda_elements.add_fo_line('clavier_gate_1', 0)
 
-# %% Build and Add fanout to qda
+fo_clav_gate_1.fo_direction = 'bottom'
+fo_clav_gate_1.n_fanout = 0
+fo_clav_gate_1.fo = fo
+
+fo_clav_gate_1.fo_line_fine.fo_width_start = 100e-3
+fo_clav_gate_1.fo_line_fine.points_along_path = [[0, -1, 'start'],
+                                                 [-0.4, -0.7, 'prev']]
+fo_clav_gate_1.build()
+fo.add_component(fo_clav_gate_1)
+
+# %%%% Fanout clavier gate bottom 2
+fo_clav_gate_1 = qda_elements.add_fo_line('clavier_gate_3', 0)
+
+fo_clav_gate_1.fo_direction = 'bottom'
+fo_clav_gate_1.n_fanout = 4
+fo_clav_gate_1.fo = fo
+
+fo_clav_gate_1.fo_line_fine.fo_width_start = 100e-3
+fo_clav_gate_1.fo_line_fine.points_along_path = [[0, -2, 'start']]
+fo_clav_gate_1.build()
+fo.add_component(fo_clav_gate_1)
+
+
+# %%% Build and Add fanout to qda
 
 fo.build()
 fo_qda = qda.add_component()
