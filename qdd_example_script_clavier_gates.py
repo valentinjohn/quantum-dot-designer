@@ -17,13 +17,27 @@ qda_elements = qdd.QuantumDotArrayElements()
 unit_cell = qdd.UnitCell('unit_cell')
 qda = qdd.QuantumDotArray()
 
+# %% Layers
+
+ohmic_layer = 4
+barrier_layer = 5
+screening_layer = 9
+barrier_source_layer = 5
+barrier_drain_layer = 5
+plunger_layer = 7
+
+clav_gate_1_layer = 5
+clav_gate_2_layer = 7
+
 # %% define plungers
 
 pl = qda_elements.add_plunger('plunger')
 pl.asym = 1
 pl.diameter = 130e-3
-pl.layer = 3
+pl.layer = plunger_layer
 pl.build()
+
+# pl.plot()
 
 # %% define barriers
 
@@ -32,7 +46,7 @@ bars_rot = np.pi*(-1/2+np.array([0, -2/3, 2/3]))
 bar_1 = qda_elements.add_barrier('barrier_1')
 bar_1.width = 40e-3
 bar_1.length = 30e-3
-bar_1.layer = 1
+bar_1.layer = barrier_layer
 bar_1.rotate = bars_rot[0]
 
 bar_2 = qda_elements.add_copy(bar_1, 'barrier_2')
@@ -44,6 +58,10 @@ bar_3.rotate = bars_rot[2]
 bar_1.build()
 bar_2.build()
 bar_3.build()
+
+# bar_1.plot()
+# bar_2.plot()
+# bar_3.plot()
 
 # %% define unit cell
 
@@ -91,21 +109,31 @@ sensor_top.gap_sep = 60e-3
 sensor_top.gap_ohmic_pl = 40e-3
 
 sensor_top.plunger.diameter = 160e-3
-sensor_top.plunger.layer = 21
+sensor_top.plunger.layer = plunger_layer
 
 sensor_top.barrier_source.width = 40e-3
 sensor_top.barrier_source.length = 70e-3
-sensor_top.barrier_source.layer = 5
+sensor_top.barrier_source.layer = barrier_source_layer
 
 sensor_top.barrier_drain.width = 40e-3
 sensor_top.barrier_drain.length = 70e-3
-sensor_top.barrier_drain.layer = 5
+sensor_top.barrier_drain.layer = barrier_drain_layer
 
 sensor_top.barrier_sep.width = 50e-3
 sensor_top.barrier_sep.length = 60e-3
-sensor_top.barrier_sep.layer = 5
+sensor_top.barrier_sep.layer = barrier_layer
+
+sensor_top.source.ohmic_pos = 'left'
+sensor_top.source.sensor_pos = 'top'
+sensor_top.source.layer = ohmic_layer
+
+sensor_top.drain.ohmic_pos = 'right'
+sensor_top.drain.sensor_pos = 'top'
+sensor_top.drain.layer = ohmic_layer
 
 sensor_top.build()
+
+# sensor_top.plot()
 
 # %% add sensor to unit cell
 
@@ -127,7 +155,7 @@ uc_st.build()
 # %% Add unit cell to main cell
 
 unit_cell.build()
-unit_cell.plot()
+# unit_cell.plot()
 
 uc_unitcell = qda.add_component()
 uc_unitcell.component = unit_cell
@@ -150,10 +178,10 @@ clavier.n_clav_rep = 8
 
 clavier.screen_width = 100e-3
 clavier.screen_gap = 0
-clavier.screen_layer = 3
+clavier.screen_layer = screening_layer
 clavier.screen_position = 200e-3
 
-clavier.clav_layers = [25, 26]
+clavier.clav_layers = [clav_gate_1_layer, clav_gate_2_layer]
 clavier.x = -(spacing_qd + clavier.screen_length/2)
 clavier.y = 0
 clavier.fillet = 0.02
@@ -175,6 +203,14 @@ sl_clavier.build()
 sl_clavier_mirrored = qda.add_component()
 sl_clavier_mirrored.component = clavier_mirrored
 sl_clavier_mirrored.build()
+
+# clavier.plot()
+
+# %% Add screening gates
+
+screen_pl_0 = qda_elements.add_screening_gate('screening_gate_pl_0')
+screen_pl_1 = qda_elements.add_screening_gate('screening_gate_pl_1')
+screen_pl_2 = qda_elements.add_screening_gate('screening_gate_pl_2')
 
 # %% Fanout Generator
 
@@ -404,6 +440,88 @@ fo_clav_gate_1.fo_line_fine.points_along_path = [[0, -2, 'start']]
 fo_clav_gate_1.build()
 fo.add_component(fo_clav_gate_1)
 
+
+# %%% Build and Add fanout to qda
+
+fo.build()
+# fo_qda = qda.add_component()
+# fo_qda.component = fo
+# fo_qda.build()
+
+# %% Screening fanout
+# %%% Plunger 0 screening
+
+# screen_pl_0 = qda_elements.add_screening_gate('screening_gate_pl_0')
+
+screen_pl_0.qda_elements = qda_elements
+screen_pl_0.screen('plunger', 0, 0.1, 0.4, width=50e-3)
+screen_pl_0.layer = screening_layer
+
+screen_pl_0.build()
+
+screen_pl_0_qda = qda.add_component()
+screen_pl_0_qda.component = screen_pl_0
+screen_pl_0_qda.build()
+
+# %%% Plunger 1 screening
+
+# screen_pl_1 = qda_elements.add_screening_gate('screening_gate_pl_1')
+
+screen_pl_1.qda_elements = qda_elements
+screen_pl_1.screen('plunger', 1, 0.1, 0.4, width=50e-3)
+screen_pl_1.layer = screening_layer
+
+screen_pl_1.build()
+
+screen_pl_1_qda = qda.add_component()
+screen_pl_1_qda.component = screen_pl_1
+screen_pl_1_qda.build()
+
+# %%% Plunger 2 screening
+
+# screen_pl_2 = qda_elements.add_screening_gate('screening_gate_pl_2')
+
+screen_pl_2.qda_elements = qda_elements
+screen_pl_2.screen('plunger', 2, 0.1, 0.4, width=50e-3)
+screen_pl_2.layer = screening_layer
+
+screen_pl_2.build()
+
+screen_pl_2_qda = qda.add_component()
+screen_pl_2_qda.component = screen_pl_2
+screen_pl_2_qda.build()
+
+
+# %% Fanout plunger
+# First we have to update the quantum dot array with the screening gates
+# qda.build()
+
+# %%% Fanout Plunger 0 screening
+# fo_screen_0 = qda_elements.add_fo_line('screening_gate_pl_0', 0)
+
+# fo_screen_0.fo_direction = 'top'
+# fo_screen_0.n_fanout = 7
+# fo_screen_0.fo = fo
+
+# fo_screen_0.fo_line_fine.fo_width_start = 50e-3
+# fo_screen_0.fo_line_fine.points_along_path = [[0, 2, 'start']]
+# fo_screen_0.build()
+
+# qda_fo_screen_0 = fo.add_component(fo_screen_0)
+# qda_fo_screen_0.component = fo_screen_0
+# qda_fo_screen_0.build()
+
+# %%% barrier 0 screening
+
+# screen_bar_3 = qda_elements.add_screening_gate('screening_gate_bar_0')
+
+# screen_bar_3.qda_elements = qda_elements
+# screen_bar_3.screen('barrier_3', 0, 0.1, 0.48, width=50e-3)
+# screen_bar_3.build()
+
+# screen_bar_3_qda = qda.add_component()
+# screen_bar_3_qda.component = screen_bar_3
+# screen_bar_3_qda.build()
 
 # %%% Build and Add fanout to qda
 
