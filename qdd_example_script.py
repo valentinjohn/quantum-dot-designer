@@ -15,6 +15,18 @@ qda_elements = qdd.QuantumDotArrayElements()
 unit_cell = qdd.UnitCell('unit_cell')
 qda = qdd.QuantumDotArray()
 
+# %% Layers
+
+ohmic_layer = 4
+barrier_layer = 5
+screening_layer = 9
+barrier_source_layer = 5
+barrier_drain_layer = 5
+plunger_layer = 7
+
+clav_gate_1_layer = 5
+clav_gate_2_layer = 7
+
 # %% define plungers
 
 pl_ver = qda_elements.add_plunger('plunger_vertically_elongated')
@@ -110,8 +122,8 @@ uc_bar_225deg.build()
 qda_elements.spacing_sep = 60e-3
 
 sensor_top = qda_elements.add_sensor('sensor_top')
-sensor_top.source_pos = 'left'
-sensor_top.drain_pos = 'right'
+# sensor_top.source_pos = 'left'
+# sensor_top.drain_pos = 'right'
 sensor_top.sep_pos = 'bottom'
 sensor_top.gap_sep = 60e-3
 sensor_top.gap_ohmic_pl = 40e-3
@@ -131,20 +143,40 @@ sensor_top.barrier_sep.width = 50e-3
 sensor_top.barrier_sep.length = 60e-3
 sensor_top.barrier_sep.layer = 5
 
+sensor_top.source.ohmic_pos = 'left'
+sensor_top.source.sensor_pos = 'top'  # redundant
+sensor_top.source.layer = ohmic_layer
+
+sensor_top.drain.ohmic_pos = 'right'
+sensor_top.drain.sensor_pos = 'top'  # redundant
+sensor_top.drain.layer = ohmic_layer
+
 sensor_bottom = qda_elements.add_copy(sensor_top, 'sensor_bottom')
-sensor_bottom.source_pos = 'right'
-sensor_bottom.drain_pos = 'left'
 sensor_bottom.sep_pos = 'top'
+sensor_bottom.source.ohmic_pos = 'left'
+sensor_bottom.source.sensor_pos = 'bottom'
+sensor_bottom.drain.ohmic_pos = 'right'
+sensor_bottom.drain.sensor_pos = 'bottom'
 
 sensor_right = qda_elements.add_copy(sensor_top, 'sensor_right')
+sensor_right.sep_pos = 'left'
+# sensor_right.sensor_pos = 'right'
+sensor_right.source.sensor_pos = 'right'  # redundant
+sensor_right.drain.sensor_pos = 'right'  # redundant
 sensor_right.source_pos = 'top'
 sensor_right.drain_pos = 'bottom'
-sensor_right.sep_pos = 'left'
+sensor_right.source.ohmic_pos = sensor_right.source_pos  # redundant
+sensor_right.drain.ohmic_pos = sensor_right.drain_pos  # redundant
 
 sensor_left = qda_elements.add_copy(sensor_top, 'sensor_left')
-sensor_left.source_pos = 'bottom'
-sensor_left.drain_pos = 'top'
 sensor_left.sep_pos = 'right'
+# sensor_left.sensor_pos = 'right'
+sensor_left.source.sensor_pos = 'left'  # redundant
+sensor_left.drain.sensor_pos = 'left'  # redundant
+sensor_left.source_pos = 'top'
+sensor_left.drain_pos = 'bottom'
+sensor_left.source.ohmic_pos = sensor_right.source_pos  # redundant
+sensor_left.drain.ohmic_pos = sensor_right.drain_pos  # redundant
 
 sensor_top.build()
 sensor_bottom.build()
@@ -222,141 +254,107 @@ fo.create_fo_polygons_coarse()
 
 
 # %% Fanout plunger ver 0
-fo_pl_ver_0 = qda_elements.add_fo_line('plunger_vertically_elongated', 0,
-                                       fo_direction='top', n_fanout=0, fo=fo)
+fo_pl_ver_0 = qda_elements.add_fo_line('plunger_vertically_elongated', 0)
 
-# Fine fan-out
-fof_pl_ver_0 = fo_pl_ver_0[0]
-fof_pl_ver_0.fo_width_start = 40e-3
-fof_pl_ver_0.points_along_path = [[-0.15, 0.3, 'start'],
-                                  [-0.4, 0.7, 'start']]
-fof_pl_ver_0.calculate_fine_fo()
-fof_pl_ver_0.build()
-fo.add_component(fof_pl_ver_0)
+fo_pl_ver_0.fo_direction = 'top'
+fo_pl_ver_0.n_fanout = 0
+fo_pl_ver_0.fo = fo
 
-# Coarse fan-out
-foc_pl_ver_0 = fo_pl_ver_0[1]
-foc_pl_ver_0.build()
-fo.add_component(foc_pl_ver_0)
+fo_pl_ver_0.fo_line_fine.fo_width_start = 40e-3
+fo_pl_ver_0.fo_line_fine.points_along_path = [[-0.15, 0.3, 'start'],
+                                              [-0.4, 0.7, 'start']]
+fo_pl_ver_0.build()
+fo.add_component(fo_pl_ver_0)
 
 # %% Fanout plunger ver 1
-fo_pl_ver_1 = qda_elements.add_fo_line('plunger_vertically_elongated', 1,
-                                       fo_direction='top', n_fanout=2, fo=fo)
+fo_pl_ver_1 = qda_elements.add_fo_line('plunger_vertically_elongated', 1)
 
-# Fine fan-out
-fof_pl_ver_1 = fo_pl_ver_1[0]
-fof_pl_ver_1.fo_width_start = 40e-3
-fof_pl_ver_1.points_along_path = [[-qda.spacing_qd_diag/2, 0, 'start'],
-                                  [0, pl_ver.diameter/2, 'prev'],
-                                  [-0.2, 0.5, 'prev']]
-fof_pl_ver_1.calculate_fine_fo()
-fof_pl_ver_1.build()
-fo.add_component(fof_pl_ver_1)
+fo_pl_ver_1.fo_direction = 'top'
+fo_pl_ver_1.n_fanout = 2
+fo_pl_ver_1.fo = fo
 
-# Coarse fan-out
-foc_pl_ver_1 = fo_pl_ver_1[1]
-foc_pl_ver_1.build()
-fo.add_component(foc_pl_ver_1)
+fo_pl_ver_1.fo_line_fine.fo_width_start = 40e-3
+fo_pl_ver_1.fo_line_fine.points_along_path = [[-qda.spacing_qd_diag/2, 0, 'start'],
+                                              [0, pl_ver.diameter/2, 'prev'],
+                                              [-0.2, 0.5, 'prev']]
+fo_pl_ver_1.build()
+fo.add_component(fo_pl_ver_1)
 
 # %% Fanout bar 45deg 0
-fo_bar_45deg_0 = qda_elements.add_fo_line('barrier_45deg_rotated', 0,
-                                          fo_direction='top', n_fanout=1, fo=fo)
+fo_bar_45deg_0 = qda_elements.add_fo_line('barrier_45deg_rotated', 0)
 
-# Fine fan-out
-fof_bar_45deg_0 = fo_bar_45deg_0[0]
-fof_bar_45deg_0.fo_width_start = 40e-3
-fof_bar_45deg_0.points_along_path = [[0.01, 0.015, 'start'],
-                                     [0.01, 0.05, 'start'],
-                                     [0, 0.08, 'prev'],
-                                     [-0.15, 0.3, 'prev']]
-fof_bar_45deg_0.calculate_fine_fo()
-fof_bar_45deg_0.build()
-fo.add_component(fof_bar_45deg_0)
+fo_bar_45deg_0.fo_direction = 'top'
+fo_bar_45deg_0.n_fanout = 1
+fo_bar_45deg_0.fo = fo
 
-# Coarse fan-out
-foc_bar_45deg_0 = fo_bar_45deg_0[1]
-foc_bar_45deg_0.build()
-fo.add_component(foc_bar_45deg_0)
+fo_bar_45deg_0.fo_line_fine.fo_width_start = 40e-3
+fo_bar_45deg_0.fo_line_fine.points_along_path = [[0.01, 0.015, 'start'],
+                                                 [0.01, 0.05, 'start'],
+                                                 [0, 0.08, 'prev'],
+                                                 [-0.15, 0.3, 'prev']]
+fo_bar_45deg_0.build()
+fo.add_component(fo_bar_45deg_0)
 
 # %% Fanout sensor plunger top
-fo_sens_pl_top = qda_elements.add_fo_line('sensor_top_plunger', 0,
-                                          fo_direction='top', n_fanout=4, fo=fo)
+fo_sens_pl_top = qda_elements.add_fo_line('sensor_top_plunger', 0)
 
-# Fine fan-out
-fof_sens_pl_top = fo_sens_pl_top[0]
-fof_sens_pl_top.fo_width_start = 40e-3
-fof_sens_pl_top.points_along_path = [[0, 0.8, 'start'],
-                                     # [0, pl_ver.diameter/2, 'prev'],
-                                     # [-0.2, 0.5, 'prev']
-                                     ]
-fof_sens_pl_top.calculate_fine_fo()
-fof_sens_pl_top.build()
-fo.add_component(fof_sens_pl_top)
+fo_sens_pl_top.fo_direction = 'top'
+fo_sens_pl_top.n_fanout = 4
+fo_sens_pl_top.fo = fo
 
-# Coarse fan-out
-foc_sens_pl_top = fo_sens_pl_top[1]
-foc_sens_pl_top.build()
-fo.add_component(foc_sens_pl_top)
+fo_sens_pl_top.fo_line_fine.fo_width_start = 40e-3
+fo_sens_pl_top.fo_line_fine.points_along_path = [[0, 0.8, 'start'],
+                                                 # [0, pl_ver.diameter/2, 'prev'],
+                                                 # [-0.2, 0.5, 'prev']
+                                                 ]
+fo_sens_pl_top.build()
+fo.add_component(fo_sens_pl_top)
 
 # %% Fanout sensor plunger bottom
-fo_sens_pl_bottom = qda_elements.add_fo_line('sensor_bottom_plunger', 0,
-                                             fo_direction='bottom', n_fanout=2, fo=fo)
+fo_sens_pl_bottom = qda_elements.add_fo_line('sensor_bottom_plunger', 0)
 
-# Fine fan-out
-fof_sens_pl_bottom = fo_sens_pl_bottom[0]
-fof_sens_pl_bottom.fo_width_start = 40e-3
-fof_sens_pl_bottom.points_along_path = [[0, -0.8, 'start'],
-                                        # [0, pl_ver.diameter/2, 'prev'],
-                                        # [-0.2, 0.5, 'prev']
-                                        ]
-fof_sens_pl_bottom.calculate_fine_fo()
-fof_sens_pl_bottom.build()
-fo.add_component(fof_sens_pl_bottom)
+fo_sens_pl_bottom.fo_direction = 'bottom'
+fo_sens_pl_bottom.n_fanout = 2
+fo_sens_pl_bottom.fo = fo
 
-# Coarse fan-out
-foc_sens_pl_bottom = fo_sens_pl_bottom[1]
-foc_sens_pl_bottom.build()
-fo.add_component(foc_sens_pl_bottom)
+fo_sens_pl_bottom.fo_line_fine.fo_width_start = 40e-3
+fo_sens_pl_bottom.fo_line_fine.points_along_path = [[0, -0.8, 'start'],
+                                                    # [0, pl_ver.diameter/2, 'prev'],
+                                                    # [-0.2, 0.5, 'prev']
+                                                    ]
+fo_sens_pl_bottom.build()
+fo.add_component(fo_sens_pl_bottom)
 
 # %% Fanout sensor plunger right
-fo_sens_pl_right = qda_elements.add_fo_line('sensor_right_plunger', 0,
-                                            fo_direction='right', n_fanout=2, fo=fo)
+fo_sens_pl_right = qda_elements.add_fo_line('sensor_right_plunger', 0)
 
-# Fine fan-out
-fof_sens_pl_right = fo_sens_pl_right[0]
-fof_sens_pl_right.fo_width_start = 40e-3
-fof_sens_pl_right.points_along_path = [[0.8, 0, 'start'],
-                                       # [0, pl_ver.diameter/2, 'prev'],
-                                       # [-0.2, 0.5, 'prev']
-                                       ]
-fof_sens_pl_right.calculate_fine_fo()
-fof_sens_pl_right.build()
-fo.add_component(fof_sens_pl_right)
+fo_sens_pl_right.fo_direction = 'right'
+fo_sens_pl_right.n_fanout = 2
+fo_sens_pl_right.fo = fo
 
-# Coarse fan-out
-foc_sens_pl_right = fo_sens_pl_right[1]
-foc_sens_pl_right.build()
-fo.add_component(foc_sens_pl_right)
+fo_sens_pl_right.fo_line_fine.fo_width_start = 40e-3
+fo_sens_pl_right.fo_line_fine.points_along_path = [[0.8, 0, 'start'],
+                                                   [0.9, 0, 'start'],
+                                                   # [0, pl_ver.diameter/2, 'prev'],
+                                                   # [-0.2, 0.5, 'prev']
+                                                   ]
+fo_sens_pl_right.build()
+fo.add_component(fo_sens_pl_right)
 
 # %% Fanout sensor plunger left
-fo_sens_pl_left = qda_elements.add_fo_line('sensor_left_plunger', 0,
-                                           fo_direction='left', n_fanout=2, fo=fo)
+fo_sens_pl_left = qda_elements.add_fo_line('sensor_left_plunger', 0)
 
-# Fine fan-out
-fof_sens_pl_left = fo_sens_pl_left[0]
-fof_sens_pl_left.fo_width_start = 40e-3
-fof_sens_pl_left.points_along_path = [[-0.8, 0, 'start'],
-                                      # [0, pl_ver.diameter/2, 'prev'],
-                                      # [-0.2, 0.5, 'prev']
-                                      ]
-fof_sens_pl_left.calculate_fine_fo()
-fof_sens_pl_left.build()
-fo.add_component(fof_sens_pl_left)
+fo_sens_pl_left.fo_direction = 'left'
+fo_sens_pl_left.n_fanout = 2
+fo_sens_pl_left.fo = fo
 
-# Coarse fan-out
-foc_sens_pl_left = fo_sens_pl_left[1]
-foc_sens_pl_left.build()
-fo.add_component(foc_sens_pl_left)
+fo_sens_pl_left.fo_line_fine.fo_width_start = 40e-3
+fo_sens_pl_left.fo_line_fine.points_along_path = [[-0.8, 0, 'start'],
+                                                  # [0, pl_ver.diameter/2, 'prev'],
+                                                  # [-0.2, 0.5, 'prev']
+                                                  ]
+fo_sens_pl_left.build()
+fo.add_component(fo_sens_pl_left)
 
 # %% Build and Add fanout to qda
 

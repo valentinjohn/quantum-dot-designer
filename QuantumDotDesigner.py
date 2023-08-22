@@ -354,6 +354,8 @@ def merge_device_positions(dict1, dict2):
         if key in merged:
             # Check if the vertices are the same
             if not np.array_equal(merged[key]['vertices'], value['vertices']):
+                print(merged[key]['vertices'])
+                print(value['vertices'])
                 raise ValueError(
                     f"The vertices for key '{key}' are different between the two dictionaries.")
 
@@ -394,6 +396,80 @@ def compute_positions(n_lines, spacing):
     """
     start = - (n_lines - 1) * spacing / 2
     return [start + i * spacing for i in range(n_lines)]
+
+
+def get_polygons_from_path(path_points):
+    """
+    Generate the vertices of a polygon based on a provided path.
+
+    Given a list of path points, this function calculates the vertices of a polygon that encompasses the path.
+    Each path point has three components: (x, y, width). The function uses the direction between consecutive points
+    and the specified width to determine the boundary of the path, generating the vertices for the polygon.
+
+    Parameters:
+    -----------
+    path_points : list of tuple
+        A list of tuples where each tuple represents a point in the path. Each tuple should contain three elements:
+        x-coordinate, y-coordinate, and the width of the path at that point.
+
+    Returns:
+    --------
+    list of tuple
+        A list of tuples where each tuple represents a vertex of the polygon. The vertices are ordered in such a way
+        that they can be directly used for plotting or further polygon-related operations.
+
+    Notes:
+    ------
+    - The function assumes that the path_points list contains at least two points.
+    - The polygon vertices are generated in a way that the left side vertices are followed by the right side vertices
+      in reverse order.
+    - `perpendicular_vector` is an external function that returns a vector perpendicular to the given vector.
+
+    Examples:
+    ---------
+    >>> path_points = [(0, 0, 1), (1, 1, 1), (2, 0, 1)]
+    >>> get_polygons_from_path(path_points)
+    [(0.5, 0.5), (1.5, 1.5), (2.5, -0.5), (1.5, -1.5), (0.5, -0.5)]
+
+    """
+    end = path_points[-1]
+    vertices_left = []
+    vertices_right = []
+    for i in range(len(path_points) - 1):
+        direction_current = np.array(
+            path_points[i+1][:2], dtype=float) - np.array(path_points[i][:2], dtype=float)
+        norm_current = np.linalg.norm(direction_current)
+        if norm_current != 0:
+            direction_current /= norm_current
+        if i == 0:
+            bisector_direction = direction_current
+        else:
+            direction_prev = np.array(
+                path_points[i][:2], dtype=float) - np.array(path_points[i-1][:2], dtype=float)
+            norm_prev = np.linalg.norm(direction_prev)
+            if norm_prev != 0:
+                direction_prev /= norm_prev
+            bisector_direction = direction_current + direction_prev
+            norm_bisector = np.linalg.norm(bisector_direction)
+            if norm_bisector != 0:
+                bisector_direction /= norm_bisector
+        normal = perpendicular_vector(bisector_direction)
+        width = path_points[i][2]
+        v1 = np.array(path_points[i][:2], dtype=float) + width/2 * normal
+        v2 = np.array(path_points[i][:2], dtype=float) - width/2 * normal
+        vertices_left.append((v1[0], v1[1]))
+        vertices_right.append((v2[0], v2[1]))
+    direction_end = np.array(end[:2], dtype=float) - \
+        np.array(path_points[-2][:2], dtype=float)
+    normal_end = perpendicular_vector(direction_end)
+    v1 = np.array(end[:2], dtype=float) + end[2]/2 * normal_end
+    v2 = np.array(end[:2], dtype=float) - end[2]/2 * normal_end
+    vertices_left.append((v1[0], v1[1]))
+    vertices_right.append((v2[0], v2[1]))
+
+    poly_vertices = vertices_left + vertices_right[::-1]
+
+    return poly_vertices
 
 
 def compute_fanout_positions(fo_stages, fanout_counts, spacings):
@@ -512,7 +588,26 @@ def calculate_vertex(point, offset):
 
 
 def generate_polygon_for_fanout(direction, fo_line, bondpad_position, bondpad_size, fo_widths, fo_fine_coarse_overlap):
-    """Helper function to generate a polygon for a single fanout based on direction."""
+    """
+    Generate a polygon for a single fanout based on the given direction.
+
+    Parameters:
+    - direction (str): Indicates the direction of the fanout. Can be one of ['top', 'bottom', 'left', 'right'].
+    - fo_line (list): List of 3 tuples representing the fanout lines in format [(x1, y1), (x2, y2), (x3, y3)].
+    - bondpad_position (dict): Dictionary containing the position of the bondpad for each direction.
+    - bondpad_size (dict): Dictionary containing the size of the bondpad for each direction.
+    - fo_widths (list): List of 3 floats representing the widths of the fanout at each of the 3 fanout lines.
+    - fo_fine_coarse_overlap (float): The overlap between the fine and coarse parts of the fanout.
+
+    Returns:
+    - fo_polys (list): List of tuples representing the vertices of the generated polygon in the format [(x1, y1), (x2, y2), ...].
+
+    Notes:
+    The function calculates the vertices of the polygon based on the provided parameters and direction. 
+    It first adjusts the calculations based on the direction. Then, it calculates the bondpad corners, 
+    the bondpad to fine vertices, the overlap between fine and coarse, and the fine to bondpad vertices.
+    Finally, it returns a list of these vertices in order to generate the desired polygon.
+    """
 
     # Adjustments based on direction
     if direction in ['top', 'bottom']:
@@ -633,6 +728,69 @@ def perpendicular_vector(v):
     perp_vector = np.array([-v[1], v[0]])
     return normalize_vector(perp_vector)
 
+# %%% screening gate calculations
+
+
+def compute_distance(point1, point2):
+    """Compute the distance between two points."""
+    x1, y1 = point1[0], point1[1]
+    x2, y2 = point2[0], point2[1]
+    return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+
+
+def interpolate_point(point1, point2, ratio):
+    """Interpolate between two points based on a given ratio."""
+    x1, y1 = point1[0], point1[1]
+    x2, y2 = point2[0], point2[1]
+
+    x_new = x1 + ratio * (x2 - x1)
+    y_new = y1 + ratio * (y2 - y1)
+
+    return [x_new, y_new]
+
+
+def create_segmented_path(path, start_length, end_length, width=None, relative_width=False):
+    """Create a new path between the start_length and end_length based on the input path."""
+
+    # Create the new path
+    new_path = []
+    accumulated_length = 0
+    started = False  # To determine if we have started recording the new path
+
+    for i in range(1, len(path)):
+        segment_length = compute_distance(path[i-1], path[i])
+
+        # Check if the current accumulated length is within the desired range
+        if accumulated_length + segment_length >= start_length and not started:
+            # Calculate the ratio to interpolate the start point
+            remaining_length = start_length - accumulated_length
+            ratio = remaining_length / segment_length
+            interpolated_start = interpolate_point(path[i-1], path[i], ratio)
+            interpolated_start.append(path[i][2])  # Add the width
+            new_path.append(interpolated_start)
+            started = True
+
+        if started:
+            if accumulated_length + segment_length <= end_length:
+                new_path.append(path[i])
+            else:
+                # Calculate the ratio to interpolate the end point
+                remaining_length = end_length - accumulated_length
+                ratio = remaining_length / segment_length
+                interpolated_end = interpolate_point(path[i-1], path[i], ratio)
+                interpolated_end.append(path[i][2])  # Add the width
+                new_path.append(interpolated_end)
+                break
+
+        accumulated_length += segment_length
+
+    # Adjust the width if necessary
+    if width is not None:
+        for point in new_path:
+            point[2] = width if not relative_width else point[2] * width
+
+    return new_path
+
 # %% Mixin
 
 
@@ -720,7 +878,7 @@ class QuantumDotArrayElements:
     def __init__(self):
         self.components = {}
 
-    def add_plunger(self, name):
+    def add_plunger(self, name: str):
         """
         Add a plunger element to the collection.
 
@@ -735,7 +893,7 @@ class QuantumDotArrayElements:
         self.components[name] = plunger
         return plunger
 
-    def add_barrier(self, name):
+    def add_barrier(self, name: str):
         """
         Add a barrier element to the collection.
 
@@ -750,7 +908,7 @@ class QuantumDotArrayElements:
         self.components[name] = barrier
         return barrier
 
-    def add_screening_gate(self, name):
+    def add_screening_gate(self, name: str):
         """
         Add a screening gate element to the collection.
 
@@ -765,7 +923,7 @@ class QuantumDotArrayElements:
         self.components[name] = screening_gate
         return screening_gate
 
-    def add_ohmic(self, name):
+    def add_ohmic(self, name: str):
         """
         Add an ohmic element to the collection.
 
@@ -868,7 +1026,7 @@ class QuantumDotArrayElements:
             new_element.source = component.source.copy(
                 f'{copy_name}_source')
             new_element.drain = component.drain.copy(
-                f'{copy_name}_barrier_drain')
+                f'{copy_name}_drain')
             new_element.barrier_sep = component.barrier_sep.copy(
                 f'{copy_name}_barrier_seperation')
 
@@ -932,6 +1090,14 @@ class UnitCell(PlotMixin):
         self._n = 0
         self._built = False
 
+    @property
+    def built(self):
+        return self._built
+
+    # This setter is private and can only be used within the class
+    def _set_built(self, new_value: bool):
+        self._built = new_value
+
     def add_component(self, component=None, build=False):
         """
         Add a sublattice to the unit cell.
@@ -987,7 +1153,7 @@ class UnitCell(PlotMixin):
         self.cell.flatten()
         self._get_lim(axis=0)
         self._get_lim(axis=1)
-        self._built = True
+        self._set_built(True)
 
 
 class QuantumDotArray(PlotMixin):
@@ -1068,7 +1234,7 @@ class QuantumDotArray(PlotMixin):
 class FanoutGenerator():
     def __init__(self, name, qda):
         self.name = name
-        self.qda_elements = qda.elements
+        self.qda = qda
         self.elements = {}
         self.cell = gdstk.Cell(name)
         self.components = {}
@@ -1137,8 +1303,8 @@ class FanoutGenerator():
 
         Args:
             name (str): Name of the sublattice.
-            component: You can assign otionally a component in the argument
-            build: Adds and builds at the same time
+            component: You can assign optionally a component in the argument
+            build: Adds and builds at the same time with a single component placed at origin.
 
         Returns:
             Sublattice: The created Sublattice object.
@@ -1169,6 +1335,22 @@ class FanoutGenerator():
 # %% Elements
 
 
+# class TypeChecked:
+#     def __init__(self, expected_type, attribute_name):
+#         self.expected_type = expected_type
+#         self.attribute_name = attribute_name
+#         self.data = {}
+
+#     def __get__(self, instance, owner):
+#         return self.data.get(instance)
+
+#     def __set__(self, instance, value):
+#         if not isinstance(value, self.expected_type):
+#             raise TypeError(
+#                 f"Expected '{self.attribute_name}' to be of type '{self.expected_type.__name__}', but got '{type(value).__name__}'")
+#         self.data[instance] = value
+
+
 class Element(ABC, PlotMixin):
     def __init__(self, name):
         """
@@ -1176,22 +1358,32 @@ class Element(ABC, PlotMixin):
 
         Args:
             name (str): Name of the element.
+            layer (int): Description of layer. Default is None.
+            rotate (float): Rotation of the element. Default is 0.0.
+            fillet (float): Fillet value. Indicates how much the polygon is rounded.
         """
+
         self.name = name
         self.layer = None
         self.elements = {name: {'vertices': [],
                                 'positions': [],
                                 'layer': self.layer}}
         self.cell = None
-        self.x = 0
-        self.y = 0
         self.rotate = 0.0
-        self.fillet = 0
+        self.fillet = 0.0
         self.fillet_tolerance = 1e-3
         self._built = False
 
     # default attributes to skip for Element
     _skip_copy_attrs = {'name', 'cell', 'elements'}
+
+    @property
+    def built(self):
+        return self._built
+
+    # This setter is private and can only be used within the class
+    def _set_built(self, new_value: bool):
+        self._built = new_value
 
     def copy(self, copy_name):
         # Use the same class as the current instance
@@ -1216,10 +1408,14 @@ class Element(ABC, PlotMixin):
 class Plunger(Element):
     def __init__(self, name):
         """
-        Initialize a Plunger object.
+        Initialize an Plunger object.
 
         Args:
-            name (str): Name of the plunger.
+            name (str): Name of the element.
+            layer (int): Description of layer. Default is None.
+            rotate (float): Rotation of the plunger. Default is 0.0.
+            fillet (float): Fillet value. Indicates how much the polygon is rounded.
+            ... (other attributes)
         """
         super().__init__(name)
         self.layer = 21
@@ -1247,16 +1443,17 @@ class Plunger(Element):
         pl = gdstk.Polygon(pl_points, layer=self.layer)
         pl.scale(0.5 / np.cos(np.pi / 8) * self.diameter)
         pl.scale(sx=self._asymx, sy=self._asymy)
-        pl.translate(self.x, self.y)
+        # pl.translate(self.x, self.y)
         pl.fillet(self.fillet, tolerance=self.fillet_tolerance)
         pl.fillet(0.02, tolerance=1e-4)
         cell = gdstk.Cell(self.name)
         cell.add(pl)
         self.elements[self.name]['vertices'] = pl.points
-        self.elements[self.name]['positions'] = [[self.x, self.y]]
+        # self.elements[self.name]['positions'] = [[self.x, self.y]]
+        self.elements[self.name]['positions'] = [[0, 0]]
         self.elements[self.name]['layer'] = self.layer
         self.cell = cell
-        self._built = True
+        self._set_built(True)
 
 
 class Barrier(Element):
@@ -1286,15 +1483,16 @@ class Barrier(Element):
                              (-self.length/2 - self.width/2, -self.width/8)],
                             layer=self.layer)
         bar.rotate(self.rotate)
-        bar.translate(self.x, self.y)
+        # bar.translate(self.x, self.y)
         bar.fillet(self.fillet, tolerance=self.fillet_tolerance)
         cell = gdstk.Cell(self.name)
         cell.add(bar)
         self.elements[self.name]['vertices'] = bar.points
-        self.elements[self.name]['positions'] = [[self.x, self.y]]
+        # self.elements[self.name]['positions'] = [[self.x, self.y]]
+        self.elements[self.name]['positions'] = [[0, 0]]
         self.elements[self.name]['layer'] = self.layer
         self.cell = cell
-        self._built = True
+        self._set_built(True)
 
 
 class ScreeningGate(Element):
@@ -1302,30 +1500,106 @@ class ScreeningGate(Element):
         super().__init__(name)
         self.layer = 5
         self.vertices = []
+        self.screen_paths = []
+        self.qda_elements = None
+        self._screen_path = False
+        self.contact_vertices = None
+
+    def screen(self, element_name, element_number,
+               start_length, end_length,
+               width=50e-3, relative_width=False):
+        fo_line_name = f'fo_line_{element_name}_{element_number}'
+        element_fo_path = self.qda_elements.components[fo_line_name].path
+        screen_path = create_segmented_path(element_fo_path,
+                                            start_length, end_length,
+                                            width=width,
+                                            relative_width=relative_width)
+        self.screen_paths.append(screen_path)
+        poly_vertices = get_polygons_from_path(screen_path)
+        self.vertices.append(poly_vertices)
+
+        self._screen_path = True
 
     def build(self):
-        screen = gdstk.Polygon(self.vertices,
-                               layer=self.layer)
-        screen.translate(self.x, self.y)
-        screen.fillet(self.fillet, tolerance=self.fillet_tolerance)
         cell = gdstk.Cell(self.name)
-        cell.add(screen)
-        self.elements[self.name]['vertices'] = screen.points
-        self.elements[self.name]['positions'] = [[self.x, self.y]]
-        self.elements[self.name]['layer'] = self.layer
+        for vertices in self.vertices:
+            screen = gdstk.Polygon(vertices,
+                                   layer=self.layer)
+            # screen.translate(self.x, self.y)
+            screen.fillet(self.fillet, tolerance=self.fillet_tolerance)
+            cell.add(screen)
+            self.elements[self.name]['vertices'] = screen.points
+            # self.elements[self.name]['positions'] = [[self.x, self.y]]
+            self.elements[self.name]['positions'] = [[0, 0]]
+            self.elements[self.name]['layer'] = self.layer
+
         self.cell = cell
-        self._built = True
+        self._set_built(True)
 
 
 class Ohmic(Element):
     def __init__(self, name):
         super().__init__(name)
-        self.width = 0.0
-        self.height = 0.0
-        self.shape = None
+        self.layer = 1
+        self.contact_length = 0.095
+        self.contact_offset = 0.01
+        self.contact_angle = np.pi/4
+        self.contact_width = 0.05
+        self.sensor_pos = 'top'
+        self.ohmic_pos = 'right'
+        self.vertices = None
+
+    def compute_ohmic_vertices(self):
+        multiplier_dict = {('top', 'right'): 1,
+                           ('top', 'left'): -1,
+                           ('bottom', 'right'): -1,
+                           ('bottom', 'left'): 1,
+                           ('right', 'top'): -1,
+                           ('right', 'bottom'): 1,
+                           ('left', 'top'): 1,
+                           ('left', 'bottom'): -1
+                           }
+
+        rotation_dict = {'top': 0,
+                         'bottom': np.pi,
+                         'right': -np.pi/2,
+                         'left': np.pi/2,
+                         }
+
+        multiplier = multiplier_dict[(self.sensor_pos, self.ohmic_pos)]
+        rotation = rotation_dict[self.sensor_pos]
+
+        v1 = [0, self.contact_length/2]
+        v2 = (0, -self.contact_length/2)
+        v4 = (multiplier * self.contact_offset, self.contact_length/2)
+        v3 = np.array(v4) + self.contact_width * \
+            np.array([multiplier * np.cos(self.contact_angle), -
+                     np.sin(self.contact_angle)])
+
+        v1 = list(rot_mat(rotation) @ np.array(v1))
+        v2 = list(rot_mat(rotation) @ np.array(v2))
+        v3 = list(rot_mat(rotation) @ np.array(v3))
+        v4 = list(rot_mat(rotation) @ np.array(v4))
+
+        vertices = [v1, v2, v3, v4]
+
+        self.vertices = vertices
 
     def build(self):
-        print('Build method for Ohmic not implemeneted yet.')
+        """
+        Build the ohmic element.
+        """
+        self.compute_ohmic_vertices()
+        ohmic = gdstk.Polygon(self.vertices, layer=self.layer)
+        ohmic.fillet(self.fillet, tolerance=self.fillet_tolerance)
+        cell = gdstk.Cell(self.name)
+        cell.add(ohmic)
+        self.elements[self.name]['vertices'] = ohmic.points
+        # self.elements[self.name]['positions'] = [[self.x, self.y]]
+        self.elements[self.name]['positions'] = [[0, 0]]
+        self.elements[self.name]['layer'] = self.layer
+        self.cell = cell
+        self._set_built(True)
 
 
 class Sensor(UnitCell):
@@ -1338,8 +1612,6 @@ class Sensor(UnitCell):
         """
         super().__init__(name)
         self.qda_elements = qda_elements
-        self.x = 0
-        self.y = 0
         self.plunger = qda_elements.add_plunger(f'{name}_plunger')
         self.barrier_source = qda_elements.add_barrier(
             f'{name}_barrier_source')
@@ -1392,16 +1664,16 @@ class Sensor(UnitCell):
 
         self.sd_position = (
             (i*(plunger._asymx*plunger.diameter/2 +
-                bar_source.width+source.width/2) +
+                self.gap_ohmic_pl) +
              self.source_position_offset[0],
              j*(plunger._asymy*plunger.diameter/2 +
-                bar_source.width+source.width/2) +
+                self.gap_ohmic_pl) +
              self.source_position_offset[1]),
             (m*(plunger._asymx*plunger.diameter/2 +
-                bar_drain.width+drain.width/2) +
+                self.gap_ohmic_pl) +
              self.drain_position_offset[0],
              n*(plunger._asymy*plunger.diameter/2 +
-                bar_drain.width+drain.width/2) +
+                self.gap_ohmic_pl) +
              self.drain_position_offset[1]))
 
         self.bar_position = (
@@ -1427,23 +1699,15 @@ class Sensor(UnitCell):
         bar_sep = self.barrier_sep
 
         bar_source.rotate = self._bar_angle_dict[self.source_pos]
-        # bar_source.x = self.bar_position[0][0]
-        # bar_source.y = self.bar_position[0][1]
-
         bar_drain.rotate = -self._bar_angle_dict[self.drain_pos]
-        # bar_drain.x = self.bar_position[1][0]
-        # bar_drain.y = self.bar_position[1][1]
-
         bar_sep.rotate = self._bar_angle_dict[self.sep_pos]
-        # bar_sep.x = self.sep_position[0]
-        # bar_sep.y = self.sep_position[1]
 
     def _build_and_add_elements(self):
         self.plunger.build()
         self.barrier_source.build()
         self.barrier_drain.build()
-        # self.source.build()
-        # self.drain.build()
+        self.source.build()
+        self.drain.build()
         self.barrier_sep.build()
 
         self.add_component(self.plunger, build=True)
@@ -1460,6 +1724,14 @@ class Sensor(UnitCell):
         sl_bsep.center = self.sep_position
         sl_bsep.build()
 
+        sl_source = self.add_component(self.source)
+        sl_source.center = self.sd_position[0]
+        sl_source.build()
+
+        sl_drain = self.add_component(self.drain)
+        sl_drain.center = self.sd_position[1]
+        sl_drain.build()
+
     def build_elements(self):
         self.__feature_gap = self.barrier_source.width - self.gap_ohmic_pl
 
@@ -1468,12 +1740,12 @@ class Sensor(UnitCell):
         self._set_barrier_properties()
 
         self.components_position = {
-            self.plunger.name: (self.plunger.x, self.plunger.y),
-            self.barrier_source.name: (self.barrier_source.x, self.barrier_source.y),
-            self.barrier_drain.name: (self.barrier_drain.x, self.barrier_drain.y),
-            self.source.name: (self.source.x, self.source.y),
-            self.drain.name: (self.drain.x, self.drain.y),
-            self.barrier_sep.name: (self.barrier_sep.x, self.barrier_sep.y),
+            self.plunger.name: (0, 0),
+            self.barrier_source.name: (0, 0),
+            self.barrier_drain.name: (0, 0),
+            self.source.name: (0, 0),
+            self.drain.name: (0, 0),
+            self.barrier_sep.name: (0, 0)
         }
 
         self._build_and_add_elements()
@@ -1528,7 +1800,7 @@ class ClavierGate(Element):
         self.elements[self.name]['positions'] = [[self.x, self.y]]
         self.elements[self.name]['layer'] = self.layer
         self.cell = cell
-        self._built = True
+        self._set_built(True)
 
 
 class Clavier(UnitCell):
@@ -1644,14 +1916,14 @@ class Clavier(UnitCell):
         self.screen = self.qda_elements.add_screening_gate(
             f'{self.name}_screen')
         self.screen.layer = self.screen_layer
-        self.screen.vertices = [(self.x-self.screen_length/2,
+        self.screen.vertices = [[(self.x-self.screen_length/2,
                                  self.y+self.screen_width/2),
                                 (self.x+self.screen_length/2,
                                  self.y+self.screen_width/2),
                                 (self.x+self.screen_length/2,
                                  self.y-self.screen_width/2),
                                 (self.x-self.screen_length/2,
-                                 self.y-self.screen_width/2)]
+                                 self.y-self.screen_width/2)]]
         self.screen.build()
 
         sl_clav_screen = self.add_component()
@@ -1696,6 +1968,14 @@ class Sublattice(PlotMixin):
         self._width = (self.columns-1) * self.spacing[0]
         self._height = (self.rows-1) * self.spacing[1]
         self._built = False
+
+    @property
+    def built(self):
+        return self._built
+
+    # This setter is private and can only be used within the class
+    def _set_built(self, new_value: bool):
+        self._built = new_value
 
     def _update_width(self):
         """
@@ -1754,7 +2034,7 @@ class Sublattice(PlotMixin):
                                  spacing=(self.spacing[0], self.spacing[1])
                                  ))
         self.cell = cell
-        self._built = True
+        self._set_built(True)
         self._get_lim(axis=0)
         self._get_lim(axis=1)
         # only update elements attribute if it exists
@@ -1784,6 +2064,7 @@ class FanOutLineBase(PlotMixin):
         self.fo_fine_coarse_overlap_gap = 0.3
         self.layer = None
         self.polygons = None
+        self.path = None
         self.fo_direction = None
         self.n_fanout = None
         self.cell = gdstk.Cell(self.name)
@@ -1793,6 +2074,14 @@ class FanOutLineBase(PlotMixin):
                                      'positions': [],
                                      'layer': self.layer}}
         self._built = False
+
+    @property
+    def built(self):
+        return self._built
+
+    # This setter is private and can only be used within the class
+    def _set_built(self, new_value: bool):
+        self._built = new_value
 
     def build(self):
         fo_line = gdstk.Polygon(self.polygons, layer=self.layer)
@@ -1804,7 +2093,7 @@ class FanOutLineBase(PlotMixin):
         self.elements[self.name]['layer'] = self.layer
 
         self.cell.add(fo_line)
-        self._built = True
+        self._set_built(True)
 
 
 class FanOutLineFine(FanOutLineBase):
@@ -1815,7 +2104,7 @@ class FanOutLineFine(FanOutLineBase):
         self.fo_end = None
         self.points_along_path = []
 
-    def calculate_fine_fo(self, return_type='polygon'):
+    def calculate_fine_fo(self):
         """
         Calculate a refined path or polygon based on given points.
 
@@ -1837,10 +2126,7 @@ class FanOutLineFine(FanOutLineBase):
         points_along_path.append([1, 0.95, self.fo_end[0][2], 'dif'])
         points_along_path.append(self.fo_end[0])
 
-        points_along_path
-
-        if return_type not in ['polygon', 'path']:
-            raise ValueError("return_type must be either 'polygon' or 'path'.")
+        # points_along_path
 
         path_points = [start]  # Starting with the start point
         current_point = np.array(start[:2])
@@ -1887,44 +2173,8 @@ class FanOutLineFine(FanOutLineBase):
 
         path_points.append(end)  # Add the end point to the path
 
-        if return_type == 'path':
-            return path_points
-
-        vertices_left = []
-        vertices_right = []
-        for i in range(len(path_points) - 1):
-            direction_current = np.array(
-                path_points[i+1][:2], dtype=float) - np.array(path_points[i][:2], dtype=float)
-            norm_current = np.linalg.norm(direction_current)
-            if norm_current != 0:
-                direction_current /= norm_current
-            if i == 0:
-                bisector_direction = direction_current
-            else:
-                direction_prev = np.array(
-                    path_points[i][:2], dtype=float) - np.array(path_points[i-1][:2], dtype=float)
-                norm_prev = np.linalg.norm(direction_prev)
-                if norm_prev != 0:
-                    direction_prev /= norm_prev
-                bisector_direction = direction_current + direction_prev
-                norm_bisector = np.linalg.norm(bisector_direction)
-                if norm_bisector != 0:
-                    bisector_direction /= norm_bisector
-            normal = perpendicular_vector(bisector_direction)
-            width = path_points[i][2]
-            v1 = np.array(path_points[i][:2], dtype=float) + width/2 * normal
-            v2 = np.array(path_points[i][:2], dtype=float) - width/2 * normal
-            vertices_left.append((v1[0], v1[1]))
-            vertices_right.append((v2[0], v2[1]))
-        direction_end = np.array(end[:2], dtype=float) - \
-            np.array(path_points[-2][:2], dtype=float)
-        normal_end = perpendicular_vector(direction_end)
-        v1 = np.array(end[:2], dtype=float) + end[2]/2 * normal_end
-        v2 = np.array(end[:2], dtype=float) - end[2]/2 * normal_end
-        vertices_left.append((v1[0], v1[1]))
-        vertices_right.append((v2[0], v2[1]))
-
-        poly_vertices = vertices_left + vertices_right[::-1]
+        self.path = path_points
+        poly_vertices = get_polygons_from_path(path_points)
         self.polygons = poly_vertices
 
         return poly_vertices
@@ -2006,7 +2256,7 @@ class FanOutLine(UnitCell):
         self.fo_line_fine.layer = self.qda_elements.components[self.element_name].layer
 
         if not any(attr is None for attr in [self.fo_direction, self.n_fanout, self.fo]):
-            self.fo_line_fine.fo_start = self.fo.qda_elements[
+            self.fo_line_fine.fo_start = self.fo.qda.elements[
                 self.element_name]['positions'][self.element_number]
             self.fo_line_fine.fo_end = self.fo.get_fo_overlap_points(self.n_fanout,
                                                                      self.fo_direction)
