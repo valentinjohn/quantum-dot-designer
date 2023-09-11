@@ -2138,7 +2138,10 @@ class FanOutLineFine(FanOutLineBase):
         start.append(self.fo_width_start)
         end = self.fo_end[1]
         points_along_path = self.points_along_path.copy()
-        points_along_path.append([1, 0.95, self.fo_end[0][2], 'dif'])
+        if self.fo_direction in ['left', 'right']:
+            points_along_path.append([0.95, 1, self.fo_end[0][2], 'dif'])
+        else:
+            points_along_path.append([1, 0.95, self.fo_end[0][2], 'dif'])
         points_along_path.append(self.fo_end[0])
 
         # points_along_path
