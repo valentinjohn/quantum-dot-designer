@@ -141,11 +141,6 @@ def generate_clavier_gates(width, length, gate_width, gate_length,
 
     # Bottom edge of the rectangle
     for i in range(num_clavier + 1):
-        # Before clavier
-        point = (start_clavier + i * (gate_width + spacing) -
-                 spacing / 2 + position[0], 0 + position[1])
-        vertices.append(rotate_point(point, rotation))
-
         # If there is a clavier here
         if i < num_clavier:
             # Move to the clavier
@@ -165,12 +160,6 @@ def generate_clavier_gates(width, length, gate_width, gate_length,
 
             point = (start_clavier + i * (gate_width + spacing) +
                      gate_width + position[0], 0 + position[1])
-            vertices.append(rotate_point(point, rotation))
-
-            # Return to the rectangle
-            point = (start_clavier + i * (gate_width + spacing) +
-                     gate_width + spacing / 2 + position[0],
-                     0 + position[1])
             vertices.append(rotate_point(point, rotation))
 
     # Right end of the rectangle
@@ -1789,7 +1778,7 @@ class ClavierGate(Element):
         self.shift = 0
         self.x = 0
         self.y = 0
-        self.fillet = 0.02
+        self.fillet = 0  # 0.02
         self.fillet_tolerance = 1e-4
         self.rotation = 0
 
@@ -1803,6 +1792,7 @@ class ClavierGate(Element):
                                            self.n_clav_rep, self.spacing,
                                            self.shift, (-self.length/2, 0),
                                            self.rotation)
+        print(cl_points)
         cl = gdstk.Polygon(cl_points, layer=self.layer)
 
         cl.translate(self.x, self.y)
@@ -1861,9 +1851,21 @@ class Clavier(UnitCell):
         self.rotation = 0
         self.mirror = False
 
+    def _update_length(self):
+        self.clav_length = ((self.clav_gate_width +
+                             self.clav_gate_gap) *
+                            self._n_clav_gates *
+                            (self.n_clav_rep - 1) +
+                            self.clav_gate_width)
+        self.screen_length = (self.clav_length +
+                              (self._n_clav_gates-1) /
+                              self._n_clav_gates *
+                              self.clav_gate_spacing)
+
     def _initialize_clavier_gates(self):
         self._sl_clavier_gates = {}
         self._clav_layers_order = self.clav_layers + self.clav_layers[::-1]
+        self._update_length()
 
     def _build_even_clavier_gates(self, n):
         name = f'{self.name}_gate_{2*n}'
