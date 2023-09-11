@@ -893,6 +893,19 @@ class QuantumDotArrayElements:
         self.components[name] = plunger
         return plunger
 
+    # def add(self, element):
+    #     """
+    #     Add a element to the collection.
+
+    #     Args:
+    #         name: Name of the element.
+
+    #     Returns:
+    #         The created plunger element.
+
+    #     """
+    #     self.components[name] = element
+
     def add_barrier(self, name: str):
         """
         Add a barrier element to the collection.
