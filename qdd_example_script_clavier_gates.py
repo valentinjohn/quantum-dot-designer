@@ -32,10 +32,9 @@ clav_gate_2_layer = 7
 # %% define plungers
 
 pl = qda_elements.add_plunger('plunger')
-pl.asym = 1
+pl.asymx = 1
 pl.diameter = 130e-3
 pl.layer = plunger_layer
-pl.build()
 
 # pl.plot()
 
@@ -54,10 +53,6 @@ bar_2.rotate = bars_rot[1]
 
 bar_3 = qda_elements.add_copy(bar_1, 'barrier_3')
 bar_3.rotate = bars_rot[2]
-
-bar_1.build()
-bar_2.build()
-bar_3.build()
 
 # bar_1.plot()
 # bar_2.plot()
@@ -93,12 +88,6 @@ uc_bar_2.center = (-1*spacing_qd/4, tritop_height/2)
 uc_bar_3.component = bar_3
 uc_bar_3.center = (1*spacing_qd/4, tritop_height/2)
 
-uc_pl_tribase.build()
-uc_pl_tritop.build()
-uc_bar_2.build()
-uc_bar_1.build()
-uc_bar_3.build()
-
 # %% define sensor
 
 sensor_top = qda_elements.add_sensor('sensor_top')
@@ -133,30 +122,26 @@ sensor_top.barrier_sep.layer = barrier_layer
 sensor_top.source.layer = ohmic_layer
 sensor_top.drain.layer = ohmic_layer
 
-sensor_top.build()
-
 # sensor_top.plot()
 
 # %% add sensor to unit cell
 
-unit_cell.ylim = (tritop_height +
+unit_cell_ylim = (tritop_height +
                   pl.diameter/2 *
-                  pl._asymy)
+                  pl.asymy)
 
-sensor_pos_uniy = (unit_cell.ylim+sensor_top.gap_sep +
+sensor_pos_uniy = (unit_cell_ylim+sensor_top.gap_sep +
                    sensor_top.plunger.diameter/2 *
-                   sensor_top.plunger._asymy)
+                   sensor_top.plunger.asymy)
 
 sensor_pos_unix = 0
 
 uc_st = unit_cell.add_component()
 uc_st.component = sensor_top
 uc_st.center = (sensor_pos_unix, sensor_pos_uniy)
-uc_st.build()
 
 # %% Add unit cell to main cell
 
-unit_cell.build()
 # unit_cell.plot()
 
 uc_unitcell = qda.add_component()
@@ -166,8 +151,6 @@ uc_unitcell.rows = 1
 uc_unitcell.columns = 1
 uc_unitcell.spacing = (2*qda.spacing_qd_diag,
                        qda.spacing_qd_diag)
-uc_unitcell.build()
-
 # %% Add clavier gates
 
 clavier = qda_elements.add_clavier('clavier')
@@ -196,15 +179,14 @@ clavier.build()
 clavier_mirrored = qda_elements.add_copy(clavier, 'clavier_mirrored')
 clavier_mirrored.mirror = True
 clavier_mirrored.x = (spacing_qd + clavier.screen_length/2)
+
 clavier_mirrored.build()
 
 sl_clavier = qda.add_component()
 sl_clavier.component = clavier
-sl_clavier.build()
 
 sl_clavier_mirrored = qda.add_component()
 sl_clavier_mirrored.component = clavier_mirrored
-sl_clavier_mirrored.build()
 
 # clavier.plot()
 
@@ -216,7 +198,6 @@ screen_pl_2 = qda_elements.add_screening_gate('screening_gate_pl_2')
 
 # %% Fanout Generator
 
-qda.build()
 fo = qdd.FanoutGenerator('fanout', qda)
 
 fo.fanout_counts = {'top': 10, 'bottom': 10, 'left': 5, 'right': 5}
@@ -244,8 +225,6 @@ fo_pl_0.fo_line_fine.fine_fo_width_start = 40e-3
 fo_pl_0.fo_line_fine.points_along_path = [[0.25, 0.15, 'start'],
                                           [0.15, 0.8, 'prev']]
 
-fo_pl_0.build()
-
 fo.add_component(fo_pl_0)
 
 # %%%% Fanout plunger 1
@@ -258,7 +237,6 @@ fo_pl_1.n_fanout = 4
 fo_pl_1.fo_line_fine.fo_width_start = 40e-3
 fo_pl_1.fo_line_fine.points_along_path = [[0, -0.1, 'start'],
                                           [0, -0.7, 'prev']]
-fo_pl_1.build()
 fo.add_component(fo_pl_1)
 
 # %%%% Fanout plunger 2
@@ -271,7 +249,6 @@ fo_pl_2.fo = fo
 fo_pl_2.fo_line_fine.fo_width_start = 40e-3
 fo_pl_2.fo_line_fine.points_along_path = [[0, -0.1, 'start'],
                                           [0, -0.7, 'prev']]
-fo_pl_2.build()
 fo.add_component(fo_pl_2)
 
 # %%% Fanout barriers
@@ -289,7 +266,6 @@ fo_bar_1.fo_line_fine.points_along_path = [[0, -0.5, 'start'],
                                            # [0, 0.3, 'prev'],
                                            # [-0.15, 0.3, 'prev']
                                            ]
-fo_bar_1.build()
 fo.add_component(fo_bar_1)
 
 # %%%% Fanout bar 2
@@ -306,7 +282,6 @@ fo_bar_2.fo_line_fine.points_along_path = [[-0.1, 0.1, 'start'],
                                            [0, 0.5, 'prev'],
                                            # [-0.15, 0.3, 'prev']
                                            ]
-fo_bar_2.build()
 fo.add_component(fo_bar_2)
 
 # %%%% Fanout bar 3
@@ -323,7 +298,6 @@ fo_bar_3.fo_line_fine.points_along_path = [[0.1, 0.1, 'start'],
                                            [0, 0.3, 'prev'],
                                            [0.15, 0.3, 'prev']
                                            ]
-fo_bar_3.build()
 fo.add_component(fo_bar_3)
 
 # %%% Fanout sensor
@@ -339,7 +313,6 @@ fo_sens_pl_top.fo_line_fine.points_along_path = [[0, 0.8, 'start'],
                                                  # [0, pl_ver.diameter/2, 'prev'],
                                                  # [-0.2, 0.5, 'prev']
                                                  ]
-fo_sens_pl_top.build()
 fo.add_component(fo_sens_pl_top)
 
 # %%%% Fanout bar sens source
@@ -355,7 +328,6 @@ fo_sens_top_sou.fo_line_fine.points_along_path = [[0, 0.1, 'start'],
                                                   # [0, 0.3, 'prev'],
                                                   # [-0.15, 0.3, 'prev']
                                                   ]
-fo_sens_top_sou.build()
 fo.add_component(fo_sens_top_sou)
 
 # %%%% Fanout bar sens drain
@@ -371,7 +343,6 @@ fo_sens_top_dra.fo_line_fine.points_along_path = [[0, 0.7, 'start'],
                                                   # [0, 0.3, 'prev'],
                                                   # [-0.15, 0.3, 'prev']
                                                   ]
-fo_sens_top_dra.build()
 fo.add_component(fo_sens_top_dra)
 
 
@@ -388,7 +359,6 @@ fo_sens_top_sep.fo_line_fine.points_along_path = [[-0.2, 0, 'start'],
                                                   [0, 0.6, 'prev'],
                                                   # [-0.15, 0.3, 'prev']
                                                   ]
-fo_sens_top_sep.build()
 fo.add_component(fo_sens_top_sep)
 
 # %%% Fanout clavier
@@ -402,7 +372,6 @@ fo_clav_gate_1.fo = fo
 fo_clav_gate_1.fo_line_fine.fo_width_start = 100e-3
 fo_clav_gate_1.fo_line_fine.points_along_path = [[0, 1, 'start'],
                                                  [-0.4, 0.7, 'prev']]
-fo_clav_gate_1.build()
 fo.add_component(fo_clav_gate_1)
 
 # %%%% Fanout clavier gate top 2
@@ -414,7 +383,6 @@ fo_clav_gate_1.fo = fo
 
 fo_clav_gate_1.fo_line_fine.fo_width_start = 100e-3
 fo_clav_gate_1.fo_line_fine.points_along_path = [[0, 2, 'start']]
-fo_clav_gate_1.build()
 fo.add_component(fo_clav_gate_1)
 
 # %%%% Fanout clavier gate bottom 1
@@ -427,7 +395,6 @@ fo_clav_gate_1.fo = fo
 fo_clav_gate_1.fo_line_fine.fo_width_start = 100e-3
 fo_clav_gate_1.fo_line_fine.points_along_path = [[0, -1, 'start'],
                                                  [-0.4, -0.7, 'prev']]
-fo_clav_gate_1.build()
 fo.add_component(fo_clav_gate_1)
 
 # %%%% Fanout clavier gate bottom 2
@@ -439,98 +406,67 @@ fo_clav_gate_1.fo = fo
 
 fo_clav_gate_1.fo_line_fine.fo_width_start = 100e-3
 fo_clav_gate_1.fo_line_fine.points_along_path = [[0, -2, 'start']]
-fo_clav_gate_1.build()
 fo.add_component(fo_clav_gate_1)
-
-
-# %%% Build and Add fanout to qda
-
-fo.build()
-# fo_qda = qda.add_component()
-# fo_qda.component = fo
-# fo_qda.build()
 
 # %% Screening fanout
 # %%% Plunger 0 screening
 
-# screen_pl_0 = qda_elements.add_screening_gate('screening_gate_pl_0')
+screen_pl_0 = qda_elements.add_screening_gate('screening_gate_pl_0')
 
 screen_pl_0.qda_elements = qda_elements
 screen_pl_0.screen('plunger', 0, 0.1, 0.4, width=50e-3)
 screen_pl_0.layer = screening_layer
 
-screen_pl_0.build()
 
 screen_pl_0_qda = qda.add_component()
 screen_pl_0_qda.component = screen_pl_0
-screen_pl_0_qda.build()
 
 # %%% Plunger 1 screening
 
-# screen_pl_1 = qda_elements.add_screening_gate('screening_gate_pl_1')
+screen_pl_1 = qda_elements.add_screening_gate('screening_gate_pl_1')
 
 screen_pl_1.qda_elements = qda_elements
 screen_pl_1.screen('plunger', 1, 0.1, 0.4, width=50e-3)
 screen_pl_1.layer = screening_layer
 
-screen_pl_1.build()
 
 screen_pl_1_qda = qda.add_component()
 screen_pl_1_qda.component = screen_pl_1
-screen_pl_1_qda.build()
 
 # %%% Plunger 2 screening
 
-# screen_pl_2 = qda_elements.add_screening_gate('screening_gate_pl_2')
+screen_pl_2 = qda_elements.add_screening_gate('screening_gate_pl_2')
 
 screen_pl_2.qda_elements = qda_elements
 screen_pl_2.screen('plunger', 2, 0.1, 0.4, width=50e-3)
 screen_pl_2.layer = screening_layer
 
-screen_pl_2.build()
-
 screen_pl_2_qda = qda.add_component()
 screen_pl_2_qda.component = screen_pl_2
-screen_pl_2_qda.build()
-
 
 # %% Fanout plunger
 # First we have to update the quantum dot array with the screening gates
-# qda.build()
+qda.build()
 
 # %%% Fanout Plunger 0 screening
-# fo_screen_0 = qda_elements.add_fo_line('screening_gate_pl_0', 0)
+fo_screen_0 = qda_elements.add_fo_line('screening_gate_pl_0', 0)
 
-# fo_screen_0.fo_direction = 'top'
-# fo_screen_0.n_fanout = 7
-# fo_screen_0.fo = fo
+fo_screen_0.fo_direction = 'top'
+fo_screen_0.n_fanout = 7
+fo_screen_0.fo = fo
+fo_screen_0.start_offset = list(screen_pl_0.vertices[0][-2])
+fo_screen_0.start_offset[0] = fo_screen_0.start_offset[0] - 0.012
 
-# fo_screen_0.fo_line_fine.fo_width_start = 50e-3
-# fo_screen_0.fo_line_fine.points_along_path = [[0, 2, 'start']]
-# fo_screen_0.build()
+fo_screen_0.fo_line_fine.fo_width_start = 40e-3
+fo_screen_0.fo_line_fine.points_along_path = [[-0.05, 0.2, 'start'],
+                                              [0, 0.55, 'prev']]
+fo.add_component(fo_screen_0)
 
-# qda_fo_screen_0 = fo.add_component(fo_screen_0)
-# qda_fo_screen_0.component = fo_screen_0
-# qda_fo_screen_0.build()
-
-# %%% barrier 0 screening
-
-# screen_bar_3 = qda_elements.add_screening_gate('screening_gate_bar_0')
-
-# screen_bar_3.qda_elements = qda_elements
-# screen_bar_3.screen('barrier_3', 0, 0.1, 0.48, width=50e-3)
-# screen_bar_3.build()
-
-# screen_bar_3_qda = qda.add_component()
-# screen_bar_3_qda.component = screen_bar_3
-# screen_bar_3_qda.build()
 
 # %%% Build and Add fanout to qda
 
-fo.build()
 fo_qda = qda.add_component()
 fo_qda.component = fo
-fo_qda.build()
 
 # %% Build and save
 

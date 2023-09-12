@@ -1005,6 +1005,8 @@ class QuantumDotArrayElements:
         return fanout_line
 
     def add_copy(self, component, copy_name):
+        # if not component.built:
+        #     component.build()
         attributes = copy.copy(vars(component))
         attributes.pop('name')
         attributes.pop('cell')
@@ -1234,7 +1236,7 @@ class QuantumDotArray(PlotMixin):
         """
         elements = {}
         for cell in self.components.values():
-            if not cell._built:
+            if not cell.built:
                 cell.build()
             elements = merge_device_positions(elements, cell.elements)
             if isinstance(cell, Sublattice):
