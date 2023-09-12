@@ -165,11 +165,9 @@ sensor_left.drain_pos = 'bottom'
 
 # %% add sensor to unit cell
 
-unit_cell.ylim = (qda.spacing_qd_diag/2 +
-                  pl_ver.diameter/2 *
-                  pl_ver.asymy)
+unit_cell_ylim = (qda.spacing_qd_diag/2 + pl_ver.diameter/2 * pl_ver.asymy)
 
-sensor_pos_uniy = (unit_cell.ylim+sensor_top.gap_sep +
+sensor_pos_uniy = (unit_cell_ylim+sensor_top.gap_sep +
                    sensor_top.plunger.diameter/2 *
                    sensor_top.plunger.asymy)
 
@@ -185,8 +183,6 @@ uc_sb.center = (-sensor_pos_unix, -sensor_pos_uniy)
 
 # %% Add unit cell to main cell
 
-unit_cell.build()
-
 uc_unitcell = qda.add_component()
 uc_unitcell.component = unit_cell
 uc_unitcell.center = (0, 0)
@@ -194,11 +190,12 @@ uc_unitcell.rows = 1
 uc_unitcell.columns = 1
 uc_unitcell.spacing = (2*qda.spacing_qd_diag,
                        qda.spacing_qd_diag)
-uc_unitcell.build()
 
 # %% Sensor positions
 
-sensor_pos_x = (uc_unitcell.xlim[1] +
+unit_cell_xlim = (qda.spacing_qd_diag + pl_hor.diameter/2 * pl_hor.asymx)
+
+sensor_pos_x = (unit_cell_xlim +
                 sensor_right.gap_sep +
                 sensor_right.plunger.diameter/2 *
                 sensor_right.plunger.asymx)
@@ -213,7 +210,6 @@ uc_sl.center = (-sensor_pos_x, 0)
 
 # %% Fanout Generator
 
-qda.build()
 fo = qdd.FanoutGenerator('fanout', qda)
 
 fo.fanout_counts = {'top': 10, 'bottom': 10, 'left': 5, 'right': 5}

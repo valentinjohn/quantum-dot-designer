@@ -1091,8 +1091,8 @@ class UnitCell(PlotMixin):
         self.elements = {}
         self.components = {}
         self.cell = gdstk.Cell(name)
-        self.xlim = None
-        self.ylim = None
+        self._xlim = None
+        self._ylim = None
         self._n = 0
         self._built = False
 
@@ -1141,9 +1141,21 @@ class UnitCell(PlotMixin):
             cell_max = max(cell_max, poly_max)
             cell_min = min(cell_min, poly_min)
         if axis:
-            self.ylim = (cell_min, cell_max)
+            self._ylim = (cell_min, cell_max)
         else:
-            self.xlim = (cell_min, cell_max)
+            self._xlim = (cell_min, cell_max)
+
+    @property
+    def xlim(self):
+        if not self.built:
+            self.build()
+        return self._xlim
+
+    @property
+    def ylim(self):
+        if not self.built:
+            self.build()
+        return self._ylim
 
     def build(self):
         """
@@ -1250,6 +1262,8 @@ class QuantumDotArray(PlotMixin):
 
 class FanoutGenerator():
     def __init__(self, name, qda):
+        if not qda.built:
+            qda.build()
         self.name = name
         self.qda = qda
         self.elements = {}
