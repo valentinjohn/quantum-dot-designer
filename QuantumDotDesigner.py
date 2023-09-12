@@ -782,7 +782,13 @@ def create_segmented_path(path, start_length, end_length, width=None, relative_w
 
 
 class PlotMixin:
-    def plot(self, ax=None):
+    def plot(self, ax=None, build=False):
+        if not self._built:
+            if build:
+                self.build()
+            else:
+                raise Exception(
+                    'Copmonent not built yet, and therefore cannot be plotted.')
         # If no axis is provided, create one
         if ax is None:
             fig, ax = plt.subplots()
@@ -1145,8 +1151,11 @@ class UnitCell(PlotMixin):
 
         This method adds the sublattices to the unit cell's cell object.
         """
+
         elements = {}
         for cell in self.components.values():
+            if not cell._built:
+                cell.build()
             self.cell.add(gdstk.Reference(cell.cell))
             elements = merge_device_positions(elements, cell.elements)
         self.elements = elements
@@ -1175,6 +1184,11 @@ class QuantumDotArray(PlotMixin):
         self.main_cell = gdstk.Cell('MAIN')
         self._n = 0
         self.chip_layout_path = "chip_layout.gds"
+        self._built = False
+
+    @property
+    def built(self):
+        return self._built
 
     def add_component(self):
         """
@@ -1208,6 +1222,8 @@ class QuantumDotArray(PlotMixin):
         """
         elements = {}
         for cell in self.components.values():
+            if not cell._built:
+                cell.build()
             elements = merge_device_positions(elements, cell.elements)
             if isinstance(cell, Sublattice):
                 self.main_cell.add(gdstk.Reference(cell.cell))
@@ -1216,6 +1232,7 @@ class QuantumDotArray(PlotMixin):
                     self.main_cell.add(gdstk.Reference(c.cell))
         self.main_cell.flatten()
         self.elements = elements
+        self._built = True
 
     def save_as_gds(self, filename):
         """
@@ -1252,6 +1269,11 @@ class FanoutGenerator():
                              'left': (400, 110), 'right': (400, 110)}
         self._n = 0
         self.fanout_positions = None
+        self._built = False
+
+    @property
+    def built(self):
+        return self._built
 
     def create_fo_polygons_coarse(self):
         polygons = {}
@@ -1313,6 +1335,8 @@ class FanoutGenerator():
         self._n = self._n + 1
         sublattice = Sublattice(name)
         if component is not None:
+            if not component._built:
+                component.build()
             sublattice.component = component
             if build:
                 sublattice.build()
@@ -1326,11 +1350,14 @@ class FanoutGenerator():
     def build(self):
         elements = {}
         for cell in self.components.values():
+            if not cell._built:
+                cell.build()
             self.cell.add(gdstk.Reference(cell.component.cell))
             elements = merge_device_positions(
                 elements, cell.component.elements)
         self.elements = elements
         self.cell.flatten()
+        self._built = True
 
 # %% Elements
 
@@ -2104,6 +2131,9 @@ class Sublattice(PlotMixin):
         Build the sublattice cell by adding the element references to the
         sublattice cell.
         """
+        if not self.component.built:
+            self.component.build()
+
         self._update_height()
         self._update_width()
         cell = gdstk.Cell(self.name)

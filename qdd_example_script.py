@@ -39,9 +39,6 @@ pl_hor.asym = 1.1
 pl_hor.diameter = 100e-3
 pl_hor.layer = 21
 
-pl_ver.build()
-pl_hor.build()
-
 # %% define barriers
 
 bar_45deg = qda_elements.add_barrier('barrier_45deg_rotated')
@@ -58,11 +55,6 @@ bar_225deg.rotate = -3/4*np.pi + 1/16*np.pi
 
 bar_315deg = qda_elements.add_copy(bar_45deg, 'barrier_315deg_rotated')
 bar_315deg.rotate = -1/4*np.pi - 1/16*np.pi
-
-bar_45deg.build()
-bar_135deg.build()
-bar_225deg.build()
-bar_315deg.build()
 
 # %% define unit cell
 
@@ -109,13 +101,8 @@ uc_bar_315deg.center = (+1.15*qda.spacing_qd_diag/4, -qda.spacing_qd_diag/4)
 uc_bar_315deg.columns = 2
 uc_bar_315deg.spacing = (qda.spacing_qd_diag, qda.spacing_qd_diag)
 
-uc_pl_ver.build()
-uc_pl_hor.build()
-
-uc_bar_135deg.build()
-uc_bar_45deg.build()
-uc_bar_315deg.build()
-uc_bar_225deg.build()
+# uc_pl_ver.build()
+# uc_pl_hor.build()
 
 # %% define sensor
 
@@ -177,12 +164,7 @@ sensor_left.sep_pos = 'right'
 sensor_left.source_pos = 'top'
 sensor_left.drain_pos = 'bottom'
 
-sensor_top.build()
-sensor_bottom.build()
-sensor_right.build()
-sensor_left.build()
-
-sensor_top.plot()
+# sensor_top.plot(build=True)
 
 # %% add sensor to unit cell
 
@@ -199,12 +181,10 @@ sensor_pos_unix = qda.spacing_qd_diag/2
 uc_st = unit_cell.add_component()
 uc_st.component = sensor_top
 uc_st.center = (sensor_pos_unix, sensor_pos_uniy)
-uc_st.build()
 
 uc_sb = unit_cell.add_component()
 uc_sb.component = sensor_bottom
 uc_sb.center = (-sensor_pos_unix, -sensor_pos_uniy)
-uc_sb.build()
 
 # %% Add unit cell to main cell
 
@@ -229,12 +209,10 @@ sensor_pos_x = (uc_unitcell.xlim[1] +
 uc_sr = qda.add_component()
 uc_sr.component = sensor_right
 uc_sr.center = (sensor_pos_x, 0)
-uc_sr.build()
 
 uc_sl = qda.add_component()
 uc_sl.component = sensor_left
 uc_sl.center = (-sensor_pos_x, 0)
-uc_sl.build()
 
 # %% Fanout Generator
 
@@ -264,7 +242,6 @@ fo_pl_ver_0.fo = fo
 fo_pl_ver_0.fo_line_fine.fo_width_start = 40e-3
 fo_pl_ver_0.fo_line_fine.points_along_path = [[-0.15, 0.3, 'start'],
                                               [-0.4, 0.7, 'start']]
-fo_pl_ver_0.build()
 fo.add_component(fo_pl_ver_0)
 
 # %% Fanout plunger ver 1
@@ -278,7 +255,6 @@ fo_pl_ver_1.fo_line_fine.fo_width_start = 40e-3
 fo_pl_ver_1.fo_line_fine.points_along_path = [[-qda.spacing_qd_diag/2, 0, 'start'],
                                               [0, pl_ver.diameter/2, 'prev'],
                                               [-0.2, 0.5, 'prev']]
-fo_pl_ver_1.build()
 fo.add_component(fo_pl_ver_1)
 
 # %% Fanout bar 45deg 0
@@ -293,7 +269,6 @@ fo_bar_45deg_0.fo_line_fine.points_along_path = [[0.01, 0.015, 'start'],
                                                  [0.01, 0.05, 'start'],
                                                  [0, 0.08, 'prev'],
                                                  [-0.15, 0.3, 'prev']]
-fo_bar_45deg_0.build()
 fo.add_component(fo_bar_45deg_0)
 
 # %% Fanout sensor plunger top
@@ -308,7 +283,6 @@ fo_sens_pl_top.fo_line_fine.points_along_path = [[0, 0.8, 'start'],
                                                  # [0, pl_ver.diameter/2, 'prev'],
                                                  # [-0.2, 0.5, 'prev']
                                                  ]
-fo_sens_pl_top.build()
 fo.add_component(fo_sens_pl_top)
 
 # %% Fanout sensor source top
@@ -324,7 +298,6 @@ fo_sens_pl_top.fo_line_fine.points_along_path = [[0.25, 0.8, 'start'],
                                                  # [0, pl_ver.diameter/2, 'prev'],
                                                  # [-0.2, 0.5, 'prev']
                                                  ]
-fo_sens_pl_top.build()
 fo.add_component(fo_sens_pl_top)
 
 # %% Fanout sensor plunger bottom
@@ -339,7 +312,6 @@ fo_sens_pl_bottom.fo_line_fine.points_along_path = [[0, -0.8, 'start'],
                                                     # [0, pl_ver.diameter/2, 'prev'],
                                                     # [-0.2, 0.5, 'prev']
                                                     ]
-fo_sens_pl_bottom.build()
 fo.add_component(fo_sens_pl_bottom)
 
 # %% Fanout sensor plunger right
@@ -355,7 +327,6 @@ fo_sens_pl_right.fo_line_fine.points_along_path = [[0.8, 0, 'start'],
                                                    # [0, pl_ver.diameter/2, 'prev'],
                                                    # [-0.2, 0.5, 'prev']
                                                    ]
-fo_sens_pl_right.build()
 fo.add_component(fo_sens_pl_right)
 
 # %% Fanout sensor plunger left
@@ -370,15 +341,12 @@ fo_sens_pl_left.fo_line_fine.points_along_path = [[-0.8, 0, 'start'],
                                                   # [0, pl_ver.diameter/2, 'prev'],
                                                   # [-0.2, 0.5, 'prev']
                                                   ]
-fo_sens_pl_left.build()
 fo.add_component(fo_sens_pl_left)
 
 # %% Build and Add fanout to qda
 
-fo.build()
 fo_qda = qda.add_component()
 fo_qda.component = fo
-fo_qda.build()
 
 # %% Build and save
 
