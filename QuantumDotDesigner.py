@@ -1447,25 +1447,33 @@ class Plunger(Element):
         super().__init__(name)
         self.layer = 21
         self.diameter = None
-        self.asym = 1.0
-        self._asymx = self.asym
-        self._asymy = 1 / self.asym
+        self._asymx = 1
+        self._asymy = 1 / self._asymx
 
-    def _update_asym(self, asym):
-        """
-        Update the asymmetry of the plunger.
+    @property
+    def asymx(self):
+        return self._asymx
 
-        Args:
-            asym (float): Asymmetry value.
-        """
-        self._asymx = asym
-        self._asymy = 1 / asym
+    @asymx.setter
+    def asymx(self, value):
+        if value != 0:  # to avoid division by zero
+            self._asymx = value
+            self._asymy = 1 / self._asymx
+
+    @property
+    def asymy(self):
+        return self._asymy
+
+    @asymy.setter
+    def asymy(self, value):
+        if value != 0:  # to avoid division by zero
+            self._asymy = value
+            self._asymx = 1 / self._asymy
 
     def build(self):
         """
         Build the plunger element.
         """
-        self._update_asym(self.asym)
         pl_points = gen_poly(8)
         pl = gdstk.Polygon(pl_points, layer=self.layer)
         pl.scale(0.5 / np.cos(np.pi / 8) * self.diameter)

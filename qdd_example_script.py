@@ -30,12 +30,12 @@ clav_gate_2_layer = 7
 # %% define plungers
 
 pl_ver = qda_elements.add_plunger('plunger_vertically_elongated')
-pl_ver.asym = 0.8
+pl_ver.asymx = 0.8
 pl_ver.diameter = 150e-3
 pl_ver.layer = 21
 
 pl_hor = qda_elements.add_plunger('plunger_horizontally_elongated')
-pl_hor.asym = 1.1
+pl_hor.asymx = 1.1
 pl_hor.diameter = 100e-3
 pl_hor.layer = 21
 
@@ -100,9 +100,6 @@ uc_bar_315deg.component = bar_315deg
 uc_bar_315deg.center = (+1.15*qda.spacing_qd_diag/4, -qda.spacing_qd_diag/4)
 uc_bar_315deg.columns = 2
 uc_bar_315deg.spacing = (qda.spacing_qd_diag, qda.spacing_qd_diag)
-
-# uc_pl_ver.build()
-# uc_pl_hor.build()
 
 # %% define sensor
 
@@ -170,11 +167,11 @@ sensor_left.drain_pos = 'bottom'
 
 unit_cell.ylim = (qda.spacing_qd_diag/2 +
                   pl_ver.diameter/2 *
-                  pl_ver._asymy)
+                  pl_ver.asymy)
 
 sensor_pos_uniy = (unit_cell.ylim+sensor_top.gap_sep +
                    sensor_top.plunger.diameter/2 *
-                   sensor_top.plunger._asymy)
+                   sensor_top.plunger.asymy)
 
 sensor_pos_unix = qda.spacing_qd_diag/2
 
@@ -204,7 +201,7 @@ uc_unitcell.build()
 sensor_pos_x = (uc_unitcell.xlim[1] +
                 sensor_right.gap_sep +
                 sensor_right.plunger.diameter/2 *
-                sensor_right.plunger._asymx)
+                sensor_right.plunger.asymx)
 
 uc_sr = qda.add_component()
 uc_sr.component = sensor_right
