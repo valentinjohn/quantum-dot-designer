@@ -123,11 +123,21 @@ qda_elements.spacing_sep = 60e-3
 
 sensor_top = qda_elements.add_sensor('sensor_top')
 
-sensor_top.sep_pos = 5/8*np.pi
-sensor_top.source_pos = -7/8*np.pi
-sensor_top.drain_pos = 3/8*np.pi
-sensor_top.bar_drain_end = 'clockwise'
-sensor_top.bar_source_end = 'counter-clockwise'
+# for the positioning of the sensor element you can either indicate 'top',
+# 'bottom', 'top-right', etc ...., or you indiacte the angle with 'top'
+# corresponding to 0, 'top-right' corresponding to np.pi/4, etc ...
+sensor_top.sep_pos = 'bottom'
+# sensor_top.sep_pos_angle = 1/8*np.pi
+# sensor_top.source_pos = 'right'
+sensor_top.source_pos_angle = 3/8*np.pi
+# sensor_top.drain_pos = 'left'  # 1/8*np.pi
+sensor_top.drain_pos_angle = -3/8*np.pi
+
+# the orientation of the sensor elements is indicated by the direction in
+# which the end of the element points to, This can be either clockwise or
+# counterclockwise
+sensor_top.bar_drain_end = 'counterclockwise'
+sensor_top.bar_source_end = 'clockwise'
 sensor_top.bar_sep_end = 'clockwise'
 
 sensor_top.gap_sep = 60e-3
@@ -154,30 +164,18 @@ sensor_top.drain.layer = ohmic_layer
 
 sensor_bottom = qda_elements.add_copy(sensor_top, 'sensor_bottom')
 sensor_bottom.sep_pos = 'top'
-sensor_bottom.source.ohmic_pos = 'left'
-sensor_bottom.source.sensor_pos = 'bottom'
-sensor_bottom.drain.ohmic_pos = 'right'
-sensor_bottom.drain.sensor_pos = 'bottom'
+sensor_bottom.source_pos = 'left'
+sensor_bottom.drain_pos = 'right'
 
 sensor_right = qda_elements.add_copy(sensor_top, 'sensor_right')
 sensor_right.sep_pos = 'left'
-# sensor_right.sensor_pos = 'right'
-sensor_right.source.sensor_pos = 'right'  # redundant
-sensor_right.drain.sensor_pos = 'right'  # redundant
-sensor_right.source_pos = 'top'
-sensor_right.drain_pos = 'bottom'
-sensor_right.source.ohmic_pos = sensor_right.source_pos  # redundant
-sensor_right.drain.ohmic_pos = sensor_right.drain_pos  # redundant
+sensor_right.source_pos = 'bottom'
+sensor_right.drain_pos = 'top'
 
 sensor_left = qda_elements.add_copy(sensor_top, 'sensor_left')
 sensor_left.sep_pos = 'right'
-# sensor_left.sensor_pos = 'right'
-sensor_left.source.sensor_pos = 'left'  # redundant
-sensor_left.drain.sensor_pos = 'left'  # redundant
 sensor_left.source_pos = 'top'
 sensor_left.drain_pos = 'bottom'
-sensor_left.source.ohmic_pos = sensor_right.source_pos  # redundant
-sensor_left.drain.ohmic_pos = sensor_right.drain_pos  # redundant
 
 sensor_top.build()
 sensor_bottom.build()

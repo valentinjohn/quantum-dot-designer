@@ -1624,9 +1624,12 @@ class Sensor(UnitCell):
             f'{name}_barrier_seperation')
         self.gap_ohmic_pl = 40
         self.gap_sep = 40
-        self.source_pos = 'left'
-        self.drain_pos = 'right'
-        self.sep_pos = 'bottom'
+        self.source_pos = None
+        self.source_pos_angle = None
+        self.drain_pos = None
+        self.drain_pos_angle = None
+        self.sep_pos = None
+        self.sep_pos_angle = None
         self.bar_drain_end = 'clockwise'
         self.bar_source_end = 'counter-clockwise'
         self.bar_sep_end = 'clockwise'
@@ -1642,33 +1645,36 @@ class Sensor(UnitCell):
         self.bar_position = None
         self.sep_position = None
         self.components_position = {}
-        self._orientation_dict = {'top': (0, 1), 'right': (1, 0),
-                                  'bottom': (0, -1), 'left': (-1, 0),
-                                  'top-right': (2**0.5/2, 2**0.5/2),
-                                  'bottom-right': (2**0.5/2, -2**0.5/2),
-                                  'bottom-left': (-2**0.5/2, -2**0.5/2),
-                                  'top-left': (-2**0.5/2, 2**0.5/2)}
-
-        self._bar_angle_dict = {'top': np.pi, 'right': -np.pi/2,
-                                'bottom': np.pi, 'left': +np.pi/2,
+        self._bar_angle_dict = {'top': 0, 'right': np.pi/2,
+                                'bottom': np.pi, 'left': -np.pi/2,
                                 'top-right': np.pi/4,
-                                'bottom-right': np.pi/4,
-                                'bottom-left': 3*np.pi/4,
-                                'top-left': -3*np.pi/4}
+                                'bottom-right': 3/4*np.pi,
+                                'bottom-left': -3/4*np.pi,
+                                'top-left': -1/4*np.pi}
 
     def _calculate_positions(self):
-        if isinstance(self.source_pos, str):
-            (i, j) = self._orientation_dict[self.source_pos]
+        if self.source_pos:
+            self.source_pos_angle = self._bar_angle_dict[self.source_pos]
         else:
-            (i, j) = (np.sin(self.source_pos), np.cos(self.source_pos))
-        if isinstance(self.drain_pos, str):
-            (m, n) = self._orientation_dict[self.drain_pos]
+            if self.source_pos_angle == None:
+                raise Exception(
+                    f'Either {self}.source_pos with "top", "bottom", ... or {self}.source_pos_angle with an angle in rad has to be defined, but both are None.')
+        if self.drain_pos:
+            self.drain_pos_angle = self._bar_angle_dict[self.drain_pos]
         else:
-            (m, n) = (np.sin(self.drain_pos), np.cos(self.drain_pos))
-        if isinstance(self.sep_pos, str):
-            (u, v) = self._orientation_dict[self.sep_pos]
+            if self.drain_pos_angle == None:
+                raise Exception(
+                    f'Either {self}.drain_pos with "top", "bottom", ... or {self}.drain_pos_angle with an angle in rad has to be defined, but both are None.')
+        if self.sep_pos:
+            self.sep_pos_angle = self._bar_angle_dict[self.sep_pos]
         else:
-            (u, v) = (np.sin(self.sep_pos), np.cos(self.sep_pos))
+            if self.sep_pos_angle == None:
+                raise Exception(
+                    f'Either {self}.sep_pos with "top", "bottom", ... or {self}.sep_pos_angle with an angle in rad has to be defined, but both are None.')
+
+        (i, j) = (np.sin(self.source_pos_angle), np.cos(self.source_pos_angle))
+        (m, n) = (np.sin(self.drain_pos_angle), np.cos(self.drain_pos_angle))
+        (u, v) = (np.sin(self.sep_pos_angle), np.cos(self.sep_pos_angle))
 
         plunger = self.plunger
         bar_source = self.barrier_source
@@ -1704,8 +1710,8 @@ class Sensor(UnitCell):
                 bar_drain.width/2 - self.__feature_gap) +
              self.bar_dra_position_offset[1]))
 
-        self.sep_position = (u*(plunger._asymx*plunger.diameter/2+self.gap_sep/2),
-                             v*(plunger._asymy*plunger.diameter/2+self.gap_sep/2))
+        self.sep_pos_angleition = (u*(plunger._asymx*plunger.diameter/2+self.gap_sep/2),
+                                   v*(plunger._asymy*plunger.diameter/2+self.gap_sep/2))
 
     def _set_barrier_properties(self):
         source = self.source
@@ -1714,39 +1720,56 @@ class Sensor(UnitCell):
         bar_drain = self.barrier_drain
         bar_sep = self.barrier_sep
 
-        source.sensor_pos = 'top'
-        source.ohmic_pos = 'left'
-        drain.sensor_pos = 'top'
-        drain.ohmic_pos = 'right'
+        if self.bar_drain_end == 'clockwise':
+            drain.sensor_pos = 'top'
+            drain.ohmic_pos = 'right'
+        else:
+            drain.sensor_pos = 'bottom'
+            drain.ohmic_pos = 'right'
+
+        if self.bar_source_end == 'clockwise':
+            source.sensor_pos = 'top'
+            source.ohmic_pos = 'right'
+        else:
+            source.sensor_pos = 'bottom'
+            source.ohmic_pos = 'right'
 
         bar_drain_angle_offset = 0
+        multiplier_bar_drain = 1
         if self.bar_drain_end == 'clockwise':
             bar_drain_angle_offset = np.pi
+            multiplier_bar_drain = -1
 
         bar_source_angle_offset = 0
+        multiplier_bar_source = 1
         if self.bar_source_end == 'clockwise':
             bar_source_angle_offset = np.pi
+            multiplier_bar_source = -1
 
         bar_sep_angle_offset = 0
         if self.bar_sep_end == 'clockwise':
             bar_sep_angle_offset = np.pi
 
-        if isinstance(self.source_pos, str):
-            bar_source.rotate = self._bar_angle_dict[self.source_pos]
-            source.rotate = self._bar_angle_dict[self.source_pos]
-        else:
-            bar_source.rotate = -self.source_pos+bar_source_angle_offset
-            source.rotate = -self.source_pos+bar_source_angle_offset-np.pi/2
-        if isinstance(self.drain_pos, str):
-            bar_drain.rotate = -self._bar_angle_dict[self.drain_pos]
-            drain.rotate = self._bar_angle_dict[self.drain_pos]
-        else:
-            bar_drain.rotate = -self.drain_pos+bar_drain_angle_offset
-            drain.rotate = -self.drain_pos+bar_drain_angle_offset-np.pi/2
-        if isinstance(self.sep_pos, str):
-            bar_sep.rotate = self._bar_angle_dict[self.sep_pos]
-        else:
-            bar_sep.rotate = -self.sep_pos+bar_sep_angle_offset
+        # if isinstance(self.source_pos_angle, str):
+        #     bar_source.rotate = self._bar_angle_dict[self.source_pos_angle]
+        #     source.rotate = (self._bar_angle_dict[self.source_pos_angle] +
+        #                      multiplier_bar_source*np.pi/2)
+        # else:
+        bar_source.rotate = -self.source_pos_angle+bar_source_angle_offset
+        source.rotate = (-self.source_pos_angle+bar_source_angle_offset +
+                         multiplier_bar_source*np.pi/2)
+        # if isinstance(self.drain_pos_angle, str):
+        #     bar_drain.rotate = -self._bar_angle_dict[self.drain_pos_angle]
+        #     drain.rotate = (self._bar_angle_dict[self.drain_pos_angle] -
+        #                     multiplier_bar_drain*np.pi/2)
+        # else:
+        bar_drain.rotate = -self.drain_pos_angle+bar_drain_angle_offset
+        drain.rotate = (-self.drain_pos_angle+bar_drain_angle_offset +
+                        multiplier_bar_drain*np.pi/2)
+        # if isinstance(self.sep_pos_angle, str):
+        #     bar_sep.rotate = self._bar_angle_dict[self.sep_pos_angle]
+        # else:
+        bar_sep.rotate = -self.sep_pos_angle+bar_sep_angle_offset
 
     def _build_and_add_elements(self):
         self.plunger.build()
@@ -1767,7 +1790,7 @@ class Sensor(UnitCell):
         sl_bd.build()
 
         sl_bsep = self.add_component(self.barrier_sep)
-        sl_bsep.center = self.sep_position
+        sl_bsep.center = self.sep_pos_angleition
         sl_bsep.build()
 
         sl_source = self.add_component(self.source)

@@ -102,9 +102,16 @@ uc_bar_3.build()
 # %% define sensor
 
 sensor_top = qda_elements.add_sensor('sensor_top')
+sensor_top = qda_elements.add_sensor('sensor_top')
+
+sensor_top.sep_pos = 'bottom'
 sensor_top.source_pos = 'left'
 sensor_top.drain_pos = 'right'
-sensor_top.sep_pos = 'bottom'
+
+sensor_top.bar_drain_end = 'clockwise'
+sensor_top.bar_source_end = 'counterclockwise'
+sensor_top.bar_sep_end = 'clockwise'
+
 sensor_top.gap_sep = 60e-3
 sensor_top.gap_ohmic_pl = 40e-3
 
@@ -123,12 +130,7 @@ sensor_top.barrier_sep.width = 50e-3
 sensor_top.barrier_sep.length = 60e-3
 sensor_top.barrier_sep.layer = barrier_layer
 
-sensor_top.source.ohmic_pos = 'left'
-sensor_top.source.sensor_pos = 'top'
 sensor_top.source.layer = ohmic_layer
-
-sensor_top.drain.ohmic_pos = 'right'
-sensor_top.drain.sensor_pos = 'top'
 sensor_top.drain.layer = ohmic_layer
 
 sensor_top.build()
