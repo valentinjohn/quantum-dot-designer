@@ -2294,6 +2294,7 @@ class FanOutLine(UnitCell):
         self.fillet = 0
         self.fillet_tolerance = 1e-3
         self.elements = {}
+        self.start_offset = (0, 0)
         # self.fine_fo_width_start = 40e-3
         # self.fine_fo_start = None
         # self.fine_fo_end = None
@@ -2342,6 +2343,10 @@ class FanOutLine(UnitCell):
         if not any(attr is None for attr in [self.fo_direction, self.n_fanout, self.fo]):
             self.fo_line_fine.fo_start = self.fo.qda.elements[
                 self.element_name]['positions'][self.element_number]
+            self.fo_line_fine.fo_start[0] = (self.fo_line_fine.fo_start[0] +
+                                             self.start_offset[0])
+            self.fo_line_fine.fo_start[1] = (self.fo_line_fine.fo_start[1] +
+                                             self.start_offset[1])
             self.fo_line_fine.fo_end = self.fo.get_fo_overlap_points(self.n_fanout,
                                                                      self.fo_direction)
 

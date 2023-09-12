@@ -311,6 +311,22 @@ fo_sens_pl_top.fo_line_fine.points_along_path = [[0, 0.8, 'start'],
 fo_sens_pl_top.build()
 fo.add_component(fo_sens_pl_top)
 
+# %% Fanout sensor source top
+fo_sens_pl_top = qda_elements.add_fo_line('sensor_top_source', 0)
+
+fo_sens_pl_top.fo_direction = 'top'
+fo_sens_pl_top.n_fanout = 6
+fo_sens_pl_top.start_offset = (0.01, 0.02)
+fo_sens_pl_top.fo = fo
+
+fo_sens_pl_top.fo_line_fine.fo_width_start = 50e-3
+fo_sens_pl_top.fo_line_fine.points_along_path = [[0.25, 0.8, 'start'],
+                                                 # [0, pl_ver.diameter/2, 'prev'],
+                                                 # [-0.2, 0.5, 'prev']
+                                                 ]
+fo_sens_pl_top.build()
+fo.add_component(fo_sens_pl_top)
+
 # %% Fanout sensor plunger bottom
 fo_sens_pl_bottom = qda_elements.add_fo_line('sensor_bottom_plunger', 0)
 
