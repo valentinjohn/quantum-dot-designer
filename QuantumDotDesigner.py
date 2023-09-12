@@ -343,8 +343,6 @@ def merge_device_positions(dict1, dict2):
         if key in merged:
             # Check if the vertices are the same
             if not np.array_equal(merged[key]['vertices'], value['vertices']):
-                print(merged[key]['vertices'])
-                print(value['vertices'])
                 raise ValueError(
                     f"The vertices for key '{key}' are different between the two dictionaries.")
 
@@ -1549,6 +1547,7 @@ class Ohmic(Element):
         self.contact_width = 0.05
         self.sensor_pos = 'top'
         self.ohmic_pos = 'right'
+        self.rotate = 0
         self.vertices = None
 
     def compute_ohmic_vertices(self):
@@ -1594,6 +1593,7 @@ class Ohmic(Element):
         self.compute_ohmic_vertices()
         ohmic = gdstk.Polygon(self.vertices, layer=self.layer)
         ohmic.fillet(self.fillet, tolerance=self.fillet_tolerance)
+        ohmic.rotate(self.rotate)
         cell = gdstk.Cell(self.name)
         cell.add(ohmic)
         self.elements[self.name]['vertices'] = ohmic.points
@@ -1627,6 +1627,9 @@ class Sensor(UnitCell):
         self.source_pos = 'left'
         self.drain_pos = 'right'
         self.sep_pos = 'bottom'
+        self.bar_drain_end = 'clockwise'
+        self.bar_source_end = 'counter-clockwise'
+        self.bar_sep_end = 'clockwise'
         self.source_position_offset = (0, 0)
         self.drain_position_offset = (0, 0)
         self.bar_sou_position_offset = (0, 0)
@@ -1648,15 +1651,24 @@ class Sensor(UnitCell):
 
         self._bar_angle_dict = {'top': np.pi, 'right': -np.pi/2,
                                 'bottom': np.pi, 'left': +np.pi/2,
-                                'top-right': -np.pi/4,
+                                'top-right': np.pi/4,
                                 'bottom-right': np.pi/4,
                                 'bottom-left': 3*np.pi/4,
                                 'top-left': -3*np.pi/4}
 
     def _calculate_positions(self):
-        (i, j) = self._orientation_dict[self.source_pos]
-        (m, n) = self._orientation_dict[self.drain_pos]
-        (u, v) = self._orientation_dict[self.sep_pos]
+        if isinstance(self.source_pos, str):
+            (i, j) = self._orientation_dict[self.source_pos]
+        else:
+            (i, j) = (np.sin(self.source_pos), np.cos(self.source_pos))
+        if isinstance(self.drain_pos, str):
+            (m, n) = self._orientation_dict[self.drain_pos]
+        else:
+            (m, n) = (np.sin(self.drain_pos), np.cos(self.drain_pos))
+        if isinstance(self.sep_pos, str):
+            (u, v) = self._orientation_dict[self.sep_pos]
+        else:
+            (u, v) = (np.sin(self.sep_pos), np.cos(self.sep_pos))
 
         plunger = self.plunger
         bar_source = self.barrier_source
@@ -1696,13 +1708,45 @@ class Sensor(UnitCell):
                              v*(plunger._asymy*plunger.diameter/2+self.gap_sep/2))
 
     def _set_barrier_properties(self):
+        source = self.source
+        drain = self.drain
         bar_source = self.barrier_source
         bar_drain = self.barrier_drain
         bar_sep = self.barrier_sep
 
-        bar_source.rotate = self._bar_angle_dict[self.source_pos]
-        bar_drain.rotate = -self._bar_angle_dict[self.drain_pos]
-        bar_sep.rotate = self._bar_angle_dict[self.sep_pos]
+        source.sensor_pos = 'top'
+        source.ohmic_pos = 'left'
+        drain.sensor_pos = 'top'
+        drain.ohmic_pos = 'right'
+
+        bar_drain_angle_offset = 0
+        if self.bar_drain_end == 'clockwise':
+            bar_drain_angle_offset = np.pi
+
+        bar_source_angle_offset = 0
+        if self.bar_source_end == 'clockwise':
+            bar_source_angle_offset = np.pi
+
+        bar_sep_angle_offset = 0
+        if self.bar_sep_end == 'clockwise':
+            bar_sep_angle_offset = np.pi
+
+        if isinstance(self.source_pos, str):
+            bar_source.rotate = self._bar_angle_dict[self.source_pos]
+            source.rotate = self._bar_angle_dict[self.source_pos]
+        else:
+            bar_source.rotate = -self.source_pos+bar_source_angle_offset
+            source.rotate = -self.source_pos+bar_source_angle_offset-np.pi/2
+        if isinstance(self.drain_pos, str):
+            bar_drain.rotate = -self._bar_angle_dict[self.drain_pos]
+            drain.rotate = self._bar_angle_dict[self.drain_pos]
+        else:
+            bar_drain.rotate = -self.drain_pos+bar_drain_angle_offset
+            drain.rotate = -self.drain_pos+bar_drain_angle_offset-np.pi/2
+        if isinstance(self.sep_pos, str):
+            bar_sep.rotate = self._bar_angle_dict[self.sep_pos]
+        else:
+            bar_sep.rotate = -self.sep_pos+bar_sep_angle_offset
 
     def _build_and_add_elements(self):
         self.plunger.build()
@@ -1792,7 +1836,6 @@ class ClavierGate(Element):
                                            self.n_clav_rep, self.spacing,
                                            self.shift, (-self.length/2, 0),
                                            self.rotation)
-        print(cl_points)
         cl = gdstk.Polygon(cl_points, layer=self.layer)
 
         cl.translate(self.x, self.y)

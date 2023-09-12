@@ -122,9 +122,14 @@ uc_bar_225deg.build()
 qda_elements.spacing_sep = 60e-3
 
 sensor_top = qda_elements.add_sensor('sensor_top')
-# sensor_top.source_pos = 'left'
-# sensor_top.drain_pos = 'right'
-sensor_top.sep_pos = 'bottom'
+
+sensor_top.sep_pos = 5/8*np.pi
+sensor_top.source_pos = -7/8*np.pi
+sensor_top.drain_pos = 3/8*np.pi
+sensor_top.bar_drain_end = 'clockwise'
+sensor_top.bar_source_end = 'counter-clockwise'
+sensor_top.bar_sep_end = 'clockwise'
+
 sensor_top.gap_sep = 60e-3
 sensor_top.gap_ohmic_pl = 40e-3
 
@@ -143,13 +148,9 @@ sensor_top.barrier_sep.width = 50e-3
 sensor_top.barrier_sep.length = 60e-3
 sensor_top.barrier_sep.layer = 5
 
-sensor_top.source.ohmic_pos = 'left'
-sensor_top.source.sensor_pos = 'top'  # redundant
 sensor_top.source.layer = ohmic_layer
-
-sensor_top.drain.ohmic_pos = 'right'
-sensor_top.drain.sensor_pos = 'top'  # redundant
 sensor_top.drain.layer = ohmic_layer
+
 
 sensor_bottom = qda_elements.add_copy(sensor_top, 'sensor_bottom')
 sensor_bottom.sep_pos = 'top'
@@ -182,6 +183,8 @@ sensor_top.build()
 sensor_bottom.build()
 sensor_right.build()
 sensor_left.build()
+
+sensor_top.plot()
 
 # %% add sensor to unit cell
 

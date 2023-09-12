@@ -393,8 +393,8 @@ fo.add_component(fo_sens_top_sep)
 # %%%% Fanout clavier gate top 1
 fo_clav_gate_1 = qda_elements.add_fo_line('clavier_gate_0', 0)
 
-fo_clav_gate_1.fo_direction = 'top'
-fo_clav_gate_1.n_fanout = 2
+fo_clav_gate_1.fo_direction = 'left'
+fo_clav_gate_1.n_fanout = 1
 fo_clav_gate_1.fo = fo
 
 fo_clav_gate_1.fo_line_fine.fo_width_start = 100e-3
@@ -406,8 +406,8 @@ fo.add_component(fo_clav_gate_1)
 # %%%% Fanout clavier gate top 2
 fo_clav_gate_1 = qda_elements.add_fo_line('clavier_gate_2', 0)
 
-fo_clav_gate_1.fo_direction = 'top'
-fo_clav_gate_1.n_fanout = 3
+fo_clav_gate_1.fo_direction = 'left'
+fo_clav_gate_1.n_fanout = 0
 fo_clav_gate_1.fo = fo
 
 fo_clav_gate_1.fo_line_fine.fo_width_start = 100e-3
