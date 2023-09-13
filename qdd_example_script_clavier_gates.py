@@ -187,7 +187,7 @@ sl_clavier.component = clavier
 sl_clavier_mirrored = qda.add_component()
 sl_clavier_mirrored.component = clavier_mirrored
 
-clavier.plot(build=True)
+# clavier.plot(build=True)
 
 # %% Add screening gates
 
