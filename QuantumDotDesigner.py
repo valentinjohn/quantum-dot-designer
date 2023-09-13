@@ -22,6 +22,8 @@ from elements.ClavierGate import ClavierGate
 from elements.FanOutLineFine import FanOutLineFine
 from elements.FanOutLineCoarse import FanOutLineCoarse
 
+from fanout.FanoutGenerator import FanoutGenerator
+
 # %% Quantum Dot Array classes
 
 
@@ -803,119 +805,3 @@ class FanOutLine(UnitCell):
         self.add_coarse_fo_line()
         self.add_fine_fo_line()
         super().build()
-
-# %% Fanout
-
-
-class FanoutGenerator():
-    def __init__(self, name, qda):
-        if not qda.built:
-            qda.build()
-        self.name = name
-        self.qda = qda
-        self.elements = {}
-        self.cell = gdstk.Cell(name)
-        self.components = {}
-        self.fo_lines = {}
-        self._all_directions = ['top', 'bottom', 'right', 'left']
-        self.fo_polygons_coarse = None
-        self.fo_stages = [(16, 16), (500, 530), (1200, 1200)]
-        self.fo_widths = [1, 6, 25]
-        self.fanout_counts = {'top': 14, 'bottom': 14, 'left': 13, 'right': 13}
-        self.spacings = [2, 80, 200]
-        self.fo_fine_coarse_overlap = 3
-        self.bondpad_position = {'top':  1500, 'bottom': 1500,
-                                 'left': 1500, 'right': 1500}
-        self.bondpad_size = {'top': (110, 400), 'bottom': (110, 400),
-                             'left': (400, 110), 'right': (400, 110)}
-        self._n = 0
-        self.fanout_positions = None
-        self._built = False
-
-    @property
-    def built(self):
-        return self._built
-
-    def create_fo_polygons_coarse(self):
-        polygons = {}
-        fanout_positions = compute_fanout_positions(self.fo_stages,
-                                                    self.fanout_counts,
-                                                    self.spacings)
-        self.fanout_positions = fanout_positions
-        fo_lines = get_fo_lines(fanout_positions,
-                                self.fanout_counts, self.fo_stages)
-        for direction in self._all_directions:
-            polygons[direction] = [generate_polygon_for_fanout(direction,
-                                                               fo_lines[direction][n_fo],
-                                                               self.bondpad_position,
-                                                               self.bondpad_size,
-                                                               self.fo_widths,
-                                                               self.fo_fine_coarse_overlap)
-                                   for n_fo in range(self.fanout_counts[direction])]
-
-        self.fo_polygons_coarse = polygons
-
-    def get_fo_overlap_points(self, n_fanout, direction):
-        multiplier = 1
-        if direction in ['bottom', 'left']:
-            multiplier = -1
-        if direction in ['top', 'bottom']:
-            overlap_start = multiplier * \
-                (self.fo_stages[0][1] - self.fo_fine_coarse_overlap)
-            overlap_end = multiplier*self.fo_stages[0][1]
-            fanout_positions = self.fanout_positions['device'][direction][n_fanout]
-            fo_end_width = self.fo_widths[0]
-
-            fo_end_points = [[fanout_positions, overlap_start, fo_end_width],
-                             [fanout_positions, overlap_end, fo_end_width]]
-        else:
-            overlap_start = multiplier * \
-                (self.fo_stages[0][0] - self.fo_fine_coarse_overlap)
-            overlap_end = multiplier*self.fo_stages[0][0]
-            fanout_positions = - \
-                self.fanout_positions['device'][direction][n_fanout]
-            fo_end_width = self.fo_widths[0]
-
-            fo_end_points = [[overlap_start, fanout_positions, fo_end_width],
-                             [overlap_end, fanout_positions, fo_end_width]]
-        return fo_end_points
-
-    def add_component(self, component=None, build=False):
-        """
-        Add a sublattice to the unit cell.
-
-        Args:
-            name (str): Name of the sublattice.
-            component: You can assign optionally a component in the argument
-            build: Adds and builds at the same time with a single component placed at origin.
-
-        Returns:
-            Sublattice: The created Sublattice object.
-        """
-        name = f'{self.name}_sublattice_{self._n}'
-        self._n = self._n + 1
-        sublattice = Sublattice(name)
-        if component is not None:
-            if not component._built:
-                component.build()
-            sublattice.component = component
-            if build:
-                sublattice.build()
-            else:
-                pass
-        else:
-            pass
-        self.components[name] = sublattice
-        return sublattice
-
-    def build(self):
-        elements = {}
-        for cell in self.components.values():
-            if not cell._built:
-                cell.build()
-            self.cell.add(gdstk.Reference(cell.component.cell))
-            elements = merge_device_positions(
-                elements, cell.component.elements)
-        self.elements = elements
-        self.cell.flatten()
-        self._built = True
