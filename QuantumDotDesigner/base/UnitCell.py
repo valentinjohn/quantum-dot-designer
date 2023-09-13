@@ -6,9 +6,9 @@ Created on Mon Sep 11 11:37:28 2023
 """
 # %% imports
 
-from base import PlotMixin
-from base.Sublattice import Sublattice
-from helpers.helpers import merge_device_positions
+from QuantumDotDesigner.base import PlotMixin
+from QuantumDotDesigner.base.Sublattice import Sublattice
+from QuantumDotDesigner.helpers.helpers import merge_device_positions
 import gdstk
 
 # %% definition

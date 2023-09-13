@@ -9,7 +9,7 @@ Created on Mon Sep 11 11:08:32 2023
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-from helpers.helpers import apply_sublattice
+from QuantumDotDesigner.helpers.helpers import apply_sublattice
 
 from abc import ABC
 

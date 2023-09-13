@@ -5,9 +5,10 @@ Created on Wed Sep 13 13:02:28 2023
 @author: vjohn
 """
 
-from base import Element
+from QuantumDotDesigner.base import Element
 import numpy as np
-from helpers.helpers import create_segmented_path, get_polygons_from_path
+from QuantumDotDesigner.helpers.helpers import (create_segmented_path,
+                                                get_polygons_from_path)
 import gdstk
 
 

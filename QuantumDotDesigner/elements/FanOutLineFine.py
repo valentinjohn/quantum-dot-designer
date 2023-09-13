@@ -5,9 +5,9 @@ Created on Wed Sep 13 13:02:28 2023
 @author: vjohn
 """
 
-from elements.FanOutLineBase import FanOutLineBase
+from QuantumDotDesigner.elements.FanOutLineBase import FanOutLineBase
 import numpy as np
-from helpers.helpers import get_polygons_from_path
+from QuantumDotDesigner.helpers.helpers import get_polygons_from_path
 
 
 class FanOutLineFine(FanOutLineBase):

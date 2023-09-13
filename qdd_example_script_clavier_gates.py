@@ -8,7 +8,7 @@ Created on Thu Jul 27 16:28:10 2023
 # %% import
 
 import numpy as np
-import QuantumDotDesigner as qdd
+import QuantumDotDesigner.QuantumDotDesigner as qdd
 import matplotlib.pyplot as plt
 
 # %% Init

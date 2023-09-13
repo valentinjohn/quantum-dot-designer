@@ -8,7 +8,7 @@ Created on Mon Sep 11 11:07:21 2023
 # %% imports
 
 from abc import abstractmethod
-from base import PlotMixin
+from QuantumDotDesigner.base import PlotMixin
 
 # %% definition
 

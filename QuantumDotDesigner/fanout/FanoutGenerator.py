@@ -6,11 +6,12 @@ Created on Wed Sep 13 13:43:55 2023
 """
 
 import gdstk
-from helpers.helpers import (compute_fanout_positions,
-                             get_fo_lines, generate_polygon_for_fanout,
-                             merge_device_positions)
+from QuantumDotDesigner.helpers.helpers import (compute_fanout_positions,
+                                                get_fo_lines,
+                                                generate_polygon_for_fanout,
+                                                merge_device_positions)
 
-from base import Sublattice
+from QuantumDotDesigner.base import Sublattice
 
 
 class FanoutGenerator():

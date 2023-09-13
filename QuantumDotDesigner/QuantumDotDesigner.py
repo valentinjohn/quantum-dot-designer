@@ -10,19 +10,19 @@ import gdstk
 import numpy as np
 import copy
 
-from helpers.helpers import *
+from QuantumDotDesigner.helpers.helpers import *
 
-from base import PlotMixin, Sublattice, UnitCell
+from QuantumDotDesigner.base import PlotMixin, Sublattice, UnitCell
 
-from elements.Plunger import Plunger
-from elements.Barrier import Barrier
-from elements.ScreeningGate import ScreeningGate
-from elements.Ohmic import Ohmic
-from elements.ClavierGate import ClavierGate
-from elements.FanOutLineFine import FanOutLineFine
-from elements.FanOutLineCoarse import FanOutLineCoarse
+from QuantumDotDesigner.elements.Plunger import Plunger
+from QuantumDotDesigner.elements.Barrier import Barrier
+from QuantumDotDesigner.elements.ScreeningGate import ScreeningGate
+from QuantumDotDesigner.elements.Ohmic import Ohmic
+from QuantumDotDesigner.elements.ClavierGate import ClavierGate
+from QuantumDotDesigner.elements.FanOutLineFine import FanOutLineFine
+from QuantumDotDesigner.elements.FanOutLineCoarse import FanOutLineCoarse
 
-from fanout.FanoutGenerator import FanoutGenerator
+from QuantumDotDesigner.fanout.FanoutGenerator import FanoutGenerator
 
 # %% Quantum Dot Array classes
 

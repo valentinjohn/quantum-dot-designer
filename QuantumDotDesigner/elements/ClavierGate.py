@@ -5,8 +5,8 @@ Created on Wed Sep 13 13:02:28 2023
 @author: vjohn
 """
 
-from base import Element
-from helpers.helpers import generate_clavier_gates
+from QuantumDotDesigner.base import Element
+from QuantumDotDesigner.helpers.helpers import generate_clavier_gates
 import gdstk
 
 

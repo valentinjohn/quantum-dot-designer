@@ -5,7 +5,7 @@ Created on Wed Sep 13 13:02:28 2023
 @author: vjohn
 """
 
-from base import Element
+from QuantumDotDesigner.base import Element
 import gdstk
 
 
