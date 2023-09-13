@@ -1929,7 +1929,6 @@ class Clavier(UnitCell):
         self.qda_elements = qda_elements
         self.clavier_gates = {}
         self.screen = None
-        self.screen_position = 200e-3
         self.clav_dot_size = 100e-3
         self.clav_gate_gap = 20e-3
         self.clav_width = 200e-3
@@ -1939,28 +1938,31 @@ class Clavier(UnitCell):
         self.n_clav_rep = 8
 
         self.clav_gate_width = self.clav_dot_size
-        self.clav_gate_length = list(np.array(self.clav_gap) +
-                                     self.clav_dot_size)
-        self.clav_length = ((self.clav_gate_width +
+        self._clav_gate_length = list(np.array(self.clav_gap) +
+                                      self.clav_dot_size)
+        self._clav_length = ((self.clav_gate_width +
                              self.clav_gate_gap) *
-                            self._n_clav_gates *
-                            (self.n_clav_rep - 1) +
-                            self.clav_gate_width)
-        self.clav_gate_spacing = ((self.clav_length -
+                             self._n_clav_gates *
+                             (self.n_clav_rep - 1) +
+                             self.clav_gate_width)
+        self._clav_gate_spacing = ((self.clav_length -
                                    self.clav_gate_width) /
-                                  (self.n_clav_rep-1))
+                                   (self.n_clav_rep-1))
 
-        self.screen_length = (self.clav_length +
-                              (self._n_clav_gates-1) /
-                              self._n_clav_gates *
-                              self.clav_gate_spacing)
+        self._screen_length = (self.clav_length +
+                               (self._n_clav_gates-1) /
+                               self._n_clav_gates *
+                               self.clav_gate_spacing)
         self.screen_width = 100
         self.screen_gap = 0
         self.screen_layer = 3
+        self._screen_position = (self.clav_dot_size +
+                                 self.screen_width +
+                                 2*self.screen_gap)
 
-        self.spacing = ((self._n_clav_gates-1) *
-                        self.clav_gate_width +
-                        self._n_clav_gates * self.clav_gate_gap)
+        self._spacing = ((self._n_clav_gates-1) *
+                         self.clav_gate_width +
+                         self._n_clav_gates * self.clav_gate_gap)
         self.x = 0
         self.y = 0
         self.fillet = 0.02
@@ -1968,28 +1970,61 @@ class Clavier(UnitCell):
         self.rotation = 0
         self.mirror = False
 
-    def _update_length(self):
-        self.clav_length = ((self.clav_gate_width +
+    @property
+    def screen_position(self):
+        self._screen_position = (self.clav_dot_size +
+                                 self.screen_width +
+                                 2*self.screen_gap)
+        return self._screen_position
+
+    @property
+    def clav_length(self):
+        self._clav_length = ((self.clav_gate_width +
                              self.clav_gate_gap) *
-                            self._n_clav_gates *
-                            (self.n_clav_rep - 1) +
-                            self.clav_gate_width)
-        self.screen_length = (self.clav_length +
-                              (self._n_clav_gates-1) /
-                              self._n_clav_gates *
-                              self.clav_gate_spacing)
+                             self._n_clav_gates *
+                             (self.n_clav_rep - 1) +
+                             self.clav_gate_width)
+        return self._clav_length
+
+    @property
+    def clav_gate_length(self):
+        self._clav_gate_length = list(np.array(self.clav_gap) +
+                                      self.clav_dot_size +
+                                      self.screen_gap +
+                                      self.screen_width)
+        return self._clav_gate_length
+
+    @property
+    def clav_gate_spacing(self):
+        self._clav_gate_spacing = ((self.clav_length -
+                                   self.clav_gate_width) /
+                                   (self.n_clav_rep-1))
+        return self._clav_gate_spacing
+
+    @property
+    def screen_length(self):
+        self._screen_length = (self.clav_length +
+                               (self._n_clav_gates-1) /
+                               self._n_clav_gates *
+                               self.clav_gate_spacing)
+        return self._screen_length
+
+    @property
+    def spacing(self):
+        self._spacing = ((self._n_clav_gates-1) *
+                         self.clav_gate_width +
+                         self._n_clav_gates * self.clav_gate_gap)
+        return self._spacing
 
     def _initialize_clavier_gates(self):
         self._sl_clavier_gates = {}
         self._clav_layers_order = self.clav_layers + self.clav_layers[::-1]
-        self._update_length()
 
     def _build_even_clavier_gates(self, n):
         name = f'{self.name}_gate_{2*n}'
         x = (self.x + (n - (self._n_clav_gates - 1) / 2) *
              self.clav_gate_spacing / self._n_clav_gates)
-        y = (self.y + self.clav_gate_length[n % 2]/2 +
-             self.clav_gap[n % 2]/2 + n*self.clav_gate_width)
+        y = (self.y + self.clav_gate_length[n % 2] - self.clav_dot_size/2)
 
         if self.mirror:
             self.rotation = 180
@@ -2000,8 +2035,7 @@ class Clavier(UnitCell):
         self.clavier_gates[name].width = self.clav_width
         self.clavier_gates[name].length = self.clav_length
         self.clavier_gates[name].gate_width = self.clav_gate_width
-        self.clavier_gates[name].gate_length = (self.clav_gate_length[n % 2]
-                                                + n * self.clav_gate_width)
+        self.clavier_gates[name].gate_length = self.clav_gate_length[n % 2]
         self.clavier_gates[name].n_clav_rep = self.n_clav_rep
         self.clavier_gates[name].spacing = self.spacing
         self.clavier_gates[name].rotation = self.rotation
@@ -2018,8 +2052,7 @@ class Clavier(UnitCell):
     def _build_odd_clavier_gates(self, n):
         name_odd = f'{self.name}_gate_{2*n+1}'
         x = (self.x + (n+1/2)*self.clav_gate_spacing / self._n_clav_gates)
-        y = (self.y + self.clav_gate_length[n % 2]/2 +
-             self.clav_gap[n % 2]/2 + n*self.clav_gate_width)
+        y = (self.y + self.clav_gate_length[n % 2] - self.clav_dot_size/2)
         if not self.mirror:
             y = - y
 
@@ -2029,8 +2062,7 @@ class Clavier(UnitCell):
         self.clavier_gates[name_odd].width = self.clav_width
         self.clavier_gates[name_odd].length = self.clav_length
         self.clavier_gates[name_odd].gate_width = self.clav_gate_width
-        self.clavier_gates[name_odd].gate_length = (self.clav_gate_length[n % 2] +
-                                                    n*self.clav_gate_width)
+        self.clavier_gates[name_odd].gate_length = self.clav_gate_length[n % 2]
         self.clavier_gates[name_odd].n_clav_rep = self.n_clav_rep
         self.clavier_gates[name_odd].spacing = self.spacing
         self.clavier_gates[name_odd].rotation = 180 + self.rotation

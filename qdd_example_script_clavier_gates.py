@@ -157,14 +157,13 @@ clavier = qda_elements.add_clavier('clavier')
 
 clavier.clav_dot_size = 100e-3
 clavier.clav_gate_gap = 20e-3
-clavier.clav_gap = [.450, .650]
+clavier.clav_gap = [.4, .7]
 clavier.clav_width = 200e-3
 clavier.n_clav_rep = 8
 
 clavier.screen_width = 100e-3
 clavier.screen_gap = 0
 clavier.screen_layer = screening_layer
-clavier.screen_position = 200e-3
 
 clavier.clav_layers = [clav_gate_1_layer, clav_gate_2_layer]
 clavier.x = -(spacing_qd + clavier.screen_length/2)
@@ -188,7 +187,7 @@ sl_clavier.component = clavier
 sl_clavier_mirrored = qda.add_component()
 sl_clavier_mirrored.component = clavier_mirrored
 
-# clavier.plot()
+clavier.plot(build=True)
 
 # %% Add screening gates
 
