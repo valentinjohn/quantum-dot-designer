@@ -19,7 +19,6 @@ from elements.Barrier import Barrier
 from elements.ScreeningGate import ScreeningGate
 from elements.Ohmic import Ohmic
 from elements.ClavierGate import ClavierGate
-from elements.FanOutLineBase import FanOutLineBase
 from elements.FanOutLineFine import FanOutLineFine
 from elements.FanOutLineCoarse import FanOutLineCoarse
 
