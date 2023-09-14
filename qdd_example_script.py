@@ -147,17 +147,17 @@ sensor_top.source.layer = ohmic_layer
 sensor_top.drain.layer = ohmic_layer
 
 
-sensor_bottom = qda_elements.add_copy(sensor_top, 'sensor_bottom')
+sensor_bottom = qda_components.add_copy(sensor_top, 'sensor_bottom')
 sensor_bottom.sep_pos = 'top'
 sensor_bottom.source_pos = 'left'
 sensor_bottom.drain_pos = 'right'
 
-sensor_right = qda_elements.add_copy(sensor_top, 'sensor_right')
+sensor_right = qda_components.add_copy(sensor_top, 'sensor_right')
 sensor_right.sep_pos = 'left'
 sensor_right.source_pos = 'bottom'
 sensor_right.drain_pos = 'top'
 
-sensor_left = qda_elements.add_copy(sensor_top, 'sensor_left')
+sensor_left = qda_components.add_copy(sensor_top, 'sensor_left')
 sensor_left.sep_pos = 'right'
 sensor_left.source_pos = 'top'
 sensor_left.drain_pos = 'bottom'
