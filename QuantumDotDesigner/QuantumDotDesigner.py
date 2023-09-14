@@ -12,7 +12,7 @@ import copy
 
 from QuantumDotDesigner.helpers.helpers import *
 
-from QuantumDotDesigner.base import PlotMixin, Sublattice, UnitCell
+from QuantumDotDesigner.base.UnitCell import UnitCell
 
 from QuantumDotDesigner.elements.Plunger import Plunger
 from QuantumDotDesigner.elements.Barrier import Barrier
@@ -22,9 +22,7 @@ from QuantumDotDesigner.elements.ClavierGate import ClavierGate
 from QuantumDotDesigner.elements.FanOutLineFine import FanOutLineFine
 from QuantumDotDesigner.elements.FanOutLineCoarse import FanOutLineCoarse
 
-from QuantumDotDesigner.fanout.FanoutGenerator import FanoutGenerator
-
-# %% Quantum Dot Array classes
+# %% Quantum Dot Array Elements
 
 
 class QuantumDotArrayElements:
@@ -62,19 +60,6 @@ class QuantumDotArrayElements:
         plunger = Plunger(name)
         self.components[name] = plunger
         return plunger
-
-    # def add(self, element):
-    #     """
-    #     Add a element to the collection.
-
-    #     Args:
-    #         name: Name of the element.
-
-    #     Returns:
-    #         The created plunger element.
-
-    #     """
-    #     self.components[name] = element
 
     def add_barrier(self, name: str):
         """
@@ -226,86 +211,6 @@ class QuantumDotArrayElements:
         self.components[copy_name] = new_element
         return new_element
 
-
-class QuantumDotArray(PlotMixin):
-    def __init__(self):
-        """
-        Initialize a QuantumDotArray object.
-
-        Args:
-            parent_instance: The parent instance.
-            unitcell_instance (UnitCell): An optional UnitCell instance to use
-            for the array.
-        """
-        self.name = 'Quantum_Dot_Array'
-        self.spacing_qd = 200e-3
-        self.spacing_qd_diag = 2**0.5 * self.spacing_qd
-        self.elements = {}
-        self.components = {}
-        self.components_position = {}
-        self.main_cell = gdstk.Cell('MAIN')
-        self._n = 0
-        self.chip_layout_path = "chip_layout.gds"
-        self._built = False
-
-    @property
-    def built(self):
-        return self._built
-
-    def add_component(self):
-        """
-        Add a sublattice to the QuantumDotArray.
-
-        Args:
-            name (str): Name of the sublattice.
-
-        Returns:
-            Sublattice: The created Sublattice object.
-        """
-        name = f'MAIN_sublattice_{self._n}'
-        self._n = self._n + 1
-        sublattice = Sublattice(name)
-        self.components[name] = sublattice
-        return sublattice
-
-    def add_chip_layout(self):
-        layout = gdstk.read_rawcells(self.chip_layout_path)
-
-        self.main_cell.add(gdstk.Reference(layout['TOP']))
-        self.main_cell.flatten()
-
-        return layout
-
-    def build(self):
-        """
-        Build the QuantumDotArray.
-
-        This method adds the sublattices and unit cells to the main cell object.
-        """
-        elements = {}
-        for cell in self.components.values():
-            if not cell.built:
-                cell.build()
-            elements = merge_device_positions(elements, cell.elements)
-            if isinstance(cell, Sublattice):
-                self.main_cell.add(gdstk.Reference(cell.cell))
-            elif isinstance(cell, UnitCell):
-                for c in cell.cells:
-                    self.main_cell.add(gdstk.Reference(c.cell))
-        self.main_cell.flatten()
-        self.elements = elements
-        self._built = True
-
-    def save_as_gds(self, filename):
-        """
-        Save the QuantumDotArray as a GDS file.
-
-        Args:
-            filename (str): Name of the output GDS file.
-        """
-        lib = gdstk.Library()
-        lib.add(self.main_cell, *self.main_cell.dependencies(True))
-        lib.write_gds(filename)
 
 # %% Components
 
@@ -725,7 +630,7 @@ class FanOutLine(UnitCell):
                  qda_elements: QuantumDotArrayElements):
         super().__init__(f'fo_{element_name}_{element_number}')
         self.qda_elements = qda_elements
-        self.fo = None
+        self.fo_points = None
         name_coarse = f'fo_coarse_{element_name}_{element_number}'
         self.fo_line_coarse = qda_elements.add_fo_line_coarse(name_coarse)
         name_fine = f'fo_line_{element_name}_{element_number}'
@@ -770,8 +675,16 @@ class FanOutLine(UnitCell):
         self.fo_line_coarse.fo_direction = self.fo_direction
         self.fo_line_coarse.layer = self.qda_elements.components[self.element_name].layer + 20
 
-        if not any(attr is None for attr in [self.fo_direction, self.n_fanout, self.fo]):
-            self.fo_line_coarse.polygons = self.fo.fo_polygons_coarse[
+        attributes = {'fo_direction': self.fo_direction,
+                      'n_fanout': self.n_fanout,
+                      'fo_points': self.fo_points}
+        missing_attrs = [name for name,
+                         value in attributes.items() if value is None]
+        if missing_attrs:
+            raise ValueError(
+                f"Attributes {', '.join(missing_attrs)} cannot be None.")
+        else:
+            self.fo_line_coarse.polygons = self.fo_points.fo_polygons_coarse[
                 self.fo_direction][self.n_fanout]
 
         # self.components[name] = self.fo_line_coarse
@@ -788,15 +701,25 @@ class FanOutLine(UnitCell):
         self.fo_line_fine.fo_direction = self.fo_direction
         self.fo_line_fine.layer = self.qda_elements.components[self.element_name].layer
 
-        if not any(attr is None for attr in [self.fo_direction, self.n_fanout, self.fo]):
-            self.fo_line_fine.fo_start = self.fo.qda.elements[
+        attributes = {
+            'fo_direction': self.fo_direction,
+            'n_fanout': self.n_fanout,
+            'fo_points': self.fo_points
+        }
+
+        missing_attrs = [name for name,
+                         value in attributes.items() if value is None]
+
+        if missing_attrs:
+            raise ValueError(
+                f"Attributes {', '.join(missing_attrs)} cannot be None.")
+        else:
+            self.fo_line_fine.fo_start = self.fo_points.qda.elements[
                 self.element_name]['positions'][self.element_number]
-            self.fo_line_fine.fo_start[0] = (self.fo_line_fine.fo_start[0] +
-                                             self.start_offset[0])
-            self.fo_line_fine.fo_start[1] = (self.fo_line_fine.fo_start[1] +
-                                             self.start_offset[1])
-            self.fo_line_fine.fo_end = self.fo.get_fo_overlap_points(self.n_fanout,
-                                                                     self.fo_direction)
+            self.fo_line_fine.fo_start[0] += self.start_offset[0]
+            self.fo_line_fine.fo_start[1] += self.start_offset[1]
+            self.fo_line_fine.fo_end = self.fo_points.get_fo_overlap_points(
+                self.n_fanout, self.fo_direction)
 
         # self.components[name] = self.fo_line_fine
         self.add_component(self.fo_line_fine, build=True)

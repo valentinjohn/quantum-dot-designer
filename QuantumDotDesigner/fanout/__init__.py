@@ -1,1 +1,2 @@
-from .FanoutGenerator import FanoutGenerator
+from .FanoutPoints import FanoutPoints
+from .Fanout import Fanout

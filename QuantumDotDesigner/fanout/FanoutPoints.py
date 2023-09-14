@@ -1,28 +1,20 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Sep 13 13:43:55 2023
+Created on Thu Sep 14 10:05:40 2023
 
 @author: vjohn
 """
 
-import gdstk
 from QuantumDotDesigner.helpers.helpers import (compute_fanout_positions,
                                                 get_fo_lines,
-                                                generate_polygon_for_fanout,
-                                                merge_device_positions)
-
-from QuantumDotDesigner.base import Sublattice
+                                                generate_polygon_for_fanout)
 
 
-class FanoutGenerator():
-    def __init__(self, name, qda):
+class FanoutPoints():
+    def __init__(self, qda):
         if not qda.built:
             qda.build()
-        self.name = name
         self.qda = qda
-        self.elements = {}
-        self.cell = gdstk.Cell(name)
-        self.components = {}
         self.fo_lines = {}
         self._all_directions = ['top', 'bottom', 'right', 'left']
         self.fo_polygons_coarse = None
@@ -37,11 +29,6 @@ class FanoutGenerator():
                              'left': (400, 110), 'right': (400, 110)}
         self._n = 0
         self.fanout_positions = None
-        self._built = False
-
-    @property
-    def built(self):
-        return self._built
 
     def create_fo_polygons_coarse(self):
         polygons = {}
@@ -86,43 +73,3 @@ class FanoutGenerator():
             fo_end_points = [[overlap_start, fanout_positions, fo_end_width],
                              [overlap_end, fanout_positions, fo_end_width]]
         return fo_end_points
-
-    def add_component(self, component=None, build=False):
-        """
-        Add a sublattice to the unit cell.
-
-        Args:
-            name (str): Name of the sublattice.
-            component: You can assign optionally a component in the argument
-            build: Adds and builds at the same time with a single component placed at origin.
-
-        Returns:
-            Sublattice: The created Sublattice object.
-        """
-        name = f'{self.name}_sublattice_{self._n}'
-        self._n = self._n + 1
-        sublattice = Sublattice(name)
-        if component is not None:
-            if not component._built:
-                component.build()
-            sublattice.component = component
-            if build:
-                sublattice.build()
-            else:
-                pass
-        else:
-            pass
-        self.components[name] = sublattice
-        return sublattice
-
-    def build(self):
-        elements = {}
-        for cell in self.components.values():
-            if not cell._built:
-                cell.build()
-            self.cell.add(gdstk.Reference(cell.component.cell))
-            elements = merge_device_positions(
-                elements, cell.component.elements)
-        self.elements = elements
-        self.cell.flatten()
-        self._built = True

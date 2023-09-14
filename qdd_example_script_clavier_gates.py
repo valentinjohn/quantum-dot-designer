@@ -8,8 +8,7 @@ Created on Thu Jul 27 16:28:10 2023
 # %% import
 
 import numpy as np
-import QuantumDotDesigner.QuantumDotDesigner as qdd
-import matplotlib.pyplot as plt
+import QuantumDotDesigner as qdd
 
 # %% Init
 
@@ -195,28 +194,29 @@ screen_pl_0 = qda_elements.add_screening_gate('screening_gate_pl_0')
 screen_pl_1 = qda_elements.add_screening_gate('screening_gate_pl_1')
 screen_pl_2 = qda_elements.add_screening_gate('screening_gate_pl_2')
 
-# %% Fanout Generator
+# %% Fanout
 
-fo = qdd.FanoutGenerator('fanout', qda)
+fo_points = qdd.FanoutPoints(qda)
+fo = qdd.Fanout('fanout')
 
-fo.fanout_counts = {'top': 10, 'bottom': 10, 'left': 5, 'right': 5}
+fo_points.fanout_counts = {'top': 10, 'bottom': 10, 'left': 5, 'right': 5}
 
-fo.fo_stages = [(16, 16), (500, 530), (1200, 1200)]
-fo.bondpad_position = {'top':  1500, 'bottom': 1500,
-                       'left': 1500, 'right': 1500}
-fo.fo_widths = [1, 6, 25]
-fo.spacings = [2, 80, 250]
+fo_points.fo_stages = [(16, 16), (500, 530), (1200, 1200)]
+fo_points.bondpad_position = {'top':  1500, 'bottom': 1500,
+                              'left': 1500, 'right': 1500}
+fo_points.fo_widths = [1, 6, 25]
+fo_points.spacings = [2, 80, 250]
 
-fo.bondpad_size = {'top': (110, 400), 'bottom': (110, 400),
-                   'left': (400, 110), 'right': (400, 110)}
-fo.create_fo_polygons_coarse()
+fo_points.bondpad_size = {'top': (110, 400), 'bottom': (110, 400),
+                          'left': (400, 110), 'right': (400, 110)}
+fo_points.create_fo_polygons_coarse()
 
 # %%% Fanout plungers
 # %%%% Fanout plunger 0
 
 fo_pl_0 = qda_elements.add_fo_line('plunger', 0)
 
-fo_pl_0.fo = fo
+fo_pl_0.fo_points = fo_points
 fo_pl_0.fo_direction = 'top'
 fo_pl_0.n_fanout = 8
 
@@ -229,7 +229,7 @@ fo.add_component(fo_pl_0)
 # %%%% Fanout plunger 1
 fo_pl_1 = qda_elements.add_fo_line('plunger', 1)
 
-fo_pl_1.fo = fo
+fo_pl_1.fo_points = fo_points
 fo_pl_1.fo_direction = 'bottom'
 fo_pl_1.n_fanout = 4
 
@@ -243,7 +243,7 @@ fo_pl_2 = qda_elements.add_fo_line('plunger', 2)
 
 fo_pl_2.fo_direction = 'bottom'
 fo_pl_2.n_fanout = 6
-fo_pl_2.fo = fo
+fo_pl_2.fo_points = fo_points
 
 fo_pl_2.fo_line_fine.fo_width_start = 40e-3
 fo_pl_2.fo_line_fine.points_along_path = [[0, -0.1, 'start'],
@@ -257,7 +257,7 @@ fo_bar_1 = qda_elements.add_fo_line('barrier_1', 0)
 
 fo_bar_1.fo_direction = 'bottom'
 fo_bar_1.n_fanout = 5
-fo_bar_1.fo = fo
+fo_bar_1.fo_points = fo_points
 
 fo_bar_1.fo_line_fine.fo_width_start = 40e-3
 fo_bar_1.fo_line_fine.points_along_path = [[0, -0.5, 'start'],
@@ -272,7 +272,7 @@ fo_bar_2 = qda_elements.add_fo_line('barrier_2', 0)
 
 fo_bar_2.fo_direction = 'top'
 fo_bar_2.n_fanout = 1
-fo_bar_2.fo = fo
+fo_bar_2.fo_points = fo_points
 
 fo_bar_2.fo_line_fine.fo_width_start = 40e-3
 fo_bar_2.fo_line_fine.points_along_path = [[-0.1, 0.1, 'start'],
@@ -288,7 +288,7 @@ fo_bar_3 = qda_elements.add_fo_line('barrier_3', 0)
 
 fo_bar_3.fo_direction = 'top'
 fo_bar_3.n_fanout = 9
-fo_bar_3.fo = fo
+fo_bar_3.fo_points = fo_points
 
 fo_bar_3.fo_line_fine.fo_width_start = 40e-3
 fo_bar_3.fo_line_fine.points_along_path = [[0.1, 0.1, 'start'],
@@ -305,7 +305,7 @@ fo_sens_pl_top = qda_elements.add_fo_line('sensor_top_plunger', 0)
 
 fo_sens_pl_top.fo_direction = 'top'
 fo_sens_pl_top.n_fanout = 5
-fo_sens_pl_top.fo = fo
+fo_sens_pl_top.fo_points = fo_points
 
 fo_sens_pl_top.fo_line_fine.fo_width_start = 40e-3
 fo_sens_pl_top.fo_line_fine.points_along_path = [[0, 0.8, 'start'],
@@ -319,7 +319,7 @@ fo_sens_top_sou = qda_elements.add_fo_line('sensor_top_barrier_source', 0)
 
 fo_sens_top_sou.fo_direction = 'top'
 fo_sens_top_sou.n_fanout = 4
-fo_sens_top_sou.fo = fo
+fo_sens_top_sou.fo_points = fo_points
 
 fo_sens_top_sou.fo_line_fine.fo_width_start = 40e-3
 fo_sens_top_sou.fo_line_fine.points_along_path = [[0, 0.1, 'start'],
@@ -334,7 +334,7 @@ fo_sens_top_dra = qda_elements.add_fo_line('sensor_top_barrier_drain', 0)
 
 fo_sens_top_dra.fo_direction = 'top'
 fo_sens_top_dra.n_fanout = 6
-fo_sens_top_dra.fo = fo
+fo_sens_top_dra.fo_points = fo_points
 
 fo_sens_top_dra.fo_line_fine.fo_width_start = 40e-3
 fo_sens_top_dra.fo_line_fine.points_along_path = [[0, 0.7, 'start'],
@@ -350,7 +350,7 @@ fo_sens_top_sep = qda_elements.add_fo_line('sensor_top_barrier_seperation', 0)
 
 fo_sens_top_sep.fo_direction = 'top'
 fo_sens_top_sep.n_fanout = 2
-fo_sens_top_sep.fo = fo
+fo_sens_top_sep.fo_points = fo_points
 
 fo_sens_top_sep.fo_line_fine.fo_width_start = 40e-3
 fo_sens_top_sep.fo_line_fine.points_along_path = [[-0.2, 0, 'start'],
@@ -366,7 +366,7 @@ fo_clav_gate_1 = qda_elements.add_fo_line('clavier_gate_0', 0)
 
 fo_clav_gate_1.fo_direction = 'left'
 fo_clav_gate_1.n_fanout = 1
-fo_clav_gate_1.fo = fo
+fo_clav_gate_1.fo_points = fo_points
 
 fo_clav_gate_1.fo_line_fine.fo_width_start = 100e-3
 fo_clav_gate_1.fo_line_fine.points_along_path = [[0, 1, 'start'],
@@ -378,7 +378,7 @@ fo_clav_gate_1 = qda_elements.add_fo_line('clavier_gate_2', 0)
 
 fo_clav_gate_1.fo_direction = 'left'
 fo_clav_gate_1.n_fanout = 0
-fo_clav_gate_1.fo = fo
+fo_clav_gate_1.fo_points = fo_points
 
 fo_clav_gate_1.fo_line_fine.fo_width_start = 100e-3
 fo_clav_gate_1.fo_line_fine.points_along_path = [[0, 2, 'start']]
@@ -389,7 +389,7 @@ fo_clav_gate_1 = qda_elements.add_fo_line('clavier_gate_1', 0)
 
 fo_clav_gate_1.fo_direction = 'bottom'
 fo_clav_gate_1.n_fanout = 0
-fo_clav_gate_1.fo = fo
+fo_clav_gate_1.fo_points = fo_points
 
 fo_clav_gate_1.fo_line_fine.fo_width_start = 100e-3
 fo_clav_gate_1.fo_line_fine.points_along_path = [[0, -1, 'start'],
@@ -401,7 +401,7 @@ fo_clav_gate_1 = qda_elements.add_fo_line('clavier_gate_3', 0)
 
 fo_clav_gate_1.fo_direction = 'bottom'
 fo_clav_gate_1.n_fanout = 4
-fo_clav_gate_1.fo = fo
+fo_clav_gate_1.fo_points = fo_points
 
 fo_clav_gate_1.fo_line_fine.fo_width_start = 100e-3
 fo_clav_gate_1.fo_line_fine.points_along_path = [[0, -2, 'start']]
@@ -452,7 +452,7 @@ fo_screen_0 = qda_elements.add_fo_line('screening_gate_pl_0', 0)
 
 fo_screen_0.fo_direction = 'top'
 fo_screen_0.n_fanout = 7
-fo_screen_0.fo = fo
+fo_screen_0.fo_points = fo_points
 fo_screen_0.start_offset = list(screen_pl_0.vertices[0][-2])
 fo_screen_0.start_offset[0] = fo_screen_0.start_offset[0] - 0.012
 

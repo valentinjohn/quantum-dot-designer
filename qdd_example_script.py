@@ -7,7 +7,7 @@ Created on Tue May  9 08:18:02 2023
 # %% import
 
 import numpy as np
-import QuantumDotDesigner.QuantumDotDesigner as qdd
+import QuantumDotDesigner as qdd
 
 # %% Init
 
@@ -208,21 +208,22 @@ uc_sl = qda.add_component()
 uc_sl.component = sensor_left
 uc_sl.center = (-sensor_pos_x, 0)
 
-# %% Fanout Generator
+# %% Fanout
 
-fo = qdd.FanoutGenerator('fanout', qda)
+fo_points = qdd.FanoutPoints(qda)
+fo = qdd.Fanout('fanout')
 
-fo.fanout_counts = {'top': 10, 'bottom': 10, 'left': 5, 'right': 5}
+fo_points.fanout_counts = {'top': 10, 'bottom': 10, 'left': 5, 'right': 5}
 
-fo.fo_stages = [(16, 16), (500, 530), (1200, 1200)]
-fo.bondpad_position = {'top':  1500, 'bottom': 1500,
-                       'left': 1500, 'right': 1500}
-fo.fo_widths = [1, 6, 25]
-fo.spacings = [2, 80, 250]
+fo_points.fo_stages = [(16, 16), (500, 530), (1200, 1200)]
+fo_points.bondpad_position = {'top':  1500, 'bottom': 1500,
+                              'left': 1500, 'right': 1500}
+fo_points.fo_widths = [1, 6, 25]
+fo_points.spacings = [2, 80, 250]
 
-fo.bondpad_size = {'top': (110, 400), 'bottom': (110, 400),
-                   'left': (400, 110), 'right': (400, 110)}
-fo.create_fo_polygons_coarse()
+fo_points.bondpad_size = {'top': (110, 400), 'bottom': (110, 400),
+                          'left': (400, 110), 'right': (400, 110)}
+fo_points.create_fo_polygons_coarse()
 
 
 # %% Fanout plunger ver 0
@@ -230,7 +231,7 @@ fo_pl_ver_0 = qda_elements.add_fo_line('plunger_vertically_elongated', 0)
 
 fo_pl_ver_0.fo_direction = 'top'
 fo_pl_ver_0.n_fanout = 0
-fo_pl_ver_0.fo = fo
+fo_pl_ver_0.fo_points = fo_points
 
 fo_pl_ver_0.fo_line_fine.fo_width_start = 40e-3
 fo_pl_ver_0.fo_line_fine.points_along_path = [[-0.15, 0.3, 'start'],
@@ -242,7 +243,7 @@ fo_pl_ver_1 = qda_elements.add_fo_line('plunger_vertically_elongated', 1)
 
 fo_pl_ver_1.fo_direction = 'top'
 fo_pl_ver_1.n_fanout = 2
-fo_pl_ver_1.fo = fo
+fo_pl_ver_1.fo_points = fo_points
 
 fo_pl_ver_1.fo_line_fine.fo_width_start = 40e-3
 fo_pl_ver_1.fo_line_fine.points_along_path = [[-qda.spacing_qd_diag/2, 0, 'start'],
@@ -255,7 +256,7 @@ fo_bar_45deg_0 = qda_elements.add_fo_line('barrier_45deg_rotated', 0)
 
 fo_bar_45deg_0.fo_direction = 'top'
 fo_bar_45deg_0.n_fanout = 1
-fo_bar_45deg_0.fo = fo
+fo_bar_45deg_0.fo_points = fo_points
 
 fo_bar_45deg_0.fo_line_fine.fo_width_start = 40e-3
 fo_bar_45deg_0.fo_line_fine.points_along_path = [[0.01, 0.015, 'start'],
@@ -269,7 +270,7 @@ fo_sens_pl_top = qda_elements.add_fo_line('sensor_top_plunger', 0)
 
 fo_sens_pl_top.fo_direction = 'top'
 fo_sens_pl_top.n_fanout = 4
-fo_sens_pl_top.fo = fo
+fo_sens_pl_top.fo_points = fo_points
 
 fo_sens_pl_top.fo_line_fine.fo_width_start = 40e-3
 fo_sens_pl_top.fo_line_fine.points_along_path = [[0, 0.8, 'start'],
@@ -284,7 +285,7 @@ fo_sens_pl_top = qda_elements.add_fo_line('sensor_top_source', 0)
 fo_sens_pl_top.fo_direction = 'top'
 fo_sens_pl_top.n_fanout = 6
 fo_sens_pl_top.start_offset = (0.01, 0.02)
-fo_sens_pl_top.fo = fo
+fo_sens_pl_top.fo_points = fo_points
 
 fo_sens_pl_top.fo_line_fine.fo_width_start = 50e-3
 fo_sens_pl_top.fo_line_fine.points_along_path = [[0.25, 0.8, 'start'],
@@ -298,7 +299,7 @@ fo_sens_pl_bottom = qda_elements.add_fo_line('sensor_bottom_plunger', 0)
 
 fo_sens_pl_bottom.fo_direction = 'bottom'
 fo_sens_pl_bottom.n_fanout = 2
-fo_sens_pl_bottom.fo = fo
+fo_sens_pl_bottom.fo_points = fo_points
 
 fo_sens_pl_bottom.fo_line_fine.fo_width_start = 40e-3
 fo_sens_pl_bottom.fo_line_fine.points_along_path = [[0, -0.8, 'start'],
@@ -312,7 +313,7 @@ fo_sens_pl_right = qda_elements.add_fo_line('sensor_right_plunger', 0)
 
 fo_sens_pl_right.fo_direction = 'right'
 fo_sens_pl_right.n_fanout = 2
-fo_sens_pl_right.fo = fo
+fo_sens_pl_right.fo_points = fo_points
 
 fo_sens_pl_right.fo_line_fine.fo_width_start = 40e-3
 fo_sens_pl_right.fo_line_fine.points_along_path = [[0.8, 0, 'start'],
@@ -327,7 +328,7 @@ fo_sens_pl_left = qda_elements.add_fo_line('sensor_left_plunger', 0)
 
 fo_sens_pl_left.fo_direction = 'left'
 fo_sens_pl_left.n_fanout = 2
-fo_sens_pl_left.fo = fo
+fo_sens_pl_left.fo_points = fo_points
 
 fo_sens_pl_left.fo_line_fine.fo_width_start = 40e-3
 fo_sens_pl_left.fo_line_fine.points_along_path = [[-0.8, 0, 'start'],
