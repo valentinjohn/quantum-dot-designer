@@ -106,20 +106,20 @@ class QuantumDotArrayElements:
         self.components[name] = ohmic
         return ohmic
 
-    def add_sensor(self, name):
-        """
-        Add a sensor to the collection.
+    # def add_sensor(self, name):
+    #     """
+    #     Add a sensor to the collection.
 
-        Args:
-            name: Name of the sensor.
+    #     Args:
+    #         name: Name of the sensor.
 
-        Returns:
-            The created sensor.
+    #     Returns:
+    #         The created sensor.
 
-        """
-        sensor = Sensor(name, self)
-        self.components[name] = sensor
-        return sensor
+    #     """
+    #     sensor = Sensor(name, self)
+    #     self.components[name] = sensor
+    #     return sensor
 
     def add_clavier_gate(self, name):
         """
@@ -136,20 +136,20 @@ class QuantumDotArrayElements:
         self.components[name] = clavier_gate
         return clavier_gate
 
-    def add_clavier(self, name):
-        """
-        Add a clavier to the collection.
+    # def add_clavier(self, name):
+    #     """
+    #     Add a clavier to the collection.
 
-        Args:
-            name: Name of the clavier.
+    #     Args:
+    #         name: Name of the clavier.
 
-        Returns:
-            The created clavier.
+    #     Returns:
+    #         The created clavier.
 
-        """
-        clavier = Clavier(name, self)
-        self.components[name] = clavier
-        return clavier
+    #     """
+    #     clavier = Clavier(name, self)
+    #     self.components[name] = clavier
+    #     return clavier
 
     def add_fo_line_fine(self, name):
         fanout_line = FanOutLineFine(name)
@@ -161,10 +161,10 @@ class QuantumDotArrayElements:
         self.components[name] = fanout_line
         return fanout_line
 
-    def add_fo_line(self, element_name, element_number):
-        fanout_line = FanOutLine(element_name, element_number, self)
-        self.components[f'fo_{element_name}_{element_number}'] = fanout_line
-        return fanout_line
+    # def add_fo_line(self, element_name, element_number):
+    #     fanout_line = FanOutLine(element_name, element_number, self)
+    #     self.components[f'fo_{element_name}_{element_number}'] = fanout_line
+    #     return fanout_line
 
     def add_copy(self, component, copy_name):
         # if not component.built:
@@ -212,11 +212,99 @@ class QuantumDotArrayElements:
         return new_element
 
 
+class QuantumDotArrayComponents:
+
+    def __init__(self, qda_elements):
+        self.components = {}
+        self.qda_elements = qda_elements
+
+    def add_sensor(self, name):
+        """
+        Add a sensor to the collection.
+
+        Args:
+            name: Name of the sensor.
+
+        Returns:
+            The created sensor.
+
+        """
+        sensor = Sensor(name, self.qda_elements)
+        self.components[name] = sensor
+        return sensor
+
+    def add_clavier(self, name):
+        """
+        Add a clavier to the collection.
+
+        Args:
+            name: Name of the clavier.
+
+        Returns:
+            The created clavier.
+
+        """
+        clavier = Clavier(name, self.qda_elements)
+        self.components[name] = clavier
+        return clavier
+
+    def add_fo_line(self, element_name, element_number):
+        fanout_line = FanOutLine(
+            element_name, element_number, self.qda_elements)
+        self.components[f'fo_{element_name}_{element_number}'] = fanout_line
+        return fanout_line
+
+    def add_copy(self, component, copy_name):
+        if not component.built:
+            component.build()
+        attributes = copy.copy(vars(component))
+        attributes.pop('name')
+        attributes.pop('cell')
+        attributes.pop('elements')
+
+        if 'components' in attributes:
+            attributes.pop('components')
+        # Check if 'qda_elements' is an attribute of the component
+        if 'qda_elements' in attributes:
+            qda_elements = attributes.pop('qda_elements')
+            # Create new element using both 'copy_name' and 'qda_elements'
+            new_element = type(component)(copy_name, qda_elements)
+        else:
+            new_element = type(component)(copy_name)
+        new_element.__dict__.update(attributes)
+
+        if isinstance(component, Sensor):
+            new_element.cell = new_element.cell.copy(copy_name)
+            new_element.plunger = component.plunger.copy(
+                f'{copy_name}_plunger')
+            new_element.barrier_source = component.barrier_source.copy(
+                f'{copy_name}_barrier_source')
+            new_element.barrier_drain = component.barrier_drain.copy(
+                f'{copy_name}_barrier_drain')
+            new_element.source = component.source.copy(
+                f'{copy_name}_source')
+            new_element.drain = component.drain.copy(
+                f'{copy_name}_drain')
+            new_element.barrier_sep = component.barrier_sep.copy(
+                f'{copy_name}_barrier_seperation')
+
+        if isinstance(component, Clavier):
+            new_element.cell = new_element.cell.copy(copy_name)
+            new_element.screen = component.screen.copy(
+                f'{copy_name}_screen_clav')
+            for element_name, clav_gate in component.clavier_gates.copy().items():
+                new_element.clavier_gates[copy_name] = clav_gate.copy(
+                    f'{copy_name}_{element_name}')
+
+        self.components[copy_name] = new_element
+        return new_element
+
+
 # %% Components
 
 
 class Sensor(UnitCell):
-    def __init__(self, name: str, qda_elements: QuantumDotArrayElements):
+    def __init__(self, name: str, qda_elements):
         """
         Initialize a Sensor object.
 

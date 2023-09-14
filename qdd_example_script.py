@@ -12,6 +12,7 @@ import QuantumDotDesigner as qdd
 # %% Init
 
 qda_elements = qdd.QuantumDotArrayElements()
+qda_components = qdd.QuantumDotArrayComponents(qda_elements)
 unit_cell = qdd.UnitCell('unit_cell')
 qda = qdd.QuantumDotArray()
 
@@ -105,7 +106,7 @@ uc_bar_315deg.spacing = (qda.spacing_qd_diag, qda.spacing_qd_diag)
 
 qda_elements.spacing_sep = 60e-3
 
-sensor_top = qda_elements.add_sensor('sensor_top')
+sensor_top = qda_components.add_sensor('sensor_top')
 
 # for the positioning of the sensor element you can either indicate 'top',
 # 'bottom', 'top-right', etc ...., or you indiacte the angle with 'top'
@@ -227,7 +228,7 @@ fo_points.create_fo_polygons_coarse()
 
 
 # %% Fanout plunger ver 0
-fo_pl_ver_0 = qda_elements.add_fo_line('plunger_vertically_elongated', 0)
+fo_pl_ver_0 = qda_components.add_fo_line('plunger_vertically_elongated', 0)
 
 fo_pl_ver_0.fo_direction = 'top'
 fo_pl_ver_0.n_fanout = 0
@@ -239,7 +240,7 @@ fo_pl_ver_0.fo_line_fine.points_along_path = [[-0.15, 0.3, 'start'],
 fo.add_component(fo_pl_ver_0)
 
 # %% Fanout plunger ver 1
-fo_pl_ver_1 = qda_elements.add_fo_line('plunger_vertically_elongated', 1)
+fo_pl_ver_1 = qda_components.add_fo_line('plunger_vertically_elongated', 1)
 
 fo_pl_ver_1.fo_direction = 'top'
 fo_pl_ver_1.n_fanout = 2
@@ -252,7 +253,7 @@ fo_pl_ver_1.fo_line_fine.points_along_path = [[-qda.spacing_qd_diag/2, 0, 'start
 fo.add_component(fo_pl_ver_1)
 
 # %% Fanout bar 45deg 0
-fo_bar_45deg_0 = qda_elements.add_fo_line('barrier_45deg_rotated', 0)
+fo_bar_45deg_0 = qda_components.add_fo_line('barrier_45deg_rotated', 0)
 
 fo_bar_45deg_0.fo_direction = 'top'
 fo_bar_45deg_0.n_fanout = 1
@@ -266,7 +267,7 @@ fo_bar_45deg_0.fo_line_fine.points_along_path = [[0.01, 0.015, 'start'],
 fo.add_component(fo_bar_45deg_0)
 
 # %% Fanout sensor plunger top
-fo_sens_pl_top = qda_elements.add_fo_line('sensor_top_plunger', 0)
+fo_sens_pl_top = qda_components.add_fo_line('sensor_top_plunger', 0)
 
 fo_sens_pl_top.fo_direction = 'top'
 fo_sens_pl_top.n_fanout = 4
@@ -280,7 +281,7 @@ fo_sens_pl_top.fo_line_fine.points_along_path = [[0, 0.8, 'start'],
 fo.add_component(fo_sens_pl_top)
 
 # %% Fanout sensor source top
-fo_sens_pl_top = qda_elements.add_fo_line('sensor_top_source', 0)
+fo_sens_pl_top = qda_components.add_fo_line('sensor_top_source', 0)
 
 fo_sens_pl_top.fo_direction = 'top'
 fo_sens_pl_top.n_fanout = 6
@@ -295,7 +296,7 @@ fo_sens_pl_top.fo_line_fine.points_along_path = [[0.25, 0.8, 'start'],
 fo.add_component(fo_sens_pl_top)
 
 # %% Fanout sensor plunger bottom
-fo_sens_pl_bottom = qda_elements.add_fo_line('sensor_bottom_plunger', 0)
+fo_sens_pl_bottom = qda_components.add_fo_line('sensor_bottom_plunger', 0)
 
 fo_sens_pl_bottom.fo_direction = 'bottom'
 fo_sens_pl_bottom.n_fanout = 2
@@ -309,7 +310,7 @@ fo_sens_pl_bottom.fo_line_fine.points_along_path = [[0, -0.8, 'start'],
 fo.add_component(fo_sens_pl_bottom)
 
 # %% Fanout sensor plunger right
-fo_sens_pl_right = qda_elements.add_fo_line('sensor_right_plunger', 0)
+fo_sens_pl_right = qda_components.add_fo_line('sensor_right_plunger', 0)
 
 fo_sens_pl_right.fo_direction = 'right'
 fo_sens_pl_right.n_fanout = 2
@@ -324,7 +325,7 @@ fo_sens_pl_right.fo_line_fine.points_along_path = [[0.8, 0, 'start'],
 fo.add_component(fo_sens_pl_right)
 
 # %% Fanout sensor plunger left
-fo_sens_pl_left = qda_elements.add_fo_line('sensor_left_plunger', 0)
+fo_sens_pl_left = qda_components.add_fo_line('sensor_left_plunger', 0)
 
 fo_sens_pl_left.fo_direction = 'left'
 fo_sens_pl_left.n_fanout = 2

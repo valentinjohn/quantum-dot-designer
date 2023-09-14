@@ -319,12 +319,12 @@ def merge_device_positions(dict1, dict2):
             # Check if the vertices are the same
             if not np.array_equal(merged[key]['vertices'], value['vertices']):
                 raise ValueError(
-                    f"The vertices for key '{key}' are different between the two dictionaries.")
+                    f"The vertices for the key {key} are different between the two dictionaries.")
 
             # Check if the layers are the same
             if merged[key]['layer'] != value['layer']:
                 raise ValueError(
-                    f"The layers for key '{key}' are different between the two dictionaries.")
+                    f"The layers for the key {key} are different between the two dictionaries.")
 
             # Merge the positions
             merged[key]['positions'] += value['positions']

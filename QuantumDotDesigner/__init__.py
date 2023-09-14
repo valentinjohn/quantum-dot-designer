@@ -1,4 +1,5 @@
 from .QuantumDotDesigner import (QuantumDotArrayElements,
+                                 QuantumDotArrayComponents,
                                  Sensor, Clavier, FanOutLine)
 
 from .QuantumDotArray import QuantumDotArray

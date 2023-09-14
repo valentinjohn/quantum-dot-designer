@@ -13,6 +13,7 @@ import QuantumDotDesigner as qdd
 # %% Init
 
 qda_elements = qdd.QuantumDotArrayElements()
+qda_components = qdd.QuantumDotArrayComponents(qda_elements)
 unit_cell = qdd.UnitCell('unit_cell')
 qda = qdd.QuantumDotArray()
 
@@ -89,8 +90,8 @@ uc_bar_3.center = (1*spacing_qd/4, tritop_height/2)
 
 # %% define sensor
 
-sensor_top = qda_elements.add_sensor('sensor_top')
-sensor_top = qda_elements.add_sensor('sensor_top')
+sensor_top = qda_components.add_sensor('sensor_top')
+sensor_top = qda_components.add_sensor('sensor_top')
 
 sensor_top.sep_pos = 'bottom'
 sensor_top.source_pos = 'left'
@@ -152,7 +153,7 @@ uc_unitcell.spacing = (2*qda.spacing_qd_diag,
                        qda.spacing_qd_diag)
 # %% Add clavier gates
 
-clavier = qda_elements.add_clavier('clavier')
+clavier = qda_components.add_clavier('clavier')
 
 clavier.clav_dot_size = 100e-3
 clavier.clav_gate_gap = 20e-3
@@ -214,7 +215,7 @@ fo_points.create_fo_polygons_coarse()
 # %%% Fanout plungers
 # %%%% Fanout plunger 0
 
-fo_pl_0 = qda_elements.add_fo_line('plunger', 0)
+fo_pl_0 = qda_components.add_fo_line('plunger', 0)
 
 fo_pl_0.fo_points = fo_points
 fo_pl_0.fo_direction = 'top'
@@ -227,7 +228,7 @@ fo_pl_0.fo_line_fine.points_along_path = [[0.25, 0.15, 'start'],
 fo.add_component(fo_pl_0)
 
 # %%%% Fanout plunger 1
-fo_pl_1 = qda_elements.add_fo_line('plunger', 1)
+fo_pl_1 = qda_components.add_fo_line('plunger', 1)
 
 fo_pl_1.fo_points = fo_points
 fo_pl_1.fo_direction = 'bottom'
@@ -239,7 +240,7 @@ fo_pl_1.fo_line_fine.points_along_path = [[0, -0.1, 'start'],
 fo.add_component(fo_pl_1)
 
 # %%%% Fanout plunger 2
-fo_pl_2 = qda_elements.add_fo_line('plunger', 2)
+fo_pl_2 = qda_components.add_fo_line('plunger', 2)
 
 fo_pl_2.fo_direction = 'bottom'
 fo_pl_2.n_fanout = 6
@@ -252,7 +253,7 @@ fo.add_component(fo_pl_2)
 
 # %%% Fanout barriers
 # %%%% Fanout bar 1
-fo_bar_1 = qda_elements.add_fo_line('barrier_1', 0)
+fo_bar_1 = qda_components.add_fo_line('barrier_1', 0)
 
 
 fo_bar_1.fo_direction = 'bottom'
@@ -268,7 +269,7 @@ fo_bar_1.fo_line_fine.points_along_path = [[0, -0.5, 'start'],
 fo.add_component(fo_bar_1)
 
 # %%%% Fanout bar 2
-fo_bar_2 = qda_elements.add_fo_line('barrier_2', 0)
+fo_bar_2 = qda_components.add_fo_line('barrier_2', 0)
 
 fo_bar_2.fo_direction = 'top'
 fo_bar_2.n_fanout = 1
@@ -284,7 +285,7 @@ fo_bar_2.fo_line_fine.points_along_path = [[-0.1, 0.1, 'start'],
 fo.add_component(fo_bar_2)
 
 # %%%% Fanout bar 3
-fo_bar_3 = qda_elements.add_fo_line('barrier_3', 0)
+fo_bar_3 = qda_components.add_fo_line('barrier_3', 0)
 
 fo_bar_3.fo_direction = 'top'
 fo_bar_3.n_fanout = 9
@@ -301,7 +302,7 @@ fo.add_component(fo_bar_3)
 
 # %%% Fanout sensor
 # %%%% Fanout sensor plunger top
-fo_sens_pl_top = qda_elements.add_fo_line('sensor_top_plunger', 0)
+fo_sens_pl_top = qda_components.add_fo_line('sensor_top_plunger', 0)
 
 fo_sens_pl_top.fo_direction = 'top'
 fo_sens_pl_top.n_fanout = 5
@@ -315,7 +316,7 @@ fo_sens_pl_top.fo_line_fine.points_along_path = [[0, 0.8, 'start'],
 fo.add_component(fo_sens_pl_top)
 
 # %%%% Fanout bar sens source
-fo_sens_top_sou = qda_elements.add_fo_line('sensor_top_barrier_source', 0)
+fo_sens_top_sou = qda_components.add_fo_line('sensor_top_barrier_source', 0)
 
 fo_sens_top_sou.fo_direction = 'top'
 fo_sens_top_sou.n_fanout = 4
@@ -330,7 +331,7 @@ fo_sens_top_sou.fo_line_fine.points_along_path = [[0, 0.1, 'start'],
 fo.add_component(fo_sens_top_sou)
 
 # %%%% Fanout bar sens drain
-fo_sens_top_dra = qda_elements.add_fo_line('sensor_top_barrier_drain', 0)
+fo_sens_top_dra = qda_components.add_fo_line('sensor_top_barrier_drain', 0)
 
 fo_sens_top_dra.fo_direction = 'top'
 fo_sens_top_dra.n_fanout = 6
@@ -346,7 +347,8 @@ fo.add_component(fo_sens_top_dra)
 
 
 # %%%% Fanout bar sens top sep
-fo_sens_top_sep = qda_elements.add_fo_line('sensor_top_barrier_seperation', 0)
+fo_sens_top_sep = qda_components.add_fo_line(
+    'sensor_top_barrier_seperation', 0)
 
 fo_sens_top_sep.fo_direction = 'top'
 fo_sens_top_sep.n_fanout = 2
@@ -362,7 +364,7 @@ fo.add_component(fo_sens_top_sep)
 
 # %%% Fanout clavier
 # %%%% Fanout clavier gate top 1
-fo_clav_gate_1 = qda_elements.add_fo_line('clavier_gate_0', 0)
+fo_clav_gate_1 = qda_components.add_fo_line('clavier_gate_0', 0)
 
 fo_clav_gate_1.fo_direction = 'left'
 fo_clav_gate_1.n_fanout = 1
@@ -374,7 +376,7 @@ fo_clav_gate_1.fo_line_fine.points_along_path = [[0, 1, 'start'],
 fo.add_component(fo_clav_gate_1)
 
 # %%%% Fanout clavier gate top 2
-fo_clav_gate_1 = qda_elements.add_fo_line('clavier_gate_2', 0)
+fo_clav_gate_1 = qda_components.add_fo_line('clavier_gate_2', 0)
 
 fo_clav_gate_1.fo_direction = 'left'
 fo_clav_gate_1.n_fanout = 0
@@ -385,7 +387,7 @@ fo_clav_gate_1.fo_line_fine.points_along_path = [[0, 2, 'start']]
 fo.add_component(fo_clav_gate_1)
 
 # %%%% Fanout clavier gate bottom 1
-fo_clav_gate_1 = qda_elements.add_fo_line('clavier_gate_1', 0)
+fo_clav_gate_1 = qda_components.add_fo_line('clavier_gate_1', 0)
 
 fo_clav_gate_1.fo_direction = 'bottom'
 fo_clav_gate_1.n_fanout = 0
@@ -397,7 +399,7 @@ fo_clav_gate_1.fo_line_fine.points_along_path = [[0, -1, 'start'],
 fo.add_component(fo_clav_gate_1)
 
 # %%%% Fanout clavier gate bottom 2
-fo_clav_gate_1 = qda_elements.add_fo_line('clavier_gate_3', 0)
+fo_clav_gate_1 = qda_components.add_fo_line('clavier_gate_3', 0)
 
 fo_clav_gate_1.fo_direction = 'bottom'
 fo_clav_gate_1.n_fanout = 4
@@ -448,7 +450,7 @@ screen_pl_2_qda.component = screen_pl_2
 qda.build()
 
 # %%% Fanout Plunger 0 screening
-fo_screen_0 = qda_elements.add_fo_line('screening_gate_pl_0', 0)
+fo_screen_0 = qda_components.add_fo_line('screening_gate_pl_0', 0)
 
 fo_screen_0.fo_direction = 'top'
 fo_screen_0.n_fanout = 7
