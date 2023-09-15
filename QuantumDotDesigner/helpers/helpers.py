@@ -29,6 +29,48 @@ def rot_mat(theta):
                      [np.sin(theta), np.cos(theta)]])
 
 
+def distance(coord1, coord2):
+    """
+    Calculate the distance between two coordinates.
+
+    Parameters:
+    - coord1 (tuple): A tuple containing the x and y coordinates of the first point, in the form (x1, y1).
+    - coord2 (tuple): A tuple containing the x and y coordinates of the second point, in the form (x2, y2).
+
+    Returns:
+    - float: The distance between the two points.
+    """
+
+    x1, y1 = coord1
+    x2, y2 = coord2
+
+    return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+
+
+def midpoint(coord1, coord2):
+    """
+    Calculate the midpoint between two coordinates.
+
+    Parameters:
+    - coord1 (tuple): A tuple containing the x and y coordinates of the first point, in the form (x1, y1).
+    - coord2 (tuple): A tuple containing the x and y coordinates of the second point, in the form (x2, y2).
+
+    Returns:
+    - tuple: A tuple containing the x and y coordinates of the midpoint, in the form (mid_x, mid_y).
+
+    Example:
+    >>> midpoint((1, 2), (3, 4))
+    (2.0, 3.0)
+    """
+    x1, y1 = coord1
+    x2, y2 = coord2
+
+    mid_x = (x1 + x2) / 2
+    mid_y = (y1 + y2) / 2
+
+    return (mid_x, mid_y)
+
+
 def gen_poly(n, sp=None):
     """
     Generate a regular polygon with a given number of sides.
@@ -654,11 +696,6 @@ def generate_polygon_for_fanout(direction, fo_line, bondpad_position, bondpad_si
     return fo_polys
 
 
-def perpendicular_vector(v):
-    """Return a 2D vector that's perpendicular to the given 2D vector `v`."""
-    return np.array([-v[1], v[0]])
-
-
 def axis_value(points, axis=0, operation="max"):
     """
     Returns the maximum or minimum value along a specified axis for a list of 2D points.
@@ -676,6 +713,7 @@ def axis_value(points, axis=0, operation="max"):
         raise ValueError("Operation must be 'max' or 'min'")
 
 
+# %%% vector
 def normalize_vector(v):
     """Return the normalized version of the vector `v`."""
     magnitude = np.linalg.norm(v)
@@ -689,6 +727,50 @@ def perpendicular_vector(v):
     """Return a normalized 2D vector that's perpendicular to the given 2D vector `v`."""
     perp_vector = np.array([-v[1], v[0]])
     return normalize_vector(perp_vector)
+
+
+def orthogonal_unit_vector(coord1, coord2):
+    x1, y1 = coord1
+    x2, y2 = coord2
+
+    # Direction vector
+    dx = x2 - x1
+    dy = y2 - y1
+
+    # Orthogonal vector (not yet a unit vector)
+    ortho = (dy, -dx)
+
+    # Compute magnitude of orthogonal vector
+    magnitude = math.sqrt(ortho[0]**2 + ortho[1]**2)
+
+    # Convert to unit vector
+    unit_ortho = (ortho[0] / magnitude, ortho[1] / magnitude)
+
+    return unit_ortho
+
+
+def adjust_vector_direction(vector, point):
+    """
+    Adjust the sign of a 2D vector to make it point towards a given 2D coordinate.
+
+    Parameters:
+    - vector (tuple): A tuple representing the 2D vector in the form (vx, vy).
+    - point (tuple): A tuple representing the 2D coordinate in the form (x, y).
+
+    Returns:
+    - tuple: The adjusted vector pointing towards the input coordinate.
+    """
+
+    vx, vy = vector
+    x, y = point
+
+    dot_product = vx * x + vy * y
+
+    if dot_product < 0:
+        # Reverse the direction of the vector
+        return (-vx, -vy)
+    else:
+        return (vx, vy)
 
 # %%% screening gate calculations
 

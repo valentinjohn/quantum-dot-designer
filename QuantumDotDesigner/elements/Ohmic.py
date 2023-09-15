@@ -7,7 +7,10 @@ Created on Wed Sep 13 13:02:28 2023
 
 from QuantumDotDesigner.base import Element
 import numpy as np
-from QuantumDotDesigner.helpers.helpers import rot_mat
+from QuantumDotDesigner.helpers.helpers import (rot_mat, midpoint,
+                                                orthogonal_unit_vector,
+                                                distance,
+                                                adjust_vector_direction)
 import gdstk
 
 
@@ -68,6 +71,14 @@ class Ohmic(Element):
         ohmic = gdstk.Polygon(self.vertices, layer=self.layer)
         ohmic.fillet(self.fillet, tolerance=self.fillet_tolerance)
         ohmic.rotate(self.rotate)
+        self.fo_contact_point = midpoint(ohmic.points[-2],
+                                         ohmic.points[-1])
+        vector = orthogonal_unit_vector(ohmic.points[-2],
+                                        ohmic.points[-1])
+        point = -ohmic.points[-3]
+        self.fo_contact_vector = adjust_vector_direction(vector, point)
+        self.fo_contact_width = distance(ohmic.points[-2],
+                                         ohmic.points[-1])
         cell = gdstk.Cell(self.name)
         cell.add(ohmic)
         self.elements[self.name]['vertices'] = ohmic.points

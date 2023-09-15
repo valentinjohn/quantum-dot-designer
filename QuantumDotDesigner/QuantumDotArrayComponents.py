@@ -81,10 +81,10 @@ class QuantumDotArrayComponents:
                 f'{copy_name}_barrier_source')
             new_element.barrier_drain = component.barrier_drain.copy(
                 f'{copy_name}_barrier_drain')
-            new_element.source = component.source.copy(
-                f'{copy_name}_source')
-            new_element.drain = component.drain.copy(
-                f'{copy_name}_drain')
+            new_element.source = qda_elements.add_copy(component.source,
+                                                       f'{copy_name}_source')
+            new_element.drain = qda_elements.add_copy(component.drain,
+                                                      f'{copy_name}_drain')
             new_element.barrier_sep = component.barrier_sep.copy(
                 f'{copy_name}_barrier_seperation')
 

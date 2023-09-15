@@ -27,7 +27,11 @@ class FanOutLine(UnitCell):
         self.element_number = element_number
         # self.fo_fine_coarse_overlap = None
         # self.fo_fine_coarse_overlap_gap = 0.3
-        self.layer = qda_elements.components[element_name].layer
+        self.element = qda_elements.components[element_name]
+        self.start_offset = self.element.fo_contact_point
+        self.fo_line_fine.fo_width_start = self.element.fo_contact_width
+        self.fo_direction_start = self.element.fo_contact_vector
+        self.layer = self.element.layer
         self.polygons = None
         self.fo_direction = None
         self.n_fanout = None
@@ -35,7 +39,6 @@ class FanOutLine(UnitCell):
         self.fillet = 0
         self.fillet_tolerance = 1e-3
         self.elements = {}
-        self.start_offset = (0, 0)
         # self.fine_fo_width_start = 40e-3
         # self.fine_fo_start = None
         # self.fine_fo_end = None
@@ -82,12 +85,19 @@ class FanOutLine(UnitCell):
         # name = f'fo_line_{self.element_name}_{self.element_number}_fine'
         # self.fo_line_fine.name = name
         # self.fo_line_fine.cell.name = name
+        if self.fo_direction_start:
+            self.fo_line_fine.points_along_path = [[0.01*self.fo_direction_start[0],
+                                                   0.01 *
+                                                   self.fo_direction_start[1],
+                                                   'start']]
+
         self.elements[self.fo_line_fine.name] = {'vertices': [],
                                                  'positions': [],
                                                  'layer': self.fo_line_fine.layer}
 
         self.fo_line_fine.fo_direction = self.fo_direction
         self.fo_line_fine.layer = self.qda_elements.components[self.element_name].layer
+        self.fo_line_fine.fillet = self.fillet
 
         attributes = {
             'fo_direction': self.fo_direction,

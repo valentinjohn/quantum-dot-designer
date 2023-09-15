@@ -40,7 +40,6 @@ class FanOutLineBase(PlotMixin):
     def build(self):
         fo_line = gdstk.Polygon(self.polygons, layer=self.layer)
         fo_line.fillet(self.fillet, tolerance=self.fillet_tolerance)
-        fo_line.fillet(0.02, tolerance=1e-4)
 
         self.elements[self.name]['vertices'] = fo_line.points
         self.elements[self.name]['positions'] = [0, 0]
