@@ -121,21 +121,21 @@ sensor_top.drain_pos_angle = -3/8*np.pi
 # the orientation of the sensor elements is indicated by the direction in
 # which the end of the element points to, This can be either clockwise or
 # counterclockwise
-sensor_top.bar_drain_end = 'counterclockwise'
-sensor_top.bar_source_end = 'clockwise'
-sensor_top.bar_sep_end = 'clockwise'
+sensor_top.barrier_orientation['drain'] = 'counterclockwise'
+sensor_top.barrier_orientation['source'] = 'clockwise'
+sensor_top.barrier_orientation['sep'] = 'clockwise'
 
 sensor_top.gap_sep = 60e-3
-sensor_top.gap_ohmic_pl = 40e-3
+sensor_top.gap_ohmic_pl = 50e-3
 
 sensor_top.plunger.diameter = 160e-3
 sensor_top.plunger.layer = 21
 
-sensor_top.barrier_source.width = 30e-3
+sensor_top.barrier_source.width = 40e-3
 sensor_top.barrier_source.length = 70e-3
 sensor_top.barrier_source.layer = 5
 
-sensor_top.barrier_drain.width = 30e-3
+sensor_top.barrier_drain.width = 40e-3
 sensor_top.barrier_drain.length = 70e-3
 sensor_top.barrier_drain.layer = 5
 
@@ -410,8 +410,24 @@ screen_pl_0.fo_contact_direction = 0
 screen_pl_0_qda = qda.add_component()
 screen_pl_0_qda.component = screen_pl_0
 
-# %%% Fanout screening plunger 0
+# %%% Plunger sens nort plunger screening
+screen_sens_pl_top = qda_elements.add_screening_gate(
+    'screening_gate_sens_pl_top')
+
+screen_sens_pl_top.qda_elements = qda_elements
+screen_sens_pl_top.screen('sensor_top_plunger', 0,
+                          [0.1, 0.3, 0.4], [50e-3, 50e-3, (25e-3, 75e-3)])
+screen_sens_pl_top.layer = screening_layer
+screen_sens_pl_top.fo_contact_width = 50e-3
+screen_sens_pl_top.fo_contact_direction = 1
+
+screen_sens_pl_top_qda = qda.add_component()
+screen_sens_pl_top_qda.component = screen_sens_pl_top
+
+# %% Screening gates fanout
 qda.build()
+
+# %%% Fanout screening plunger 0
 
 fo_screen_pl_0 = qda_components.add_fo_line('screening_gate_pl_ver_0')
 
@@ -422,10 +438,24 @@ fo_screen_pl_0.fo_points = fo_points
 fo_screen_pl_0.fo_line_fine.fo_width_start = screen_pl_0.fo_contact_width
 fo_screen_pl_0.fo_line_fine.points_along_path = [[-0.1, 0.1, 'start'],
                                                  [-0.8, 0.4, 'start'],
-                                                 # [0, pl_ver.diameter/2, 'prev'],
-                                                 # [-0.2, 0.5, 'prev']
                                                  ]
 fo.add_component(fo_screen_pl_0)
+
+# %%% Fanout screening plunger sensor top
+
+fo_screen_sens_pl_top = qda_components.add_fo_line(
+    'screening_gate_sens_pl_top')
+
+fo_screen_sens_pl_top.fo_direction = 'top'
+fo_screen_sens_pl_top.n_fanout = 5
+fo_screen_sens_pl_top.fo_points = fo_points
+
+fo_screen_sens_pl_top.fo_line_fine.fo_width_start = screen_sens_pl_top.fo_contact_width
+fo_screen_sens_pl_top.fo_line_fine.points_along_path = [[0.05, 0.1, 'start'],
+                                                        [0.2, 0.8, 'start'],
+                                                        ]
+fo.add_component(fo_screen_sens_pl_top)
+
 
 # %% Build and Add fanout to qda
 

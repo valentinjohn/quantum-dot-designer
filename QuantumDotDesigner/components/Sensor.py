@@ -22,6 +22,10 @@ class Sensor(UnitCell):
         Args:
             name (str): Name of the sensor.
         """
+        if not isinstance(qda_elements, QuantumDotArrayElements):
+            raise TypeError(
+                f"Expected qda_elements to be of type {QuantumDotArrayElements}, but got {type(qda_elements)} instead.")
+
         super().__init__(name)
         self.qda_elements = qda_elements
         self.plunger = qda_elements.add_plunger(f'{name}_plunger')
@@ -40,27 +44,30 @@ class Sensor(UnitCell):
         self.drain_pos_angle = None
         self.sep_pos = None
         self.sep_pos_angle = None
-        self.bar_drain_end = 'clockwise'
-        self.bar_source_end = 'counter-clockwise'
-        self.bar_sep_end = 'clockwise'
-        self.source_position_offset = (0, 0)
-        self.drain_position_offset = (0, 0)
-        self.bar_sou_position_offset = (0, 0)
-        self.bar_dra_position_offset = (0, 0)
-        self.bar_sharp_source = (0, 0)
-        self.bar_sharp_drain = (0, 0)
-        self.fillet = (0, 1e-3)
-        self.__feature_gap = None
-        self.sd_position = None
-        self.bar_position = None
-        self.sep_position = None
-        self.components_position = {}
+        self.barrier_orientation = {'source': 'counter-clockwise',
+                                    'drain': 'clockwise',
+                                    'sep': 'clockwise',
+                                    }
+        self.offset = {'source': (0, 0),
+                       'drain': (0, 0),
+                       'barrier_source': (0, 0),
+                       'barrier_drain': (0, 0),
+                       }
+        self.element_positions = {'source': None,
+                                  'drain': None,
+                                  'barrier_source': None,
+                                  'barrier_drain': None,
+                                  'barrier_sep': None
+                                  }
         self._bar_angle_dict = {'top': 0, 'right': np.pi/2,
                                 'bottom': np.pi, 'left': -np.pi/2,
                                 'top-right': np.pi/4,
                                 'bottom-right': 3/4*np.pi,
                                 'bottom-left': -3/4*np.pi,
                                 'top-left': -1/4*np.pi}
+        self.components_position = {}
+        self.fillet = (0, 1e-3)
+        self.__feature_gap = None
 
     def _calculate_positions(self):
         if self.source_pos:
@@ -92,36 +99,34 @@ class Sensor(UnitCell):
         source = self.source
         drain = self.drain
 
-        self.sd_position = (
-            (i*(plunger._asymx*plunger.diameter/2 +
-                self.gap_ohmic_pl) +
-             self.source_position_offset[0],
-             j*(plunger._asymy*plunger.diameter/2 +
-                self.gap_ohmic_pl) +
-             self.source_position_offset[1]),
-            (m*(plunger._asymx*plunger.diameter/2 +
-                self.gap_ohmic_pl) +
-             self.drain_position_offset[0],
-             n*(plunger._asymy*plunger.diameter/2 +
-                self.gap_ohmic_pl) +
-             self.drain_position_offset[1]))
+        self.element_positions['source'] = ((i*(plunger._asymx*plunger.diameter/2 +
+                                                self.gap_ohmic_pl) +
+                                             self.offset['source'][0],
+                                             j*(plunger._asymy*plunger.diameter/2 +
+                                                self.gap_ohmic_pl) +
+                                             self.offset['source'][1]))
+        self.element_positions['drain'] = ((m*(plunger._asymx*plunger.diameter/2 +
+                                               self.gap_ohmic_pl) +
+                                            self.offset['drain'][0],
+                                            n*(plunger._asymy*plunger.diameter/2 +
+                                               self.gap_ohmic_pl) +
+                                            self.offset['drain'][1]))
 
-        self.bar_position = (
-            (i*(plunger._asymx*plunger.diameter/2 +
-                bar_source.width/2-self.__feature_gap) +
-             self.bar_sou_position_offset[0],
-             j*(plunger._asymy*plunger.diameter/2 +
-                bar_source.width/2-self.__feature_gap) +
-             self.bar_sou_position_offset[1]),
-            (m*(plunger._asymx*plunger.diameter/2 +
-                bar_drain.width/2-self.__feature_gap) +
-             self.bar_dra_position_offset[0],
-             n*(plunger._asymy*plunger.diameter/2 +
-                bar_drain.width/2 - self.__feature_gap) +
-             self.bar_dra_position_offset[1]))
+        self.element_positions['barrier_source'] = (i*(plunger._asymx*plunger.diameter/2 +
+                                                       bar_source.width/2-self.__feature_gap) +
+                                                    self.offset['barrier_source'][0],
+                                                    j*(plunger._asymy*plunger.diameter/2 +
+                                                       bar_source.width/2-self.__feature_gap) +
+                                                    self.offset['barrier_source'][1])
+        self.element_positions['barrier_drain'] = (m*(plunger._asymx*plunger.diameter/2 +
+                                                      bar_drain.width/2-self.__feature_gap) +
+                                                   self.offset['barrier_drain'][0],
+                                                   n*(plunger._asymy*plunger.diameter/2 +
+                                                      bar_drain.width/2 - self.__feature_gap) +
+                                                   self.offset['barrier_drain'][1])
 
-        self.sep_pos_angleition = (u*(plunger._asymx*plunger.diameter/2+self.gap_sep/2),
-                                   v*(plunger._asymy*plunger.diameter/2+self.gap_sep/2))
+        self.element_positions['barrier_sep'] = (u*(plunger._asymx*plunger.diameter/2+self.gap_sep/2),
+                                                 v*(plunger._asymy*plunger.diameter/2+self.gap_sep/2))
 
     def _set_barrier_properties(self):
         source = self.source
@@ -130,14 +135,14 @@ class Sensor(UnitCell):
         bar_drain = self.barrier_drain
         bar_sep = self.barrier_sep
 
-        if self.bar_drain_end == 'clockwise':
+        if self.barrier_orientation['drain'] == 'clockwise':
             drain.sensor_pos = 'top'
             drain.ohmic_pos = 'right'
         else:
             drain.sensor_pos = 'bottom'
             drain.ohmic_pos = 'right'
 
-        if self.bar_source_end == 'clockwise':
+        if self.barrier_orientation['source'] == 'clockwise':
             source.sensor_pos = 'top'
             source.ohmic_pos = 'right'
         else:
@@ -146,18 +151,18 @@ class Sensor(UnitCell):
 
         bar_drain_angle_offset = 0
         multiplier_bar_drain = 1
-        if self.bar_drain_end == 'clockwise':
+        if self.barrier_orientation['drain'] == 'clockwise':
             bar_drain_angle_offset = np.pi
             multiplier_bar_drain = -1
 
         bar_source_angle_offset = 0
         multiplier_bar_source = 1
-        if self.bar_source_end == 'clockwise':
+        if self.barrier_orientation['source'] == 'clockwise':
             bar_source_angle_offset = np.pi
             multiplier_bar_source = -1
 
         bar_sep_angle_offset = 0
-        if self.bar_sep_end == 'clockwise':
+        if self.barrier_orientation['sep'] == 'clockwise':
             bar_sep_angle_offset = np.pi
 
         # if isinstance(self.source_pos_angle, str):
@@ -192,26 +197,26 @@ class Sensor(UnitCell):
         self.add_component(self.plunger, build=True)
 
         sl_bs = self.add_component(self.barrier_source)
-        sl_bs.center = self.bar_position[0]
+        sl_bs.center = self.element_positions['barrier_source']
         sl_bs.build()
 
         sl_bd = self.add_component(self.barrier_drain)
-        sl_bd.center = self.bar_position[1]
+        sl_bd.center = self.element_positions['barrier_drain']
         sl_bd.build()
 
         sl_bsep = self.add_component(self.barrier_sep)
-        sl_bsep.center = self.sep_pos_angleition
+        sl_bsep.center = self.element_positions['barrier_sep']
         sl_bsep.build()
 
         sl_source = self.add_component(self.source)
-        sl_source.center = self.sd_position[0]
+        sl_source.center = self.element_positions['source']
         sl_source.build()
 
         sl_drain = self.add_component(self.drain)
-        sl_drain.center = self.sd_position[1]
+        sl_drain.center = self.element_positions['drain']
         sl_drain.build()
 
-    def build_elements(self):
+    def _build_elements(self):
         self.__feature_gap = self.barrier_source.width - self.gap_ohmic_pl
 
         self._calculate_positions()
@@ -232,5 +237,5 @@ class Sensor(UnitCell):
         return self.cell
 
     def build(self):
-        self.build_elements()
+        self._build_elements()
         super().build()

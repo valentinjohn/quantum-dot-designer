@@ -71,14 +71,14 @@ class Ohmic(Element):
         ohmic = gdstk.Polygon(self.vertices, layer=self.layer)
         ohmic.fillet(self.fillet, tolerance=self.fillet_tolerance)
         ohmic.rotate(self.rotate)
-        self.fo_contact_point = midpoint(ohmic.points[-2],
-                                         ohmic.points[-1])
+        self._fo_contact_point = midpoint(ohmic.points[-2],
+                                          ohmic.points[-1])
         vector = orthogonal_unit_vector(ohmic.points[-2],
                                         ohmic.points[-1])
         point = -ohmic.points[-3]
-        self.fo_contact_vector = adjust_vector_direction(vector, point)
-        self.fo_contact_width = distance(ohmic.points[-2],
-                                         ohmic.points[-1])
+        self._fo_contact_vector = adjust_vector_direction(vector, point)
+        self._fo_contact_width = distance(ohmic.points[-2],
+                                          ohmic.points[-1])
         cell = gdstk.Cell(self.name)
         cell.add(ohmic)
         self.elements[self.name]['vertices'] = ohmic.points

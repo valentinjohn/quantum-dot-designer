@@ -15,6 +15,9 @@ import numpy as np
 
 class Clavier(UnitCell):
     def __init__(self, name, qda_elements: QuantumDotArrayElements):
+        if not isinstance(qda_elements, QuantumDotArrayElements):
+            raise TypeError(
+                f"Expected qda_elements to be of type {QuantumDotArrayElements}, but got {type(qda_elements)} instead.")
         super().__init__(name)
         self.qda_elements = qda_elements
         self.clavier_gates = {}

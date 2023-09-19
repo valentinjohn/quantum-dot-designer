@@ -5,6 +5,7 @@ Created on Thu Sep 14 10:05:40 2023
 @author: vjohn
 """
 
+from QuantumDotDesigner import QuantumDotArray
 from QuantumDotDesigner.helpers.helpers import (compute_fanout_positions,
                                                 get_fo_lines,
                                                 generate_polygon_for_fanout)
@@ -12,6 +13,9 @@ from QuantumDotDesigner.helpers.helpers import (compute_fanout_positions,
 
 class FanoutPoints():
     def __init__(self, qda):
+        if not isinstance(qda, QuantumDotArray):
+            raise TypeError(
+                f"Expected qda to be of type {QuantumDotArray}, but got {type(qda)} instead.")
         if not qda.built:
             qda.build()
         self.qda = qda

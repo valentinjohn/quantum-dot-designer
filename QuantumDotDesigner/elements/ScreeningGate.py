@@ -54,15 +54,16 @@ class ScreeningGate(Element):
             self.elements[self.name]['positions'] = [[0, 0]]
             self.elements[self.name]['layer'] = self.layer
 
-        end_path = get_end_path(self.vertices)
-        self.fo_contact_point = point_along_line(end_path[self.fo_contact_direction % 2],
-                                                 end_path[(
-                                                     self.fo_contact_direction+1) % 2],
-                                                 self.fo_contact_width/2)
-        vector = orthogonal_unit_vector(end_path[0],
-                                        end_path[1])
-        point = self.screen_paths[0][0][:2]
-        self.fo_contact_vector = adjust_vector_direction(vector, point)
+        if self.screen_paths:
+            end_path = get_end_path(self.vertices)
+            self._fo_contact_point = point_along_line(end_path[self.fo_contact_direction % 2],
+                                                      end_path[(
+                                                          self.fo_contact_direction+1) % 2],
+                                                      self.fo_contact_width/2)
+            vector = orthogonal_unit_vector(end_path[0],
+                                            end_path[1])
+            point = self.screen_paths[0][0][:2]
+            self._fo_contact_vector = adjust_vector_direction(vector, point)
 
         self.cell = cell
         self._set_built(True)

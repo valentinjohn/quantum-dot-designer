@@ -16,6 +16,9 @@ import gdstk
 class FanOutLine(UnitCell):
     def __init__(self, element_name: str, element_number: int,
                  qda_elements: QuantumDotArrayElements):
+        if not isinstance(qda_elements, QuantumDotArrayElements):
+            raise TypeError(
+                f"Expected qda_elements to be of type {QuantumDotArrayElements}, but got {type(qda_elements)} instead.")
         super().__init__(f'fo_{element_name}_{element_number}')
         self.qda_elements = qda_elements
         self.fo_points = None
@@ -28,9 +31,9 @@ class FanOutLine(UnitCell):
         # self.fo_fine_coarse_overlap = None
         # self.fo_fine_coarse_overlap_gap = 0.3
         self.element = qda_elements.components[element_name]
-        self.start_offset = self.element.fo_contact_point
-        self.fo_line_fine.fo_width_start = self.element.fo_contact_width
-        self.fo_direction_start = self.element.fo_contact_vector
+        self.start_offset = self.element._fo_contact_point
+        self.fo_line_fine.fo_width_start = self.element._fo_contact_width
+        self.fo_direction_start = self.element._fo_contact_vector
         self.layer = self.element.layer
         self.polygons = None
         self.fo_direction = None

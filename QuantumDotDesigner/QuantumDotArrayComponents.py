@@ -7,14 +7,17 @@ Created on Thu Sep 14 18:02:07 2023
 
 import copy
 
+from QuantumDotDesigner import QuantumDotArrayElements
 from QuantumDotDesigner.components.Sensor import Sensor
 from QuantumDotDesigner.components.Clavier import Clavier
 from QuantumDotDesigner.components.FanOutLine import FanOutLine
 
 
 class QuantumDotArrayComponents:
-
     def __init__(self, qda_elements):
+        if not isinstance(qda_elements, QuantumDotArrayElements):
+            raise TypeError(
+                f"Expected qda to be of type {QuantumDotArrayElements}, but got {type(qda_elements)} instead.")
         self.components = {}
         self.qda_elements = qda_elements
 

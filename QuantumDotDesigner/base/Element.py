@@ -31,9 +31,9 @@ class Element(PlotMixin):
                                 'positions': [],
                                 'layer': self.layer}}
         self.cell = None
-        self.fo_contact_point = (0, 0)
-        self.fo_contact_width = 40e-3
-        self.fo_contact_vector = None
+        self._fo_contact_point = (0, 0)
+        self._fo_contact_width = 40e-3
+        self._fo_contact_vector = None
         self.rotate = 0.0
         self.fillet = 0.0
         self.fillet_tolerance = 1e-3

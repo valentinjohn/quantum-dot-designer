@@ -404,14 +404,16 @@ fo_clav_gate_1.fo_line_fine.points_along_path = [[0, -2, 'start']]
 fo.add_component(fo_clav_gate_1)
 
 # %% Screening fanout
-# %%% Plunger 0 screening
 
+# %%% Plunger 0 screening
 screen_pl_0 = qda_elements.add_screening_gate('screening_gate_pl_0')
 
 screen_pl_0.qda_elements = qda_elements
-screen_pl_0.screen('plunger', 0, 0.1, 0.4, width=50e-3)
+screen_pl_0.screen('plunger', 0,
+                   [0.1, 0.3, 0.5], [60e-3, 60e-3, (80e-3, 30e-3)])
 screen_pl_0.layer = screening_layer
-
+screen_pl_0.fo_contact_width = 50e-3
+screen_pl_0.fo_contact_direction = 0
 
 screen_pl_0_qda = qda.add_component()
 screen_pl_0_qda.component = screen_pl_0
@@ -421,7 +423,7 @@ screen_pl_0_qda.component = screen_pl_0
 screen_pl_1 = qda_elements.add_screening_gate('screening_gate_pl_1')
 
 screen_pl_1.qda_elements = qda_elements
-screen_pl_1.screen('plunger', 1, 0.1, 0.4, width=50e-3)
+screen_pl_1.screen('plunger', 1, [0.1, 0.4], [50e-3, 50e-3])
 screen_pl_1.layer = screening_layer
 
 
@@ -433,7 +435,7 @@ screen_pl_1_qda.component = screen_pl_1
 screen_pl_2 = qda_elements.add_screening_gate('screening_gate_pl_2')
 
 screen_pl_2.qda_elements = qda_elements
-screen_pl_2.screen('plunger', 2, 0.1, 0.4, width=50e-3)
+screen_pl_2.screen('plunger', 2, [0.1, 0.4], [50e-3, 50e-3])
 screen_pl_2.layer = screening_layer
 
 screen_pl_2_qda = qda.add_component()
@@ -443,19 +445,19 @@ screen_pl_2_qda.component = screen_pl_2
 # First we have to update the quantum dot array with the screening gates
 qda.build()
 
-# %%% Fanout Plunger 0 screening
-fo_screen_0 = qda_components.add_fo_line('screening_gate_pl_0', 0)
+# %%% Fanout screening plunger sensor top
 
-fo_screen_0.fo_direction = 'top'
-fo_screen_0.n_fanout = 7
-fo_screen_0.fo_points = fo_points
-fo_screen_0.start_offset = list(screen_pl_0.vertices[0][-2])
-fo_screen_0.start_offset[0] = fo_screen_0.start_offset[0] - 0.012
+fo_screen_pl_0_top = qda_components.add_fo_line('screening_gate_pl_0')
 
-fo_screen_0.fo_line_fine.fo_width_start = 40e-3
-fo_screen_0.fo_line_fine.points_along_path = [[-0.05, 0.2, 'start'],
-                                              [0, 0.55, 'prev']]
-fo.add_component(fo_screen_0)
+fo_screen_pl_0_top.fo_direction = 'top'
+fo_screen_pl_0_top.n_fanout = 7
+fo_screen_pl_0_top.fo_points = fo_points
+
+fo_screen_pl_0_top.fo_line_fine.fo_width_start = screen_pl_0.fo_contact_width
+fo_screen_pl_0_top.fo_line_fine.points_along_path = [[0.0, 0.1, 'start'],
+                                                     [0.05, 0.8, 'start'],
+                                                     ]
+fo.add_component(fo_screen_pl_0_top)
 
 
 # %%% Build and Add fanout to qda
