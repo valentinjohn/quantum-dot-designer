@@ -71,6 +71,48 @@ def midpoint(coord1, coord2):
     return (mid_x, mid_y)
 
 
+def interpolate_point(point1, point2, ratio):
+    """Interpolate between two 2D points based on a given ratio."""
+    x = point1[0] + ratio * (point2[0] - point1[0])
+    y = point1[1] + ratio * (point2[1] - point1[1])
+    return [x, y]
+
+
+def point_along_line(coord1, coord2, length):
+    """
+    Return the coordinate along the line connecting coord1 and coord2, starting from coord1 and moving a specified length.
+
+    Parameters:
+    - coord1 (tuple): A tuple containing the x and y coordinates of the starting point, in the form (x1, y1).
+    - coord2 (tuple): A tuple containing the x and y coordinates of the second point, in the form (x2, y2).
+    - length (float): The distance to move along the line starting from coord1.
+
+    Returns:
+    - tuple: A tuple containing the x and y coordinates of the point, in the form (new_x, new_y).
+
+    Example:
+    >>> point_along_line((1, 1), (4, 5), 3)
+    (2.4, 3.0)
+    """
+
+    # Compute direction vector
+    dx = coord2[0] - coord1[0]
+    dy = coord2[1] - coord1[1]
+
+    # Compute magnitude of the direction vector
+    magnitude = math.sqrt(dx**2 + dy**2)
+
+    # Normalize the direction vector to get unit direction vector
+    unit_dx = dx / magnitude
+    unit_dy = dy / magnitude
+
+    # Compute the new coordinates
+    new_x = coord1[0] + unit_dx * length
+    new_y = coord1[1] + unit_dy * length
+
+    return (new_x, new_y)
+
+
 def gen_poly(n, sp=None):
     """
     Generate a regular polygon with a given number of sides.
@@ -427,7 +469,6 @@ def get_polygons_from_path(path_points):
     - The function assumes that the path_points list contains at least two points.
     - The polygon vertices are generated in a way that the left side vertices are followed by the right side vertices
       in reverse order.
-    - `perpendicular_vector` is an external function that returns a vector perpendicular to the given vector.
 
     Examples:
     ---------
@@ -439,6 +480,16 @@ def get_polygons_from_path(path_points):
     end = path_points[-1]
     vertices_left = []
     vertices_right = []
+
+    def get_offset(width, normal):
+        if isinstance(width, tuple):
+            offset_left = width[0] * normal
+            offset_right = width[1] * -normal
+        else:
+            offset_left = width/2 * normal
+            offset_right = -width/2 * normal
+        return offset_left, offset_right
+
     for i in range(len(path_points) - 1):
         direction_current = np.array(
             path_points[i+1][:2], dtype=float) - np.array(path_points[i][:2], dtype=float)
@@ -459,15 +510,17 @@ def get_polygons_from_path(path_points):
                 bisector_direction /= norm_bisector
         normal = perpendicular_vector(bisector_direction)
         width = path_points[i][2]
-        v1 = np.array(path_points[i][:2], dtype=float) + width/2 * normal
-        v2 = np.array(path_points[i][:2], dtype=float) - width/2 * normal
+        offset_left, offset_right = get_offset(width, normal)
+        v1 = np.array(path_points[i][:2], dtype=float) + offset_left
+        v2 = np.array(path_points[i][:2], dtype=float) + offset_right
         vertices_left.append((v1[0], v1[1]))
         vertices_right.append((v2[0], v2[1]))
     direction_end = np.array(end[:2], dtype=float) - \
         np.array(path_points[-2][:2], dtype=float)
     normal_end = perpendicular_vector(direction_end)
-    v1 = np.array(end[:2], dtype=float) + end[2]/2 * normal_end
-    v2 = np.array(end[:2], dtype=float) - end[2]/2 * normal_end
+    offset_left_end, offset_right_end = get_offset(end[2], normal_end)
+    v1 = np.array(end[:2], dtype=float) + offset_left_end
+    v2 = np.array(end[:2], dtype=float) + offset_right_end
     vertices_left.append((v1[0], v1[1]))
     vertices_right.append((v2[0], v2[1]))
 
@@ -775,6 +828,25 @@ def adjust_vector_direction(vector, point):
 # %%% screening gate calculations
 
 
+def get_end_path(coord_list):
+    # Check if the list is empty or None
+    if not coord_list or not coord_list[0]:
+        return []
+
+    # Extract the list of coordinates
+    coords = coord_list[0]
+
+    # Calculate the middle index
+    length = len(coords)
+    mid_index = length // 2
+
+    # Return the two middle coordinates based on the length
+    if length % 2 == 0:
+        return coords[mid_index - 1: mid_index + 1]
+    else:
+        return [coords[mid_index]]
+
+
 def compute_distance(point1, point2):
     """Compute the distance between two points."""
     x1, y1 = point1[0], point1[1]
@@ -793,44 +865,139 @@ def interpolate_point(point1, point2, ratio):
     return [x_new, y_new]
 
 
-def create_segmented_path(path, start_length, end_length, width=None, relative_width=False):
-    """Create a new path between the start_length and end_length based on the input path."""
+def create_segmented_path(path, points, width):
+    """Create a new path between the points[0] and points[-1] based on the input path, adjusting widths according to the width list."""
 
     # Create the new path
     new_path = []
     accumulated_length = 0
-    started = False  # To determine if we have started recording the new path
+    # Index to keep track of which point we are processing from the points list
+    current_point_index = 0
 
     for i in range(1, len(path)):
-        segment_length = compute_distance(path[i-1], path[i])
+        segment_length = distance(path[i-1][:2], path[i][:2])
 
-        # Check if the current accumulated length is within the desired range
-        if accumulated_length + segment_length >= start_length and not started:
-            # Calculate the ratio to interpolate the start point
-            remaining_length = start_length - accumulated_length
+        # Check if we have reached or passed the next point in the points list
+        while accumulated_length + segment_length >= points[current_point_index] and current_point_index < len(points):
+            remaining_length = points[current_point_index] - accumulated_length
             ratio = remaining_length / segment_length
-            interpolated_start = interpolate_point(path[i-1], path[i], ratio)
-            interpolated_start.append(path[i][2])  # Add the width
-            new_path.append(interpolated_start)
-            started = True
+            interpolated_point = interpolate_point(path[i-1], path[i], ratio)
+            interpolated_point.append(
+                width[current_point_index])  # Add the width
+            new_path.append(interpolated_point)
+            current_point_index += 1
 
-        if started:
-            if accumulated_length + segment_length <= end_length:
-                new_path.append(path[i])
-            else:
-                # Calculate the ratio to interpolate the end point
-                remaining_length = end_length - accumulated_length
-                ratio = remaining_length / segment_length
-                interpolated_end = interpolate_point(path[i-1], path[i], ratio)
-                interpolated_end.append(path[i][2])  # Add the width
-                new_path.append(interpolated_end)
+            # Break if we have processed all points
+            if current_point_index >= len(points):
                 break
 
         accumulated_length += segment_length
 
-    # Adjust the width if necessary
-    if width is not None:
-        for point in new_path:
-            point[2] = width if not relative_width else point[2] * width
+        # Break if we have processed all points
+        if current_point_index >= len(points):
+            break
 
     return new_path
+
+# def create_segmented_path(path, start_length, end_length, width=None, relative_width=False):
+#     """Create a new path between the start_length and end_length based on the input path."""
+
+#     # Create the new path
+#     new_path = []
+#     accumulated_length = 0
+#     started = False  # To determine if we have started recording the new path
+
+#     for i in range(1, len(path)):
+#         segment_length = compute_distance(path[i-1], path[i])
+
+#         # Check if the current accumulated length is within the desired range
+#         if accumulated_length + segment_length >= start_length and not started:
+#             # Calculate the ratio to interpolate the start point
+#             remaining_length = start_length - accumulated_length
+#             ratio = remaining_length / segment_length
+#             interpolated_start = interpolate_point(path[i-1], path[i], ratio)
+#             interpolated_start.append(path[i][2])  # Add the width
+#             new_path.append(interpolated_start)
+#             started = True
+
+#         if started:
+#             if accumulated_length + segment_length <= end_length:
+#                 new_path.append(path[i])
+#             else:
+#                 # Calculate the ratio to interpolate the end point
+#                 remaining_length = end_length - accumulated_length
+#                 ratio = remaining_length / segment_length
+#                 interpolated_end = interpolate_point(path[i-1], path[i], ratio)
+#                 interpolated_end.append(path[i][2])  # Add the width
+#                 new_path.append(interpolated_end)
+#                 break
+
+#         accumulated_length += segment_length
+
+#     # Adjust the width if necessary
+#     if width is not None:
+#         for point in new_path:
+#             point[2] = width if not relative_width else point[2] * width
+
+#     return new_path
+
+# def create_segmented_path(path, start_length, end_lengths, widths=None, relative_width=False):
+#     """Create new paths between the start_length and each value in end_lengths based on the input path."""
+
+#     # Ensure end_lengths and widths are lists
+#     if not isinstance(end_lengths, list):
+#         end_lengths = [end_lengths]
+#     if widths is not None and not isinstance(widths, list):
+#         widths = [widths] * len(end_lengths)
+#     elif widths is None:
+#         widths = [None] * len(end_lengths)
+
+#     segmented_paths = []
+
+#     for end_length, width in zip(end_lengths, widths):
+#         new_path = []
+#         accumulated_length = 0
+#         started = False  # To determine if we have started recording the new path
+
+#         for i in range(1, len(path)):
+#             segment_length = compute_distance(path[i-1], path[i])
+
+#             # Check if the current accumulated length is within the desired range
+#             if accumulated_length + segment_length >= start_length and not started:
+#                 # Calculate the ratio to interpolate the start point
+#                 remaining_length = start_length - accumulated_length
+#                 ratio = remaining_length / segment_length
+#                 interpolated_start = interpolate_point(
+#                     path[i-1], path[i], ratio)
+#                 interpolated_start.append(path[i][2])  # Add the width
+#                 new_path.append(tuple(interpolated_start))
+#                 started = True
+
+#             if started:
+#                 if accumulated_length + segment_length <= end_length:
+#                     new_path.append(path[i])
+#                 else:
+#                     # Calculate the ratio to interpolate the end point
+#                     remaining_length = end_length - accumulated_length
+#                     ratio = remaining_length / segment_length
+#                     interpolated_end = interpolate_point(
+#                         path[i-1], path[i], ratio)
+#                     interpolated_end.append(path[i][2])  # Add the width
+#                     new_path.append(tuple(interpolated_end))
+#                     break
+
+#             accumulated_length += segment_length
+
+#         # Adjust the width if necessary
+#         if width is not None:
+#             for idx, point in enumerate(new_path):
+#                 new_point = list(point)
+#                 if isinstance(width, tuple):
+#                     new_point[2] = width
+#                 else:
+#                     new_point[2] = width if not relative_width else new_point[2] * width
+#                 new_path[idx] = tuple(new_point)
+
+#         segmented_paths.append(new_path)
+
+#     return segmented_paths

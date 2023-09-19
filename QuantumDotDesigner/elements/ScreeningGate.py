@@ -8,7 +8,11 @@ Created on Wed Sep 13 13:02:28 2023
 from QuantumDotDesigner.base import Element
 import numpy as np
 from QuantumDotDesigner.helpers.helpers import (create_segmented_path,
-                                                get_polygons_from_path)
+                                                get_polygons_from_path,
+                                                get_end_path,
+                                                point_along_line,
+                                                orthogonal_unit_vector,
+                                                adjust_vector_direction)
 import gdstk
 
 
@@ -21,16 +25,15 @@ class ScreeningGate(Element):
         self.qda_elements = None
         self._screen_path = False
         self.contact_vertices = None
+        self.fo_contact_width = 40e-3
 
     def screen(self, element_name, element_number,
-               start_length, end_length,
-               width=50e-3, relative_width=False):
+               points, widths):
         fo_line_name = f'fo_line_{element_name}_{element_number}'
         element_fo_path = self.qda_elements.components[fo_line_name].path
         screen_path = create_segmented_path(element_fo_path,
-                                            start_length, end_length,
-                                            width=width,
-                                            relative_width=relative_width)
+                                            points,
+                                            widths)
         self.screen_paths.append(screen_path)
         poly_vertices = get_polygons_from_path(screen_path)
         self.vertices.append(poly_vertices)
@@ -49,6 +52,15 @@ class ScreeningGate(Element):
             # self.elements[self.name]['positions'] = [[self.x, self.y]]
             self.elements[self.name]['positions'] = [[0, 0]]
             self.elements[self.name]['layer'] = self.layer
+
+        end_path = get_end_path(self.vertices)
+        self.fo_contact_point = point_along_line(end_path[0],
+                                                 end_path[1],
+                                                 self.fo_contact_width/2)
+        vector = orthogonal_unit_vector(end_path[0],
+                                        end_path[1])
+        point = self.screen_paths[0][0][:2]
+        self.fo_contact_vector = adjust_vector_direction(vector, point)
 
         self.cell = cell
         self._set_built(True)

@@ -189,12 +189,6 @@ sl_clavier_mirrored.component = clavier_mirrored
 
 # clavier.plot(build=True)
 
-# %% Add screening gates
-
-screen_pl_0 = qda_elements.add_screening_gate('screening_gate_pl_0')
-screen_pl_1 = qda_elements.add_screening_gate('screening_gate_pl_1')
-screen_pl_2 = qda_elements.add_screening_gate('screening_gate_pl_2')
-
 # %% Fanout
 
 fo_points = qdd.FanoutPoints(qda)

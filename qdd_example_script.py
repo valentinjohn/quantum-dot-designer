@@ -268,7 +268,7 @@ fo_bar_45deg_0.fo_line_fine.points_along_path = [[0.01, 0.015, 'start'],
 fo.add_component(fo_bar_45deg_0)
 
 # %%% Fanout sensor plunger top
-fo_sens_pl_top = qda_components.add_fo_line('sensor_top_plunger', 0)
+fo_sens_pl_top = qda_components.add_fo_line('sensor_top_plunger')
 
 fo_sens_pl_top.fo_direction = 'top'
 fo_sens_pl_top.n_fanout = 4
@@ -282,7 +282,7 @@ fo_sens_pl_top.fo_line_fine.points_along_path = [[0, 0.8, 'start', 40e-3],
 fo.add_component(fo_sens_pl_top)
 
 # %%% Fanout sensor source top
-fo_sens_top_source = qda_components.add_fo_line('sensor_top_source', 0)
+fo_sens_top_source = qda_components.add_fo_line('sensor_top_source')
 
 fo_sens_top_source.fo_direction = 'top'
 fo_sens_top_source.n_fanout = 6
@@ -295,20 +295,20 @@ fo_sens_top_source.fo_line_fine.points_along_path = [[0.25, 0.8, 'start'],
 fo.add_component(fo_sens_top_source)
 
 # %%% Fanout sensor drain top
-fo_sens_top_drain = qda_components.add_fo_line('sensor_top_drain', 0)
+fo_sens_top_drain = qda_components.add_fo_line('sensor_top_drain')
 
 fo_sens_top_drain.fo_direction = 'top'
 fo_sens_top_drain.n_fanout = 3
 fo_sens_top_drain.fo_points = fo_points
 
-fo_sens_top_drain.fo_line_fine.points_along_path = [[0.25, 0.8, 'start'],
+fo_sens_top_drain.fo_line_fine.points_along_path = [[-0.25, 0.8, 'start'],
                                                     # [0, pl_ver.diameter/2, 'prev'],
                                                     # [-0.2, 0.5, 'prev']
                                                     ]
 fo.add_component(fo_sens_top_drain)
 
 # %%% Fanout sensor plunger bottom
-fo_sens_pl_bottom = qda_components.add_fo_line('sensor_bottom_plunger', 0)
+fo_sens_pl_bottom = qda_components.add_fo_line('sensor_bottom_plunger')
 
 fo_sens_pl_bottom.fo_direction = 'bottom'
 fo_sens_pl_bottom.n_fanout = 2
@@ -322,7 +322,7 @@ fo_sens_pl_bottom.fo_line_fine.points_along_path = [[0, -0.8, 'start'],
 fo.add_component(fo_sens_pl_bottom)
 
 # %%% Fanout sensor plunger right
-fo_sens_pl_right = qda_components.add_fo_line('sensor_right_plunger', 0)
+fo_sens_pl_right = qda_components.add_fo_line('sensor_right_plunger')
 
 fo_sens_pl_right.fo_direction = 'right'
 fo_sens_pl_right.n_fanout = 2
@@ -338,30 +338,30 @@ fo.add_component(fo_sens_pl_right)
 
 # %%% Fanout sensor source right
 
-fo_sens_right_source = qda_components.add_fo_line('sensor_right_source', 0)
+fo_sens_right_source = qda_components.add_fo_line('sensor_right_source')
 
 fo_sens_right_source.fo_direction = 'right'
 fo_sens_right_source.n_fanout = 4
 fo_sens_right_source.fo_points = fo_points
 
-# fo_sens_right_source.fo_line_fine.points_along_path = [[0.8, 0.25, 'start'],
-#                                                        # [0, pl_ver.diameter/2, 'prev'],
-#                                                        # [-0.2, 0.5, 'prev']
-#                                                        ]
+fo_sens_right_source.fo_line_fine.points_along_path = [[0.8, -0.25, 'start'],
+                                                       # [0, pl_ver.diameter/2, 'prev'],
+                                                       # [-0.2, 0.5, 'prev']
+                                                       ]
 fo.add_component(fo_sens_right_source)
 
 # %%% Fanout sensor drain right
 
-fo_sens_right_drain = qda_components.add_fo_line('sensor_right_drain', 0)
+fo_sens_right_drain = qda_components.add_fo_line('sensor_right_drain')
 
 fo_sens_right_drain.fo_direction = 'right'
 fo_sens_right_drain.n_fanout = 0
 fo_sens_right_drain.fo_points = fo_points
 
-# fo_sens_right_drain.fo_line_fine.points_along_path = [[0.8, 0.25, 'start'],
-#                                                        # [0, pl_ver.diameter/2, 'prev'],
-#                                                        # [-0.2, 0.5, 'prev']
-#                                                        ]
+fo_sens_right_drain.fo_line_fine.points_along_path = [[0.8, 0.25, 'start'],
+                                                      # [0, pl_ver.diameter/2, 'prev'],
+                                                      # [-0.2, 0.5, 'prev']
+                                                      ]
 fo.add_component(fo_sens_right_drain)
 
 # %%% Fanout sensor barrier source right
@@ -381,19 +381,6 @@ fo_sens_right_barrier_source.fo_line_fine.points_along_path = [[0.8, 0, 'start']
                                                                ]
 fo.add_component(fo_sens_right_barrier_source)
 
-# %%% Fanout sensor drain right
-# fo_sens_right_drain = qda_components.add_fo_line('sensor_right_drain', 0)
-
-# fo_sens_right_drain.fo_direction = 'right'
-# fo_sens_right_drain.n_fanout = 2
-# fo_sens_right_drain.fo_points = fo_points
-
-# fo_sens_right_drain.fo_line_fine.points_along_path = [[0.8, 0.25, 'start'],
-#                                                       # [0, pl_ver.diameter/2, 'prev'],
-#                                                       # [-0.2, 0.5, 'prev']
-#                                                       ]
-# fo.add_component(fo_sens_right_drain)
-
 # %%% Fanout sensor plunger left
 fo_sens_pl_left = qda_components.add_fo_line('sensor_left_plunger', 0)
 
@@ -402,11 +389,42 @@ fo_sens_pl_left.n_fanout = 2
 fo_sens_pl_left.fo_points = fo_points
 
 fo_sens_pl_left.fo_line_fine.fo_width_start = 40e-3
+
 fo_sens_pl_left.fo_line_fine.points_along_path = [[-0.8, 0, 'start'],
                                                   # [0, pl_ver.diameter/2, 'prev'],
                                                   # [-0.2, 0.5, 'prev']
                                                   ]
 fo.add_component(fo_sens_pl_left)
+
+# %% Screening gates
+# %%% Plunger 0 screening
+screen_pl_0 = qda_elements.add_screening_gate('screening_gate_pl_ver_0')
+
+screen_pl_0.qda_elements = qda_elements
+screen_pl_0.screen('plunger_vertically_elongated', 0,
+                   [0.1, 0.3, 0.4], [50e-3, 50e-3, (75e-3, 25e-3)])
+screen_pl_0.layer = screening_layer
+screen_pl_0.fo_contact_width = 50e-3
+
+screen_pl_0_qda = qda.add_component()
+screen_pl_0_qda.component = screen_pl_0
+
+# %%% Fanout screening plunger 0
+qda.build()
+
+fo_screen_pl_0 = qda_components.add_fo_line('screening_gate_pl_ver_0')
+
+fo_screen_pl_0.fo_direction = 'left'
+fo_screen_pl_0.n_fanout = 0
+fo_screen_pl_0.fo_points = fo_points
+
+fo_screen_pl_0.fo_line_fine.fo_width_start = screen_pl_0.fo_contact_width
+fo_screen_pl_0.fo_line_fine.points_along_path = [[-0.1, 0.1, 'start'],
+                                                 [-0.8, 0.4, 'start'],
+                                                 # [0, pl_ver.diameter/2, 'prev'],
+                                                 # [-0.2, 0.5, 'prev']
+                                                 ]
+fo.add_component(fo_screen_pl_0)
 
 # %% Build and Add fanout to qda
 

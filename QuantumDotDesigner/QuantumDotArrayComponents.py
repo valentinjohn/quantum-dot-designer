@@ -48,7 +48,7 @@ class QuantumDotArrayComponents:
         self.components[name] = clavier
         return clavier
 
-    def add_fo_line(self, element_name, element_number):
+    def add_fo_line(self, element_name, element_number=0):
         fanout_line = FanOutLine(
             element_name, element_number, self.qda_elements)
         self.components[f'fo_{element_name}_{element_number}'] = fanout_line

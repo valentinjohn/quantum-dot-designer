@@ -86,10 +86,11 @@ class FanOutLine(UnitCell):
         # self.fo_line_fine.name = name
         # self.fo_line_fine.cell.name = name
         if self.fo_direction_start:
-            self.fo_line_fine.points_along_path = [[0.01*self.fo_direction_start[0],
-                                                   0.01 *
-                                                   self.fo_direction_start[1],
-                                                   'start']]
+            contact = [[0.01*self.fo_direction_start[0],
+                        0.01*self.fo_direction_start[1],
+                        'start']]
+            self.fo_line_fine.points_along_path = contact + \
+                self.fo_line_fine.points_along_path
 
         self.elements[self.fo_line_fine.name] = {'vertices': [],
                                                  'positions': [],
