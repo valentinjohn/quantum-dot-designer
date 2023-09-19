@@ -26,6 +26,7 @@ class ScreeningGate(Element):
         self._screen_path = False
         self.contact_vertices = None
         self.fo_contact_width = 40e-3
+        self.fo_contact_direction = 0
 
     def screen(self, element_name, element_number,
                points, widths):
@@ -54,8 +55,9 @@ class ScreeningGate(Element):
             self.elements[self.name]['layer'] = self.layer
 
         end_path = get_end_path(self.vertices)
-        self.fo_contact_point = point_along_line(end_path[0],
-                                                 end_path[1],
+        self.fo_contact_point = point_along_line(end_path[self.fo_contact_direction % 2],
+                                                 end_path[(
+                                                     self.fo_contact_direction+1) % 2],
                                                  self.fo_contact_width/2)
         vector = orthogonal_unit_vector(end_path[0],
                                         end_path[1])

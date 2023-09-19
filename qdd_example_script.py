@@ -405,6 +405,7 @@ screen_pl_0.screen('plunger_vertically_elongated', 0,
                    [0.1, 0.3, 0.4], [50e-3, 50e-3, (75e-3, 25e-3)])
 screen_pl_0.layer = screening_layer
 screen_pl_0.fo_contact_width = 50e-3
+screen_pl_0.fo_contact_direction = 0
 
 screen_pl_0_qda = qda.add_component()
 screen_pl_0_qda.component = screen_pl_0
