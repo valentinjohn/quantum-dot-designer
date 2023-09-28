@@ -6,11 +6,12 @@ Created on Wed Sep 13 13:02:28 2023
 """
 
 from QuantumDotDesigner.base import PlotMixin
+from QuantumDotDesigner.BaseCollection import BaseCollection
 import gdstk
 
 
 class FanOutLineBase(PlotMixin):
-    def __init__(self, name):
+    def __init__(self, name, collection: BaseCollection):
         self.name = name
         self.element_name = None
         self.element_number = None
@@ -29,6 +30,8 @@ class FanOutLineBase(PlotMixin):
                                      'layer': self.layer}}
         self._built = False
 
+        collection.add_element(self)
+
     @property
     def built(self):
         return self._built
@@ -41,8 +44,8 @@ class FanOutLineBase(PlotMixin):
         fo_line = gdstk.Polygon(self.polygons, layer=self.layer)
         fo_line.fillet(self.fillet, tolerance=self.fillet_tolerance)
 
-        self.elements[self.name]['vertices'] = fo_line.points
-        self.elements[self.name]['positions'] = [0, 0]
+        self.elements[self.name]['vertices'] = self.polygons  # fo_line.points
+        self.elements[self.name]['positions'] = [[0, 0]]
         self.elements[self.name]['layer'] = self.layer
 
         self.cell.add(fo_line)

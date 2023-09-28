@@ -7,19 +7,23 @@ Created on Mon Sep 11 11:46:38 2023
 # %% imports
 
 from QuantumDotDesigner.base import UnitCell
-from QuantumDotDesigner.QuantumDotArrayElements import QuantumDotArrayElements
+from QuantumDotDesigner.BaseCollection import BaseCollection
+
+from QuantumDotDesigner.elements.ClavierGate import ClavierGate
+from QuantumDotDesigner.elements.ScreeningGate import ScreeningGate
+
 import numpy as np
 
 # %% definition
 
 
 class Clavier(UnitCell):
-    def __init__(self, name, qda_elements: QuantumDotArrayElements):
-        if not isinstance(qda_elements, QuantumDotArrayElements):
-            raise TypeError(
-                f"Expected qda_elements to be of type {QuantumDotArrayElements}, but got {type(qda_elements)} instead.")
+    def __init__(self, name, collection: BaseCollection):
+        # if not isinstance(qda_elements, QuantumDotArrayElements):
+        #     raise TypeError(
+        #         f"Expected qda_elements to be of type {QuantumDotArrayElements}, but got {type(qda_elements)} instead.")
         super().__init__(name)
-        self.qda_elements = qda_elements
+        self.collection = collection
         self.clavier_gates = {}
         self.screen = None
         self.clav_dot_size = 100e-3
@@ -62,6 +66,8 @@ class Clavier(UnitCell):
         self.fillet_tolerance = 1e-4
         self.rotation = 0
         self.mirror = False
+
+        self.collection.add_component(self)
 
     @property
     def screen_position(self):
@@ -123,7 +129,7 @@ class Clavier(UnitCell):
             self.rotation = 180
             y = - y
 
-        self.clavier_gates[name] = self.qda_elements.add_clavier_gate(name)
+        self.clavier_gates[name] = ClavierGate(name, self.collection)
         self.clavier_gates[name].layer = self._clav_layers_order[2*n]
         self.clavier_gates[name].width = self.clav_width
         self.clavier_gates[name].length = self.clav_length
@@ -149,8 +155,7 @@ class Clavier(UnitCell):
         if not self.mirror:
             y = - y
 
-        self.clavier_gates[name_odd] = self.qda_elements.add_clavier_gate(
-            name_odd)
+        self.clavier_gates[name_odd] = ClavierGate(name_odd, self.collection)
         self.clavier_gates[name_odd].layer = self._clav_layers_order[2*n]
         self.clavier_gates[name_odd].width = self.clav_width
         self.clavier_gates[name_odd].length = self.clav_length
@@ -170,8 +175,7 @@ class Clavier(UnitCell):
         self._sl_clavier_gates[sl_name_odd].build()
 
     def _build_screening_gate(self):
-        self.screen = self.qda_elements.add_screening_gate(
-            f'{self.name}_screen')
+        self.screen = ScreeningGate(f'{self.name}_screen', self.collection)
         self.screen.layer = self.screen_layer
         self.screen.vertices = [[(self.x-self.screen_length/2,
                                  self.y+self.screen_width/2),

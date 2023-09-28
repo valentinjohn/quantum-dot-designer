@@ -7,7 +7,7 @@ Created on Mon Sep 11 11:41:19 2023
 # %% imports
 
 from QuantumDotDesigner.base import PlotMixin
-from QuantumDotDesigner.elements.FanOutLineBase import FanOutLineBase
+# from QuantumDotDesigner.elements.FanOutLineBase import FanOutLineBase
 from QuantumDotDesigner.helpers.helpers import update_positions
 import gdstk
 
@@ -108,10 +108,8 @@ class Sublattice(PlotMixin):
         self._get_lim(axis=0)
         self._get_lim(axis=1)
         # only update elements attribute if it exists
-        if not isinstance(self.component, FanOutLineBase):
+        if hasattr(self, 'elements'):
             self.elements = update_positions(self.component.elements,
                                              self.rows, self.columns,
                                              self.spacing[0], self.spacing[1],
                                              self.center)
-        else:
-            pass

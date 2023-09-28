@@ -6,13 +6,15 @@ Created on Wed Sep 13 13:02:28 2023
 """
 
 from QuantumDotDesigner.base import Element
+from QuantumDotDesigner.BaseCollection import BaseCollection
 import numpy as np
 from QuantumDotDesigner.helpers.helpers import gen_poly
 import gdstk
+import copy
 
 
 class Plunger(Element):
-    def __init__(self, name):
+    def __init__(self, name: str, collection: BaseCollection):
         """
         Initialize an Plunger object.
 
@@ -23,7 +25,7 @@ class Plunger(Element):
             fillet (float): Fillet value. Indicates how much the polygon is rounded.
             ... (other attributes)
         """
-        super().__init__(name)
+        super().__init__(name, collection)
         self.layer = 21
         self.diameter = None
         self._asymx = 1
@@ -48,6 +50,21 @@ class Plunger(Element):
         if value != 0:  # to avoid division by zero
             self._asymy = value
             self._asymx = 1 / self._asymy
+
+    # def copy(self, copy_name, collection: BaseCollection):
+    #     # if not component.built:
+    #     #     component.build()
+    #     attributes = copy.copy(vars(self))
+    #     attributes.pop('name')
+    #     attributes.pop('cell')
+    #     attributes.pop('elements')
+    #     # attributes.pop('components')
+
+    #     new_element = type(self)(copy_name, collection)
+    #     new_element.__dict__.update(attributes)
+    #     collection.add_element(new_element)
+
+    #     return new_element
 
     def build(self):
         """

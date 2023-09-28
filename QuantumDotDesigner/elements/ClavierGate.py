@@ -7,18 +7,19 @@ Created on Wed Sep 13 13:02:28 2023
 
 from QuantumDotDesigner.base import Element
 from QuantumDotDesigner.helpers.helpers import generate_clavier_gates
+from QuantumDotDesigner.BaseCollection import BaseCollection
 import gdstk
 
 
 class ClavierGate(Element):
-    def __init__(self, name):
+    def __init__(self, name, collection: BaseCollection):
         """
         Initialize a Clavier gate object.
 
         Args:
             name (str): Name of the clavier gate
         """
-        super().__init__(name)
+        super().__init__(name, collection)
         self.layer = 25
         self.width = 100
         self.length = 100*4*10

@@ -7,7 +7,11 @@ Created on Mon Sep 11 11:53:24 2023
 # %% imports
 
 from QuantumDotDesigner.base import UnitCell
-from QuantumDotDesigner.QuantumDotArrayElements import QuantumDotArrayElements
+from QuantumDotDesigner.BaseCollection import BaseCollection
+
+from QuantumDotDesigner.elements.FanOutLineFine import FanOutLineFine
+from QuantumDotDesigner.elements.FanOutLineCoarse import FanOutLineCoarse
+
 import gdstk
 
 # %% definition
@@ -15,22 +19,22 @@ import gdstk
 
 class FanOutLine(UnitCell):
     def __init__(self, element_name: str, element_number: int,
-                 qda_elements: QuantumDotArrayElements):
-        if not isinstance(qda_elements, QuantumDotArrayElements):
-            raise TypeError(
-                f"Expected qda_elements to be of type {QuantumDotArrayElements}, but got {type(qda_elements)} instead.")
+                 collection: BaseCollection):
+        # if not isinstance(qda_elements, QuantumDotArrayElements):
+        #     raise TypeError(
+        #         f"Expected qda_elements to be of type {QuantumDotArrayElements}, but got {type(qda_elements)} instead.")
         super().__init__(f'fo_{element_name}_{element_number}')
-        self.qda_elements = qda_elements
+        self.collection = collection
         self.fo_points = None
         name_coarse = f'fo_coarse_{element_name}_{element_number}'
-        self.fo_line_coarse = qda_elements.add_fo_line_coarse(name_coarse)
+        self.fo_line_coarse = FanOutLineCoarse(name_coarse, self.collection)
         name_fine = f'fo_line_{element_name}_{element_number}'
-        self.fo_line_fine = qda_elements.add_fo_line_fine(name_fine)
+        self.fo_line_fine = FanOutLineFine(name_fine, self.collection)
         self.element_name = element_name
         self.element_number = element_number
         # self.fo_fine_coarse_overlap = None
         # self.fo_fine_coarse_overlap_gap = 0.3
-        self.element = qda_elements.components[element_name]
+        self.element = self.collection.elements[element_name]
         self.start_offset = self.element._fo_contact_point
         self.fo_line_fine.fo_width_start = self.element._fo_contact_width
         self.fo_direction_start = self.element._fo_contact_vector
@@ -41,7 +45,7 @@ class FanOutLine(UnitCell):
         self.cell = gdstk.Cell(self.name)
         self.fillet = 0
         self.fillet_tolerance = 1e-3
-        self.elements = {}
+        # self.elements = {}
         # self.fine_fo_width_start = 40e-3
         # self.fine_fo_start = None
         # self.fine_fo_end = None
@@ -54,6 +58,8 @@ class FanOutLine(UnitCell):
         self.fo_line_coarse.element_name = self.element_name
         self.fo_line_coarse.element_number = self.element_number
 
+        self.collection.add_component(self)
+
     # def update_properties(self):
     #     self.element_name =
 
@@ -64,10 +70,10 @@ class FanOutLine(UnitCell):
         self.elements[self.fo_line_coarse.name] = {'vertices': [],
                                                    'positions': [],
                                                    'layer': self.fo_line_coarse.layer}
-        # self.fo_line_coarse = self.qda_elements.add_fo_line_coarse(name)
+        # self.fo_line_coarse = self.fo_line_coarse(name)
 
         self.fo_line_coarse.fo_direction = self.fo_direction
-        self.fo_line_coarse.layer = self.qda_elements.components[self.element_name].layer + 20
+        self.fo_line_coarse.layer = self.collection.elements[self.element_name].layer + 20
 
         attributes = {'fo_direction': self.fo_direction,
                       'n_fanout': self.n_fanout,
@@ -81,7 +87,7 @@ class FanOutLine(UnitCell):
             self.fo_line_coarse.polygons = self.fo_points.fo_polygons_coarse[
                 self.fo_direction][self.n_fanout]
 
-        # self.components[name] = self.fo_line_coarse
+        # self.elements[name] = self.fo_line_coarse
         self.add_component(self.fo_line_coarse, build=True)
 
     def add_fine_fo_line(self):
@@ -100,7 +106,7 @@ class FanOutLine(UnitCell):
                                                  'layer': self.fo_line_fine.layer}
 
         self.fo_line_fine.fo_direction = self.fo_direction
-        self.fo_line_fine.layer = self.qda_elements.components[self.element_name].layer
+        self.fo_line_fine.layer = self.collection.elements[self.element_name].layer
         self.fo_line_fine.fillet = self.fillet
 
         attributes = {
@@ -123,7 +129,7 @@ class FanOutLine(UnitCell):
             self.fo_line_fine.fo_end = self.fo_points.get_fo_overlap_points(
                 self.n_fanout, self.fo_direction)
 
-        # self.components[name] = self.fo_line_fine
+        # self.elements[name] = self.fo_line_fine
         self.add_component(self.fo_line_fine, build=True)
 
     def build(self):

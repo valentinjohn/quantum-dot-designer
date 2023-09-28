@@ -6,6 +6,7 @@ Created on Wed Sep 13 13:02:28 2023
 """
 
 from QuantumDotDesigner.base import Element
+from QuantumDotDesigner.BaseCollection import BaseCollection
 import numpy as np
 from QuantumDotDesigner.helpers.helpers import (create_segmented_path,
                                                 get_polygons_from_path,
@@ -17,12 +18,12 @@ import gdstk
 
 
 class ScreeningGate(Element):
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name, collection: BaseCollection):
+        super().__init__(name, collection)
         self.layer = 5
         self.vertices = []
         self.screen_paths = []
-        self.qda_elements = None
+        self.collection = collection
         self._screen_path = False
         self.contact_vertices = None
         self.fo_contact_width = 40e-3
@@ -31,7 +32,7 @@ class ScreeningGate(Element):
     def screen(self, element_name, element_number,
                points, widths):
         fo_line_name = f'fo_line_{element_name}_{element_number}'
-        element_fo_path = self.qda_elements.components[fo_line_name].path
+        element_fo_path = self.collection.elements[fo_line_name].path
         screen_path = create_segmented_path(element_fo_path,
                                             points,
                                             widths)

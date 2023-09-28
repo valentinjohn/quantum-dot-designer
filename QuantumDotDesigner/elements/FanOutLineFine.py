@@ -8,11 +8,12 @@ Created on Wed Sep 13 13:02:28 2023
 from QuantumDotDesigner.elements.FanOutLineBase import FanOutLineBase
 import numpy as np
 from QuantumDotDesigner.helpers.helpers import get_polygons_from_path
+from QuantumDotDesigner.BaseCollection import BaseCollection
 
 
 class FanOutLineFine(FanOutLineBase):
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name, collection: BaseCollection):
+        super().__init__(name, collection)
         self.fo_width_start = 40e-3
         self.fo_start = None
         self.fo_end = None

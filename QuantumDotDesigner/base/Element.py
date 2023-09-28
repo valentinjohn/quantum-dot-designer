@@ -8,13 +8,16 @@ Created on Mon Sep 11 11:07:21 2023
 # %% imports
 
 from abc import abstractmethod
-from QuantumDotDesigner.base import PlotMixin
+from QuantumDotDesigner.base.ElementBase import ElementBase
+from QuantumDotDesigner.BaseCollection import BaseCollection
+
+import copy
 
 # %% definition
 
 
-class Element(PlotMixin):
-    def __init__(self, name):
+class Element(ElementBase):
+    def __init__(self, name: str, collection: BaseCollection):
         """
         Initialize an Element object.
 
@@ -25,46 +28,20 @@ class Element(PlotMixin):
             fillet (float): Fillet value. Indicates how much the polygon is rounded.
         """
 
-        self.name = name
-        self.layer = None
-        self.elements = {name: {'vertices': [],
-                                'positions': [],
-                                'layer': self.layer}}
-        self.cell = None
-        self._fo_contact_point = (0, 0)
-        self._fo_contact_width = 40e-3
-        self._fo_contact_vector = None
-        self.rotate = 0.0
-        self.fillet = 0.0
-        self.fillet_tolerance = 1e-3
-        self._built = False
+        super().__init__(name)
+        collection.add_element(self)
 
-    # default attributes to skip for Element
-    _skip_copy_attrs = {'name', 'cell', 'elements'}
+    def copy(self, copy_name, collection: BaseCollection):
+        # if not component.built:
+        #     component.build()
+        attributes = copy.copy(vars(self))
+        attributes.pop('name')
+        attributes.pop('cell')
+        attributes.pop('elements')
+        # attributes.pop('components')
 
-    @property
-    def built(self):
-        return self._built
+        new_element = type(self)(copy_name, collection)
+        new_element.__dict__.update(attributes)
+        collection.add_element(new_element)
 
-    # This setter is private and can only be used within the class
-    def _set_built(self, new_value: bool):
-        self._built = new_value
-
-    def copy(self, copy_name):
-        # Use the same class as the current instance
-        copied_obj = self.__class__(copy_name)
-
-        for attr, value in self.__dict__.items():
-            if attr not in self._skip_copy_attrs:
-                setattr(copied_obj, attr, value)
-
-        return copied_obj
-
-    @abstractmethod
-    def build(self):
-        """
-        Build the element.
-
-        This method should be implemented in subclasses to build the specific element.
-        """
-        pass
+        return new_element

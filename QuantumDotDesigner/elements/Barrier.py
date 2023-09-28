@@ -6,18 +6,20 @@ Created on Wed Sep 13 13:02:28 2023
 """
 
 from QuantumDotDesigner.base import Element
+from QuantumDotDesigner.BaseCollection import BaseCollection
 import gdstk
+import copy
 
 
 class Barrier(Element):
-    def __init__(self, name):
+    def __init__(self, name, collection: BaseCollection):
         """
         Initialize a Barrier object.
 
         Args:
             name (str): Name of the barrier.
         """
-        super().__init__(name)
+        super().__init__(name, collection)
         self.layer = 5
         self.width = None
         self.length = None

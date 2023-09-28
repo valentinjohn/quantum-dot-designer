@@ -8,34 +8,39 @@ Created on Mon Sep 11 11:33:18 2023
 # %% imports
 
 from QuantumDotDesigner.base import UnitCell
+from QuantumDotDesigner.BaseCollection import BaseCollection
+
+from QuantumDotDesigner.elements.Plunger import Plunger
+from QuantumDotDesigner.elements.Barrier import Barrier
+from QuantumDotDesigner.elements.Ohmic import Ohmic
+
 from QuantumDotDesigner.QuantumDotArrayElements import QuantumDotArrayElements
 import numpy as np
+import copy
 
 # %% definition
 
 
 class Sensor(UnitCell):
-    def __init__(self, name: str, qda_elements: QuantumDotArrayElements):
+    def __init__(self, name: str, collection: BaseCollection):
         """
         Initialize a Sensor object.
 
         Args:
             name (str): Name of the sensor.
         """
-        if not isinstance(qda_elements, QuantumDotArrayElements):
-            raise TypeError(
-                f"Expected qda_elements to be of type {QuantumDotArrayElements}, but got {type(qda_elements)} instead.")
+        # if not isinstance(qda_elements, QuantumDotArrayElements):
+        #     raise TypeError(
+        #         f"Expected qda_elements to be of type {QuantumDotArrayElements}, but got {type(qda_elements)} instead.")
 
         super().__init__(name)
-        self.qda_elements = qda_elements
-        self.plunger = qda_elements.add_plunger(f'{name}_plunger')
-        self.barrier_source = qda_elements.add_barrier(
-            f'{name}_barrier_source')
-        self.barrier_drain = qda_elements.add_barrier(f'{name}_barrier_drain')
-        self.source = qda_elements.add_ohmic(f'{name}_source')
-        self.drain = qda_elements.add_ohmic(f'{name}_drain')
-        self.barrier_sep = qda_elements.add_barrier(
-            f'{name}_barrier_seperation')
+        self.collection = collection
+        self.plunger = Plunger(f'{name}_plunger', collection)
+        self.barrier_source = Barrier(f'{name}_barrier_source', collection)
+        self.barrier_drain = Barrier(f'{name}_barrier_drain', collection)
+        self.source = Ohmic(f'{name}_source', collection)
+        self.drain = Ohmic(f'{name}_drain', collection)
+        self.barrier_sep = Barrier(f'{name}_barrier_seperation', collection)
         self.gap_ohmic_pl = 40
         self.gap_sep = 40
         self.source_pos = None
@@ -235,6 +240,34 @@ class Sensor(UnitCell):
         self._build_and_add_elements()
 
         return self.cell
+
+    def copy(self, copy_name, collection):
+        # if not component.built:
+        #     component.build()
+        attributes = copy.copy(vars(self))
+        attributes.pop('name')
+        attributes.pop('cell')
+        attributes.pop('elements')
+        attributes.pop('components')
+
+        new_element = type(self)(copy_name, collection)
+
+        new_element.__dict__.update(attributes)
+
+        new_element.cell = new_element.cell.copy(copy_name)
+        new_element.plunger = self.plunger.copy(f'{copy_name}_plunger',
+                                                collection)
+        new_element.barrier_source = self.barrier_source.copy(f'{copy_name}_barrier_source',
+                                                              collection)
+        new_element.barrier_drain = self.barrier_drain.copy(f'{copy_name}_barrier_drain',
+                                                            collection)
+        new_element.source = self.source.copy(
+            f'{copy_name}_source', collection)
+        new_element.drain = self.drain.copy(f'{copy_name}_drain', collection)
+        new_element.barrier_sep = self.barrier_sep.copy(f'{copy_name}_barrier_seperation',
+                                                        collection)
+
+        return new_element
 
     def build(self):
         self._build_elements()

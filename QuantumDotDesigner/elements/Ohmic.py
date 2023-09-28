@@ -6,6 +6,7 @@ Created on Wed Sep 13 13:02:28 2023
 """
 
 from QuantumDotDesigner.base import Element
+from QuantumDotDesigner.BaseCollection import BaseCollection
 import numpy as np
 from QuantumDotDesigner.helpers.helpers import (rot_mat, midpoint,
                                                 orthogonal_unit_vector,
@@ -15,8 +16,8 @@ import gdstk
 
 
 class Ohmic(Element):
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name, collection: BaseCollection):
+        super().__init__(name, collection)
         self.layer = 1
         self.contact_length = 0.095
         self.contact_offset = 0.01

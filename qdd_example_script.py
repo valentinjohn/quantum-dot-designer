@@ -9,10 +9,16 @@ Created on Tue May  9 08:18:02 2023
 import numpy as np
 import QuantumDotDesigner as qdd
 
+from QuantumDotDesigner.elements.Plunger import Plunger
+from QuantumDotDesigner.elements.Barrier import Barrier
+from QuantumDotDesigner.elements.ScreeningGate import ScreeningGate
+
+from QuantumDotDesigner.components.Sensor import Sensor
+from QuantumDotDesigner.components.FanOutLine import FanOutLine
+
 # %% Init
 
-qda_elements = qdd.QuantumDotArrayElements()
-qda_components = qdd.QuantumDotArrayComponents(qda_elements)
+collection = qdd.BaseCollection()
 unit_cell = qdd.UnitCell('unit_cell')
 qda = qdd.QuantumDotArray()
 
@@ -30,31 +36,31 @@ clav_gate_2_layer = 7
 
 # %% define plungers
 
-pl_ver = qda_elements.add_plunger('plunger_vertically_elongated')
+pl_ver = Plunger('plunger_vertically_elongated', collection)
 pl_ver.asymx = 0.8
 pl_ver.diameter = 150e-3
 pl_ver.layer = 21
 
-pl_hor = qda_elements.add_plunger('plunger_horizontally_elongated')
+pl_hor = Plunger('plunger_horizontally_elongated', collection)
 pl_hor.asymx = 1.1
 pl_hor.diameter = 100e-3
 pl_hor.layer = 21
 
 # %% define barriers
 
-bar_45deg = qda_elements.add_barrier('barrier_45deg_rotated')
+bar_45deg = Barrier('barrier_45deg_rotated', collection)
 bar_45deg.width = 40e-3
 bar_45deg.length = 70e-3
 bar_45deg.layer = 5
 bar_45deg.rotate = 1/4*np.pi + 1/16*np.pi
 
-bar_135deg = qda_elements.add_copy(bar_45deg, 'barrier_135deg_rotated')
+bar_135deg = bar_45deg.copy('barrier_135deg_rotated', collection)
 bar_135deg.rotate = 3/4*np.pi - 1/16*np.pi
 
-bar_225deg = qda_elements.add_copy(bar_45deg, 'barrier_225deg_rotated')
+bar_225deg = bar_45deg.copy('barrier_225deg_rotated', collection)
 bar_225deg.rotate = -3/4*np.pi + 1/16*np.pi
 
-bar_315deg = qda_elements.add_copy(bar_45deg, 'barrier_315deg_rotated')
+bar_315deg = bar_45deg.copy('barrier_315deg_rotated', collection)
 bar_315deg.rotate = -1/4*np.pi - 1/16*np.pi
 
 # %% define unit cell
@@ -104,9 +110,9 @@ uc_bar_315deg.spacing = (qda.spacing_qd_diag, qda.spacing_qd_diag)
 
 # %% define sensor
 
-qda_elements.spacing_sep = 60e-3
+spacing_sep = 60e-3
 
-sensor_top = qda_components.add_sensor('sensor_top')
+sensor_top = Sensor('sensor_top', collection)
 
 # for the positioning of the sensor element you can either indicate 'top',
 # 'bottom', 'top-right', etc ...., or you indiacte the angle with 'top'
@@ -148,17 +154,17 @@ sensor_top.source.contact_length = 70e-3
 sensor_top.drain.layer = ohmic_layer
 sensor_top.drain.contact_length = 70e-3
 
-sensor_bottom = qda_components.add_copy(sensor_top, 'sensor_bottom')
+sensor_bottom = sensor_top.copy('sensor_bottom', collection)
 sensor_bottom.sep_pos = 'top'
 sensor_bottom.source_pos = 'left'
 sensor_bottom.drain_pos = 'right'
 
-sensor_right = qda_components.add_copy(sensor_top, 'sensor_right')
+sensor_right = sensor_top.copy('sensor_right', collection)
 sensor_right.sep_pos = 'left'
 sensor_right.source_pos = 'bottom'
 sensor_right.drain_pos = 'top'
 
-sensor_left = qda_components.add_copy(sensor_top, 'sensor_left')
+sensor_left = sensor_top.copy('sensor_left', collection)
 sensor_left.sep_pos = 'right'
 sensor_left.source_pos = 'top'
 sensor_left.drain_pos = 'bottom'
@@ -229,7 +235,8 @@ fo_points.create_fo_polygons_coarse()
 
 
 # %%% Fanout plunger ver 0
-fo_pl_ver_0 = qda_components.add_fo_line('plunger_vertically_elongated', 0)
+fo_pl_ver_0 = FanOutLine(
+    'plunger_vertically_elongated', 0, collection)
 
 fo_pl_ver_0.fo_direction = 'top'
 fo_pl_ver_0.n_fanout = 0
@@ -241,7 +248,8 @@ fo_pl_ver_0.fo_line_fine.points_along_path = [[-0.15, 0.3, 'start'],
 fo.add_component(fo_pl_ver_0)
 
 # %%% Fanout plunger ver 1
-fo_pl_ver_1 = qda_components.add_fo_line('plunger_vertically_elongated', 1)
+fo_pl_ver_1 = FanOutLine(
+    'plunger_vertically_elongated', 1, collection)
 
 fo_pl_ver_1.fo_direction = 'top'
 fo_pl_ver_1.n_fanout = 2
@@ -254,7 +262,8 @@ fo_pl_ver_1.fo_line_fine.points_along_path = [[-qda.spacing_qd_diag/2, 0, 'start
 fo.add_component(fo_pl_ver_1)
 
 # %%% Fanout bar 45deg 0
-fo_bar_45deg_0 = qda_components.add_fo_line('barrier_45deg_rotated', 0)
+fo_bar_45deg_0 = FanOutLine(
+    'barrier_45deg_rotated', 0, collection)
 
 fo_bar_45deg_0.fo_direction = 'top'
 fo_bar_45deg_0.n_fanout = 1
@@ -268,7 +277,7 @@ fo_bar_45deg_0.fo_line_fine.points_along_path = [[0.01, 0.015, 'start'],
 fo.add_component(fo_bar_45deg_0)
 
 # %%% Fanout sensor plunger top
-fo_sens_pl_top = qda_components.add_fo_line('sensor_top_plunger')
+fo_sens_pl_top = FanOutLine('sensor_top_plunger', 0, collection)
 
 fo_sens_pl_top.fo_direction = 'top'
 fo_sens_pl_top.n_fanout = 4
@@ -282,7 +291,8 @@ fo_sens_pl_top.fo_line_fine.points_along_path = [[0, 0.8, 'start', 40e-3],
 fo.add_component(fo_sens_pl_top)
 
 # %%% Fanout sensor source top
-fo_sens_top_source = qda_components.add_fo_line('sensor_top_source')
+fo_sens_top_source = FanOutLine(
+    'sensor_top_source', 0, collection)
 
 fo_sens_top_source.fo_direction = 'top'
 fo_sens_top_source.n_fanout = 6
@@ -295,7 +305,8 @@ fo_sens_top_source.fo_line_fine.points_along_path = [[0.25, 0.8, 'start'],
 fo.add_component(fo_sens_top_source)
 
 # %%% Fanout sensor drain top
-fo_sens_top_drain = qda_components.add_fo_line('sensor_top_drain')
+fo_sens_top_drain = FanOutLine(
+    'sensor_top_drain', 0, collection)
 
 fo_sens_top_drain.fo_direction = 'top'
 fo_sens_top_drain.n_fanout = 3
@@ -308,7 +319,8 @@ fo_sens_top_drain.fo_line_fine.points_along_path = [[-0.25, 0.8, 'start'],
 fo.add_component(fo_sens_top_drain)
 
 # %%% Fanout sensor plunger bottom
-fo_sens_pl_bottom = qda_components.add_fo_line('sensor_bottom_plunger')
+fo_sens_pl_bottom = FanOutLine(
+    'sensor_bottom_plunger', 0, collection)
 
 fo_sens_pl_bottom.fo_direction = 'bottom'
 fo_sens_pl_bottom.n_fanout = 2
@@ -322,7 +334,8 @@ fo_sens_pl_bottom.fo_line_fine.points_along_path = [[0, -0.8, 'start'],
 fo.add_component(fo_sens_pl_bottom)
 
 # %%% Fanout sensor plunger right
-fo_sens_pl_right = qda_components.add_fo_line('sensor_right_plunger')
+fo_sens_pl_right = FanOutLine(
+    'sensor_right_plunger', 0, collection)
 
 fo_sens_pl_right.fo_direction = 'right'
 fo_sens_pl_right.n_fanout = 2
@@ -338,7 +351,7 @@ fo.add_component(fo_sens_pl_right)
 
 # %%% Fanout sensor source right
 
-fo_sens_right_source = qda_components.add_fo_line('sensor_right_source')
+fo_sens_right_source = FanOutLine('sensor_right_source', 0, collection)
 
 fo_sens_right_source.fo_direction = 'right'
 fo_sens_right_source.n_fanout = 4
@@ -352,7 +365,7 @@ fo.add_component(fo_sens_right_source)
 
 # %%% Fanout sensor drain right
 
-fo_sens_right_drain = qda_components.add_fo_line('sensor_right_drain')
+fo_sens_right_drain = FanOutLine('sensor_right_drain', 0, collection)
 
 fo_sens_right_drain.fo_direction = 'right'
 fo_sens_right_drain.n_fanout = 0
@@ -366,8 +379,8 @@ fo.add_component(fo_sens_right_drain)
 
 # %%% Fanout sensor barrier source right
 
-fo_sens_right_barrier_source = qda_components.add_fo_line(
-    'sensor_right_barrier_source', 0)
+fo_sens_right_barrier_source = FanOutLine(
+    'sensor_right_barrier_source', 0, collection)
 
 fo_sens_right_barrier_source.fo_direction = 'right'
 fo_sens_right_barrier_source.n_fanout = 3
@@ -382,7 +395,7 @@ fo_sens_right_barrier_source.fo_line_fine.points_along_path = [[0.8, 0, 'start']
 fo.add_component(fo_sens_right_barrier_source)
 
 # %%% Fanout sensor plunger left
-fo_sens_pl_left = qda_components.add_fo_line('sensor_left_plunger', 0)
+fo_sens_pl_left = FanOutLine('sensor_left_plunger', 0, collection)
 
 fo_sens_pl_left.fo_direction = 'left'
 fo_sens_pl_left.n_fanout = 2
@@ -398,9 +411,8 @@ fo.add_component(fo_sens_pl_left)
 
 # %% Screening gates
 # %%% Plunger 0 screening
-screen_pl_0 = qda_elements.add_screening_gate('screening_gate_pl_ver_0')
+screen_pl_0 = ScreeningGate('screening_gate_pl_ver_0', collection)
 
-screen_pl_0.qda_elements = qda_elements
 screen_pl_0.screen('plunger_vertically_elongated', 0,
                    [0.1, 0.3, 0.4], [50e-3, 50e-3, (75e-3, 25e-3)])
 screen_pl_0.layer = screening_layer
@@ -411,10 +423,9 @@ screen_pl_0_qda = qda.add_component()
 screen_pl_0_qda.component = screen_pl_0
 
 # %%% Plunger sens nort plunger screening
-screen_sens_pl_top = qda_elements.add_screening_gate(
-    'screening_gate_sens_pl_top')
+screen_sens_pl_top = ScreeningGate('screening_gate_sens_pl_top',
+                                   collection)
 
-screen_sens_pl_top.qda_elements = qda_elements
 screen_sens_pl_top.screen('sensor_top_plunger', 0,
                           [0.1, 0.3, 0.4], [50e-3, 50e-3, (25e-3, 75e-3)])
 screen_sens_pl_top.layer = screening_layer
@@ -429,7 +440,8 @@ qda.build()
 
 # %%% Fanout screening plunger 0
 
-fo_screen_pl_0 = qda_components.add_fo_line('screening_gate_pl_ver_0')
+fo_screen_pl_0 = FanOutLine(
+    'screening_gate_pl_ver_0', 0, collection)
 
 fo_screen_pl_0.fo_direction = 'left'
 fo_screen_pl_0.n_fanout = 0
@@ -443,8 +455,8 @@ fo.add_component(fo_screen_pl_0)
 
 # %%% Fanout screening plunger sensor top
 
-fo_screen_sens_pl_top = qda_components.add_fo_line(
-    'screening_gate_sens_pl_top')
+fo_screen_sens_pl_top = FanOutLine(
+    'screening_gate_sens_pl_top', 0, collection)
 
 fo_screen_sens_pl_top.fo_direction = 'top'
 fo_screen_sens_pl_top.n_fanout = 5
