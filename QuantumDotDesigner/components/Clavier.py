@@ -13,6 +13,7 @@ from QuantumDotDesigner.elements.ClavierGate import ClavierGate
 from QuantumDotDesigner.elements.ScreeningGate import ScreeningGate
 
 import numpy as np
+import copy
 
 # %% definition
 
@@ -193,6 +194,28 @@ class Clavier(UnitCell):
         sl_clav_screen.rows = 2
         sl_clav_screen.spacing = (0, self.screen_position)
         sl_clav_screen.build()
+
+    def copy(self, copy_name, collection):
+        # if not component.built:
+        #     component.build()
+        attributes = copy.copy(vars(self))
+        attributes.pop('name')
+        attributes.pop('cell')
+        attributes.pop('elements')
+        attributes.pop('components')
+
+        new_element = type(self)(copy_name, collection)
+
+        new_element.__dict__.update(attributes)
+
+        new_element.cell = new_element.cell.copy(copy_name)
+        new_element.screen = self.screen.copy(f'{copy_name}_screen_clav',
+                                              collection)
+        for element_name, clav_gate in self.clavier_gates.copy().items():
+            new_element.clavier_gates[copy_name] = clav_gate.copy(
+                f'{copy_name}_{element_name}', collection)
+
+        return new_element
 
     def build(self):
         self._initialize_clavier_gates()

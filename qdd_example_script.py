@@ -9,12 +9,8 @@ Created on Tue May  9 08:18:02 2023
 import numpy as np
 import QuantumDotDesigner as qdd
 
-from QuantumDotDesigner.elements.Plunger import Plunger
-from QuantumDotDesigner.elements.Barrier import Barrier
-from QuantumDotDesigner.elements.ScreeningGate import ScreeningGate
-
-from QuantumDotDesigner.components.Sensor import Sensor
-from QuantumDotDesigner.components.FanOutLine import FanOutLine
+from QuantumDotDesigner.elements import Plunger, Barrier, ScreeningGate
+from QuantumDotDesigner.components import Sensor, FanOutLine
 
 # %% Init
 
