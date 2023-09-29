@@ -6,7 +6,7 @@ Created on Mon Sep 11 11:53:24 2023
 """
 # %% imports
 
-from QuantumDotDesigner.base import UnitCell
+from QuantumDotDesigner.base import Component
 from QuantumDotDesigner.BaseCollection import BaseCollection
 
 from QuantumDotDesigner.elements.FanOutLineFine import FanOutLineFine
@@ -17,19 +17,16 @@ import gdstk
 # %% definition
 
 
-class FanOutLine(UnitCell):
+class FanOutLine(Component):
     def __init__(self, element_name: str, element_number: int,
                  collection: BaseCollection):
         # if not isinstance(qda_elements, QuantumDotArrayElements):
         #     raise TypeError(
         #         f"Expected qda_elements to be of type {QuantumDotArrayElements}, but got {type(qda_elements)} instead.")
         super().__init__(f'fo_{element_name}_{element_number}')
+        self._init_elements(element_name, element_number, collection)
         self.collection = collection
         self.fo_points = None
-        name_coarse = f'fo_coarse_{element_name}_{element_number}'
-        self.fo_line_coarse = FanOutLineCoarse(name_coarse, self.collection)
-        name_fine = f'fo_line_{element_name}_{element_number}'
-        self.fo_line_fine = FanOutLineFine(name_fine, self.collection)
         self.element_name = element_name
         self.element_number = element_number
         # self.fo_fine_coarse_overlap = None
@@ -60,8 +57,11 @@ class FanOutLine(UnitCell):
 
         self.collection.add_component(self)
 
-    # def update_properties(self):
-    #     self.element_name =
+    def _init_elements(self, element_name, element_number, collection):
+        name_coarse = f'fo_coarse_{element_name}_{element_number}'
+        self.fo_line_coarse = FanOutLineCoarse(name_coarse, collection)
+        name_fine = f'fo_line_{element_name}_{element_number}'
+        self.fo_line_fine = FanOutLineFine(name_fine, collection)
 
     def add_coarse_fo_line(self):
 

@@ -1,5 +1,3 @@
-from .QuantumDotArrayElements import QuantumDotArrayElements
-from .QuantumDotArrayComponents import QuantumDotArrayComponents
 from .QuantumDotArray import QuantumDotArray
 from .BaseCollection import BaseCollection
 

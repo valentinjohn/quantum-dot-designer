@@ -7,21 +7,20 @@ Created on Mon Sep 11 11:33:18 2023
 
 # %% imports
 
-from QuantumDotDesigner.base import UnitCell
+from QuantumDotDesigner.base import Component
 from QuantumDotDesigner.BaseCollection import BaseCollection
 
 from QuantumDotDesigner.elements.Plunger import Plunger
 from QuantumDotDesigner.elements.Barrier import Barrier
 from QuantumDotDesigner.elements.Ohmic import Ohmic
 
-from QuantumDotDesigner.QuantumDotArrayElements import QuantumDotArrayElements
 import numpy as np
 import copy
 
 # %% definition
 
 
-class Sensor(UnitCell):
+class Sensor(Component):
     def __init__(self, name: str, collection: BaseCollection):
         """
         Initialize a Sensor object.
@@ -29,18 +28,13 @@ class Sensor(UnitCell):
         Args:
             name (str): Name of the sensor.
         """
-        # if not isinstance(qda_elements, QuantumDotArrayElements):
-        #     raise TypeError(
-        #         f"Expected qda_elements to be of type {QuantumDotArrayElements}, but got {type(qda_elements)} instead.")
+        if not isinstance(collection, BaseCollection):
+            raise TypeError(
+                f"Expected collection to be of type {BaseCollection}, but got {type(collection)} instead.")
 
         super().__init__(name)
-        self.collection = collection
-        self.plunger = Plunger(f'{name}_plunger', collection)
-        self.barrier_source = Barrier(f'{name}_barrier_source', collection)
-        self.barrier_drain = Barrier(f'{name}_barrier_drain', collection)
-        self.source = Ohmic(f'{name}_source', collection)
-        self.drain = Ohmic(f'{name}_drain', collection)
-        self.barrier_sep = Barrier(f'{name}_barrier_seperation', collection)
+        self._init_elements(name, collection)
+
         self.gap_ohmic_pl = 40
         self.gap_sep = 40
         self.source_pos = None
@@ -73,6 +67,14 @@ class Sensor(UnitCell):
         self.components_position = {}
         self.fillet = (0, 1e-3)
         self.__feature_gap = None
+
+    def _init_elements(self, name, collection):
+        self.plunger = Plunger(f'{name}_plunger', collection)
+        self.barrier_source = Barrier(f'{name}_barrier_source', collection)
+        self.barrier_drain = Barrier(f'{name}_barrier_drain', collection)
+        self.source = Ohmic(f'{name}_source', collection)
+        self.drain = Ohmic(f'{name}_drain', collection)
+        self.barrier_sep = Barrier(f'{name}_barrier_seperation', collection)
 
     def _calculate_positions(self):
         if self.source_pos:

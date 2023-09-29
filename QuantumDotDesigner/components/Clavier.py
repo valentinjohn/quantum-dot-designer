@@ -6,7 +6,7 @@ Created on Mon Sep 11 11:46:38 2023
 """
 # %% imports
 
-from QuantumDotDesigner.base import UnitCell
+from QuantumDotDesigner.base import Component
 from QuantumDotDesigner.BaseCollection import BaseCollection
 
 from QuantumDotDesigner.elements.ClavierGate import ClavierGate
@@ -18,11 +18,11 @@ import copy
 # %% definition
 
 
-class Clavier(UnitCell):
-    def __init__(self, name, collection: BaseCollection):
-        # if not isinstance(qda_elements, QuantumDotArrayElements):
-        #     raise TypeError(
-        #         f"Expected qda_elements to be of type {QuantumDotArrayElements}, but got {type(qda_elements)} instead.")
+class Clavier(Component):
+    def __init__(self, name: str, collection: BaseCollection):
+        if not isinstance(collection, BaseCollection):
+            raise TypeError(
+                f"Expected collection to be of type {BaseCollection}, but got {type(collection)} instead.")
         super().__init__(name)
         self.collection = collection
         self.clavier_gates = {}
