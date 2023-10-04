@@ -1,8 +1,8 @@
 from .QuantumDotArray import QuantumDotArray
 from .BaseCollection import BaseCollection
 
-# from . import elements
-# from . import components
+from . import elements
+from . import components
 # from . import base
 
 from .fanout import Fanout, FanoutPoints

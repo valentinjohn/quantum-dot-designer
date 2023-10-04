@@ -766,7 +766,35 @@ def axis_value(points, axis=0, operation="max"):
         raise ValueError("Operation must be 'max' or 'min'")
 
 
+def mirror_points_along_path(lst, mirror='both'):
+    """
+    Given a list of sublists, this function multiplies the first or second element (or both) of each sublist by -1.
+    It is assumed that the first two elements of each sublist are numbers, and the third element is not.
+
+    Parameters:
+    - lst (list of lists): The input list containing sublists. Each sublist is expected to have at least two numeric elements.
+    - mirror (str): A string indicating which value to mirror. Acceptable values are 'x', 'y', or 'both'.
+                    'x' will multiply the first element of each sublist by -1,
+                    'y' will multiply the second element,
+                    'both' will multiply both the first and second elements.
+
+    Returns:
+    - list of lists: A new list with the specified elements of each sublist multiplied by -1.
+    """
+    result = []
+    for sublist in lst:
+        if mirror == 'x':
+            new_sublist = [sublist[0] * -1, sublist[1], sublist[2]]
+        elif mirror == 'y':
+            new_sublist = [sublist[0], sublist[1] * -1, sublist[2]]
+        else:  # 'both'
+            new_sublist = [sublist[0] * -1, sublist[1] * -1, sublist[2]]
+        result.append(new_sublist)
+    return result
+
 # %%% vector
+
+
 def normalize_vector(v):
     """Return the normalized version of the vector `v`."""
     magnitude = np.linalg.norm(v)

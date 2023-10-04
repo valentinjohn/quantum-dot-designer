@@ -40,11 +40,11 @@ class FanoutPoints():
                                                     self.fanout_counts,
                                                     self.spacings)
         self.fanout_positions = fanout_positions
-        fo_lines = get_fo_lines(fanout_positions,
-                                self.fanout_counts, self.fo_stages)
+        self.fo_lines = get_fo_lines(fanout_positions,
+                                     self.fanout_counts, self.fo_stages)
         for direction in self._all_directions:
             polygons[direction] = [generate_polygon_for_fanout(direction,
-                                                               fo_lines[direction][n_fo],
+                                                               self.fo_lines[direction][n_fo],
                                                                self.bondpad_position,
                                                                self.bondpad_size,
                                                                self.fo_widths,

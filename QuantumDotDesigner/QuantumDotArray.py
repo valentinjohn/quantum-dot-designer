@@ -29,7 +29,7 @@ class QuantumDotArray(PlotMixin):
         self.components_position = {}
         self.main_cell = gdstk.Cell('MAIN')
         self._n = 0
-        self.chip_layout_path = "chip_layout.gds"
+        self.chip_layout_path = None
         self._built = False
 
     @property
@@ -52,8 +52,10 @@ class QuantumDotArray(PlotMixin):
         self.components[name] = sublattice
         return sublattice
 
-    def add_chip_layout(self):
-        layout = gdstk.read_rawcells(self.chip_layout_path)
+    def add_chip_layout(self, chip_layout_path=None):
+        if chip_layout_path is not None:
+            self.chip_layout_path = chip_layout_path
+        layout = gdstk.read_rawcells(chip_layout_path)
 
         self.main_cell.add(gdstk.Reference(layout['TOP']))
         self.main_cell.flatten()

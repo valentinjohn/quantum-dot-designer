@@ -8,25 +8,27 @@ Created on Mon Sep 11 11:53:24 2023
 
 from QuantumDotDesigner.base import Component
 from QuantumDotDesigner.BaseCollection import BaseCollection
+from QuantumDotDesigner.fanout import FanoutPoints
 
 from QuantumDotDesigner.elements.FanOutLineFine import FanOutLineFine
 from QuantumDotDesigner.elements.FanOutLineCoarse import FanOutLineCoarse
 
 import gdstk
+import matplotlib.pylab as plt
 
 # %% definition
 
 
 class FanOutLine(Component):
     def __init__(self, element_name: str, element_number: int,
-                 collection: BaseCollection):
+                 collection: BaseCollection, fo_points: FanoutPoints):
         # if not isinstance(qda_elements, QuantumDotArrayElements):
         #     raise TypeError(
         #         f"Expected qda_elements to be of type {QuantumDotArrayElements}, but got {type(qda_elements)} instead.")
         super().__init__(f'fo_{element_name}_{element_number}')
         self._init_elements(element_name, element_number, collection)
         self.collection = collection
-        self.fo_points = None
+        self.fo_points = fo_points
         self.element_name = element_name
         self.element_number = element_number
         # self.fo_fine_coarse_overlap = None
@@ -131,6 +133,24 @@ class FanOutLine(Component):
 
         # self.elements[name] = self.fo_line_fine
         self.add_component(self.fo_line_fine, build=True)
+
+    def plot(self):
+        fig, axs = plt.subplots(1, 2, figsize=(6, 3))
+
+        super().plot(axs[0])
+        super().plot(axs[1])
+
+        axs[0].set_xlim(-1.1*self.fo_points.fo_stages[0][0],
+                        1.1*self.fo_points.fo_stages[0][0])
+        axs[0].set_ylim(-1.1*self.fo_points.fo_stages[0][1],
+                        1.1*self.fo_points.fo_stages[0][1])
+
+        axs[0].set_title('fine fanout')
+        axs[1].set_title('coarse fanout')
+
+        fig.suptitle(self.name)
+
+        plt.tight_layout()
 
     def build(self):
         self.add_coarse_fo_line()
