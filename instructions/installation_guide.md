@@ -29,6 +29,12 @@ conda activate env_qdd
 
 ### 3. Install Dependencies
 
+First navigate to the cloned repository
+```bash
+cd my_local_path
+```
+where you have to replace my_local_path with the path, where you have cloned the repository.
+ 
 Install the required dependencies from the `requirements.txt` file:
 
 ```bash
