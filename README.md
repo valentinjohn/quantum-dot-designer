@@ -11,6 +11,8 @@ Instructions:
 
 Design scripts:
 
-[2x2 design in Germanium](example_notebooks/qdd_example_script_2x2)
-[232 design in Germanium](example_notebooks/qdd_example_script)
-[Clavier design in Germanium](example_notebooks/qdd_example_script_clavier_gates)
+[2x2 design in Germanium](example_notebooks/qdd_example_script_2x2.py)
+
+[232 design in Germanium](example_notebooks/qdd_example_script.py)
+
+[Clavier design in Germanium](example_notebooks/qdd_example_script_clavier_gates.py)
