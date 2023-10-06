@@ -606,5 +606,6 @@ fo_qda.component = fo
 # %% Build and save
 
 qda.build()
-layout = qda.add_chip_layout("chip_layout.gds")
-qda.save_as_gds('qdd_test_design_2x2.gds')
+layout_path = "..\example_notebooks\layout_files\chip_layout.gds"
+layout = qda.add_chip_layout(layout_path)
+qda.save_as_gds('..\example_notebooks\example_2x2_device.gds')
