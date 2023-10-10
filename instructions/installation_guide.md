@@ -9,15 +9,7 @@ To clone the repository to your local machine, open a terminal and run the follo
 git clone https://github.com/valentinjohn/quantum-dot-designer.git
 ```
 
-### 2. Navigate to the Project Directory
-
-After cloning, navigate to the project directory:
-
-```bash
-cd quantum-dot-designer
-```
-
-### 3. Set Up a New Conda Environment
+### 2. Set Up a New Conda Environment
 
 To ensure that you have all the required dependencies and to avoid any conflicts, it's a good idea to set up a new Conda environment specifically for this project.
 
@@ -35,14 +27,20 @@ Activate the newly created environment:
 conda activate env_qdd
 ```
 
-### 4. Install Dependencies
+### 3. Install Dependencies
 
+First navigate to the cloned repository
+```bash
+cd my_local_path
+```
+where you have to replace my_local_path with the path of the cloned repository.
+ 
 Install the required dependencies from the `requirements.txt` file:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 5. Ready to Go!
+### 4. Ready to Go!
 
 You're all set! Now you can start working on the project within your newly created Conda environment.

@@ -1,9 +1,18 @@
 # quantum-dot-designer
 
-Installation guide:
+## Installation guide:
 
-[Installation guide](installation_guide.md)
+[Installation guide](instructions/installation_guide.md)
 
-Example:
+## Instructions:
 
-[2x2 design in Germanium](qdd_example_notebook.ipynb)
+[Making the first design](instructions/qdd_example_notebook.ipynb)
+
+
+## Design scripts:
+
+[2x2 design in Germanium](example_notebooks/qdd_example_script_2x2.py)
+
+[232 design in Germanium](example_notebooks/qdd_example_script.py)
+
+[Clavier design in Germanium](example_notebooks/qdd_example_script_clavier_gates.py)
