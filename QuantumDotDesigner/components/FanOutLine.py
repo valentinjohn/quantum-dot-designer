@@ -123,6 +123,9 @@ class FanOutLine(Component):
         if missing_attrs:
             raise ValueError(
                 f"Attributes {', '.join(missing_attrs)} cannot be None.")
+        elif self.element_name not in self.fo_points.qda.elements:
+            raise KeyError(f"'{self.element_name}' not found in QuantumDotArray elements. "
+                           "Have you built the QuantumDotArray before?")
         else:
             self.fo_line_fine.fo_start = self.fo_points.qda.elements[
                 self.element_name]['positions'][self.element_number]
