@@ -205,6 +205,12 @@ fo_points.spacings = [2, 80, 250]
 
 fo_points.bondpad_size = {'top': (110, 400), 'bottom': (110, 400),
                           'left': (400, 110), 'right': (400, 110)}
+
+fo_points.ohmic_bondpad['top']['shift'] = 50
+fo_points.ohmic_bondpad['bottom']['shift'] = 50
+fo_points.ohmic_bondpad['left']['shift'] = 90
+fo_points.ohmic_bondpad['right']['shift'] = 90
+
 fo_points.create_fo_polygons_coarse()
 
 # %%% Fanout plunger

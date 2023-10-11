@@ -8,7 +8,8 @@ Created on Thu Sep 14 10:05:40 2023
 from QuantumDotDesigner import QuantumDotArray
 from QuantumDotDesigner.helpers.helpers import (compute_fanout_positions,
                                                 get_fo_lines,
-                                                generate_polygon_for_fanout)
+                                                generate_polygon_for_fanout,
+                                                generate_polygon_for_ohmic_fanout)
 
 
 class FanoutPoints():
@@ -22,6 +23,7 @@ class FanoutPoints():
         self.fo_lines = {}
         self._all_directions = ['top', 'bottom', 'right', 'left']
         self.fo_polygons_coarse = None
+        self.fo_ohmics_polygons_coarse = None
         self.fo_stages = [(16, 16), (500, 530), (1200, 1200)]
         self.fo_widths = [1, 6, 25]
         self.fanout_counts = {'top': 14, 'bottom': 14, 'left': 13, 'right': 13}
@@ -29,13 +31,33 @@ class FanoutPoints():
         self.fo_fine_coarse_overlap = 3
         self.bondpad_position = {'top':  1500, 'bottom': 1500,
                                  'left': 1500, 'right': 1500}
+        self.ohmic_bondpad_position = {'top':  1000, 'bottom': 1000,
+                                       'left': 1000, 'right': 1000}
         self.bondpad_size = {'top': (110, 400), 'bottom': (110, 400),
                              'left': (400, 110), 'right': (400, 110)}
+        self.ohmic_bondpad = {}
+        self.ohmic_bondpad['top'] = {'width_out': 110,
+                                     'width_in': 50,
+                                     'shift': 50,
+                                     'length': 110}
+        self.ohmic_bondpad['bottom'] = {'width_out': 110,
+                                        'width_in': 50,
+                                        'shift': 50,
+                                        'length': 110}
+        self.ohmic_bondpad['left'] = {'width_out': 110,
+                                      'width_in': 50,
+                                      'shift': 50,
+                                      'length': 110}
+        self.ohmic_bondpad['right'] = {'width_out': 110,
+                                       'width_in': 50,
+                                       'shift': 50,
+                                       'length': 110}
         self._n = 0
         self.fanout_positions = None
 
     def create_fo_polygons_coarse(self):
         polygons = {}
+        polygons_ohmics = {}
         fanout_positions = compute_fanout_positions(self.fo_stages,
                                                     self.fanout_counts,
                                                     self.spacings)
@@ -51,7 +73,17 @@ class FanoutPoints():
                                                                self.fo_fine_coarse_overlap)
                                    for n_fo in range(self.fanout_counts[direction])]
 
+            polygons_ohmics[direction] = [generate_polygon_for_ohmic_fanout(direction,
+                                                                            self.fo_lines[direction][n_fo],
+                                                                            self.ohmic_bondpad_position,
+                                                                            self.bondpad_size,
+                                                                            self.ohmic_bondpad,
+                                                                            self.fo_widths,
+                                                                            self.fo_fine_coarse_overlap)
+                                          for n_fo in range(self.fanout_counts[direction])]
+
         self.fo_polygons_coarse = polygons
+        self.fo_ohmics_polygons_coarse = polygons_ohmics
 
     def get_fo_overlap_points(self, n_fanout, direction):
         multiplier = 1

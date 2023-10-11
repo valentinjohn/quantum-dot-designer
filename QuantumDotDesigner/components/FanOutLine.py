@@ -10,6 +10,7 @@ from QuantumDotDesigner.base import Component
 from QuantumDotDesigner.BaseCollection import BaseCollection
 from QuantumDotDesigner.fanout import FanoutPoints
 
+from QuantumDotDesigner.elements.Ohmic import Ohmic
 from QuantumDotDesigner.elements.FanOutLineFine import FanOutLineFine
 from QuantumDotDesigner.elements.FanOutLineCoarse import FanOutLineCoarse
 
@@ -114,9 +115,11 @@ class FanOutLine(Component):
         if missing_attrs:
             raise ValueError(
                 f"Attributes {', '.join(missing_attrs)} cannot be None.")
+        if isinstance(self.element, Ohmic):
+            fo_poly = self.fo_points.fo_ohmics_polygons_coarse[self.fo_direction][self.n_fanout]
         else:
-            self.fo_line_coarse.polygons = self.fo_points.fo_polygons_coarse[
-                self.fo_direction][self.n_fanout]
+            fo_poly = self.fo_points.fo_polygons_coarse[self.fo_direction][self.n_fanout]
+        self.fo_line_coarse.polygons = fo_poly
 
         # self.elements[name] = self.fo_line_coarse
         self.add_component(self.fo_line_coarse, build=True)

@@ -749,6 +749,104 @@ def generate_polygon_for_fanout(direction, fo_line, bondpad_position, bondpad_si
     return fo_polys
 
 
+def generate_polygon_for_ohmic_fanout(direction, fo_line, bondpad_position,
+                                      bondpad_size, ohmic_bondpad, fo_widths,
+                                      fo_fine_coarse_overlap):
+    """
+    Generate a polygon for a single fanout based on the given direction.
+
+    Parameters:
+    - direction (str): Indicates the direction of the fanout. Can be one of ['top', 'bottom', 'left', 'right'].
+    - fo_line (list): List of 3 tuples representing the fanout lines in format [(x1, y1), (x2, y2), (x3, y3)].
+    - bondpad_position (dict): Dictionary containing the position of the bondpad for each direction.
+    - bondpad_size (dict): Dictionary containing the size of the bondpad for each direction.
+    - fo_widths (list): List of 3 floats representing the widths of the fanout at each of the 3 fanout lines.
+    - fo_fine_coarse_overlap (float): The overlap between the fine and coarse parts of the fanout.
+
+    Returns:
+    - fo_polys (list): List of tuples representing the vertices of the generated polygon in the format [(x1, y1), (x2, y2), ...].
+
+    Notes:
+    The function calculates the vertices of the polygon based on the provided parameters and direction.
+    It first adjusts the calculations based on the direction. Then, it calculates the bondpad corners,
+    the bondpad to fine vertices, the overlap between fine and coarse, and the fine to bondpad vertices.
+    Finally, it returns a list of these vertices in order to generate the desired polygon.
+    """
+
+    # Adjustments based on direction
+    if direction in ['top', 'bottom']:
+        coord_index = 0
+        multiplier = 1 if direction == 'top' else -1
+    else:  # 'left' or 'right'
+        coord_index = 1
+        multiplier = 1 if direction == 'right' else -1
+
+    # Base points and offsets
+    if direction in ['top', 'bottom']:
+        base_point = [fo_line[2][0],
+                      multiplier*abs(bondpad_position[direction])]
+    else:
+        base_point = [multiplier*abs(bondpad_position[direction]),
+                      fo_line[2][1]]
+
+    bondpad_offset = [multiplier * bondpad_size[direction][0]/2,
+                      multiplier * bondpad_size[direction][1]/2]
+    fo_width_offset = [0, 0]
+    fo_width_offset[coord_index] = multiplier * fo_widths[2]/2
+
+    # Calculating bondpad corners
+    if direction in ['top', 'bottom']:
+        top_left = calculate_vertex(
+            base_point, [-multiplier*bondpad_offset[0], bondpad_offset[1]])
+        top_right = calculate_vertex(
+            base_point, [multiplier*bondpad_offset[0], bondpad_offset[1]])
+        bottom_left = calculate_vertex(
+            base_point, [multiplier*(ohmic_bondpad[direction]['shift']-bondpad_offset[0]), -bondpad_offset[1]])
+        bottom_right = calculate_vertex(
+            base_point, [multiplier*(ohmic_bondpad[direction]['shift']+bondpad_offset[0]), -bondpad_offset[1]])
+
+        bondpad = [top_left, bottom_left, bottom_right, top_right]
+
+        dir_unit = np.array([1, 0])
+        dir_unit_orth = np.array([0, 1])
+    else:
+        top_left = calculate_vertex(
+            base_point, [-bondpad_offset[0], multiplier*(ohmic_bondpad[direction]['shift']+bondpad_offset[1])])
+        top_right = calculate_vertex(
+            base_point, [bondpad_offset[0], multiplier*bondpad_offset[1]])
+        bottom_left = calculate_vertex(
+            base_point, [-bondpad_offset[0], multiplier*(ohmic_bondpad[direction]['shift']-bondpad_offset[1])])
+        bottom_right = calculate_vertex(
+            base_point, [bondpad_offset[0], -multiplier*bondpad_offset[1]])
+
+        bondpad = [bottom_right, bottom_left, top_left, top_right]
+        dir_unit = np.array([0, 1])
+        dir_unit_orth = np.array([1, 0])
+
+    bondpad_to_fine = [calculate_vertex(fo_line[2], -dir_unit*fo_widths[2]/2),
+                       calculate_vertex(fo_line[1], -dir_unit*fo_widths[1]/2),
+                       calculate_vertex(fo_line[0], -dir_unit*fo_widths[0]/2)]
+
+    overlap_fine_coarse = [calculate_vertex(fo_line[0],
+                                            -dir_unit*fo_widths[0]/2 -
+                                            dir_unit_orth*fo_fine_coarse_overlap * multiplier),
+                           calculate_vertex(fo_line[0],
+                                            dir_unit*fo_widths[0]/2 -
+                                            dir_unit_orth*fo_fine_coarse_overlap * multiplier)]
+
+    fine_to_bondpad = [calculate_vertex(fo_line[0], dir_unit*fo_widths[0]/2),
+                       calculate_vertex(fo_line[1], dir_unit*fo_widths[1]/2),
+                       calculate_vertex(fo_line[2], dir_unit*fo_widths[2]/2)]
+
+    fo_polys = []
+    fo_polys.extend(bondpad_to_fine)
+    fo_polys.extend(overlap_fine_coarse)
+    fo_polys.extend(fine_to_bondpad)
+    fo_polys.extend(bondpad)
+
+    return fo_polys
+
+
 def axis_value(points, axis=0, operation="max"):
     """
     Returns the maximum or minimum value along a specified axis for a list of 2D points.
