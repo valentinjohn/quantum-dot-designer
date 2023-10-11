@@ -23,7 +23,13 @@ class PlotMixin(ABC):
             fig, ax = plt.subplots()
 
         # Collect unique layers
-        unique_layers = list({el['layer'] for el in self.elements.values()})
+        layer_numbers = []
+        for el in self.elements.values():
+            layer = el['layer']
+            layer_stage = el['layer_stage']
+            layer_number = getattr(layer, layer_stage)
+            layer_numbers.append(layer_number)
+        unique_layers = list(set(layer_numbers))
 
         # Create a colormap with enough colors for each layer
         colors = plt.cm.jet(np.linspace(0, 1, len(unique_layers)))
@@ -52,8 +58,9 @@ class PlotMixin(ABC):
 
             for i in range(0, len(combined_vertices), len(vertices)):
                 polygon_vertices = combined_vertices[i:i+len(vertices)]
+                layer_number = getattr(el['layer'], el['layer_stage'])
                 polygon = plt.Polygon(
-                    polygon_vertices, color=layer_to_color[el['layer']])
+                    polygon_vertices, color=layer_to_color[layer_number])
                 ax.add_patch(polygon)
 
                 # Extract x and y coordinates for axes limits

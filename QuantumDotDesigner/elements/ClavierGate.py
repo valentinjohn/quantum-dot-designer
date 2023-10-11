@@ -55,5 +55,6 @@ class ClavierGate(Element):
         self.elements[self.name]['vertices'] = cl.points
         self.elements[self.name]['positions'] = [[self.x, self.y]]
         self.elements[self.name]['layer'] = self.layer
+        self.elements[self.name]['layer_stage'] = self.layer_stage
         self.cell = cell
         self._set_built(True)

@@ -13,10 +13,10 @@ import gdstk
 import copy
 
 
-class Plunger(Element):
+class BasicPolygon(Element):
     def __init__(self, name: str, collection: BaseCollection):
         """
-        Initialize an Plunger object.
+        Initialize a BasicPolygon object.
 
         Args:
             name (str): Name of the element.
@@ -29,6 +29,7 @@ class Plunger(Element):
         self.layer = None
         self.layer_stage = 'fine'
         self.diameter = None
+        self.corners = 8
         self._asymx = 1
         self._asymy = 1 / self._asymx
 
@@ -52,37 +53,20 @@ class Plunger(Element):
             self._asymy = value
             self._asymx = 1 / self._asymy
 
-    # def copy(self, copy_name, collection: BaseCollection):
-    #     # if not component.built:
-    #     #     component.build()
-    #     attributes = copy.copy(vars(self))
-    #     attributes.pop('name')
-    #     attributes.pop('cell')
-    #     attributes.pop('elements')
-    #     # attributes.pop('components')
-
-    #     new_element = type(self)(copy_name, collection)
-    #     new_element.__dict__.update(attributes)
-    #     collection.add_element(new_element)
-
-    #     return new_element
-
     def build(self):
         """
         Build the plunger element.
         """
-        pl_points = gen_poly(8)
+        pl_points = gen_poly(self.corners)
         layer = getattr(self.layer, self.layer_stage)
         pl = gdstk.Polygon(pl_points, layer=layer)
         pl.scale(0.5 / np.cos(np.pi / 8) * self.diameter)
         pl.scale(sx=self._asymx, sy=self._asymy)
-        # pl.translate(self.x, self.y)
         pl.fillet(self.fillet, tolerance=self.fillet_tolerance)
         pl.fillet(0.02, tolerance=1e-4)
         cell = gdstk.Cell(self.name)
         cell.add(pl)
         self.elements[self.name]['vertices'] = pl.points
-        # self.elements[self.name]['positions'] = [[self.x, self.y]]
         self.elements[self.name]['positions'] = [[0, 0]]
         self.elements[self.name]['layer'] = self.layer
         self.elements[self.name]['layer_stage'] = self.layer_stage

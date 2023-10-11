@@ -65,16 +65,29 @@ class FanOutLine(Component):
         name_fine = f'fo_line_{element_name}_{element_number}'
         self.fo_line_fine = FanOutLineFine(name_fine, collection)
         self.via = None
+        self.via_etch = None
 
     def add_via(self):
         if self.via is not None:
             self.via.layer = self.layer
-            self.via.layer_stage = 'via'
+            self.via.layer_stage = 'via_fine'
             self.via.build()
+
             uc_via = self.add_component(self.via)
             center = self.fo_points.qda.elements[self.element_name]['positions'][self.element_number]
             uc_via.center = center
             uc_via.build()
+
+    def add_via_etch(self):
+        if self.via is not None:
+            self.via_etch.layer = self.layer
+            self.via_etch.layer_stage = 'via_etch'
+            self.via_etch.build()
+
+            uc_via_etch = self.add_component(self.via_etch)
+            center = self.fo_points.qda.elements[self.element_name]['positions'][self.element_number]
+            uc_via_etch.center = center
+            uc_via_etch.build()
 
     def add_coarse_fo_line(self):
 
@@ -178,6 +191,7 @@ class FanOutLine(Component):
         plt.tight_layout()
 
     def build(self):
+        self.add_via_etch()
         self.add_via()
         self.add_coarse_fo_line()
         self.add_fine_fo_line()

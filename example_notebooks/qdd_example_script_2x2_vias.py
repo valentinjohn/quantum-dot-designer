@@ -214,8 +214,21 @@ fo_pl_0 = FanOutLine('plunger', 0, collection, fo_points)
 fo_pl_0.fo_direction = 'left'
 fo_pl_0.n_fanout = 4
 
+# add via etch
+fo_pl_0.via_etch = BasicPolygon('via_etch_plunger_0', collection)
+fo_pl_0.via_etch.diameter = 0.9*pl.diameter
+fo_pl_0.via_etch.asymx = pl.asymx
+fo_pl_0.via_etch.corners = 16
+
+# add via
+fo_pl_0.via = BasicPolygon('via_plunger_0', collection)
+fo_pl_0.via.diameter = pl.diameter
+fo_pl_0.via.asymx = pl.asymx
+
+# fo_pl_0.start_offset = (fo_pl_0.via.diameter/2, 0)
+
 fo_pl_0.fo_line_fine.fo_width_start = 40e-3
-fo_pl_0.fo_line_fine.points_along_path = [[-0.05, -0.01, 'start'],
+fo_pl_0.fo_line_fine.points_along_path = [[-fo_pl_0.via.diameter/2, 0, 'start'],
                                           [-0.4, -0.1, 'prev']
                                           ]
 
@@ -226,6 +239,17 @@ fo_pl_1 = FanOutLine('plunger', 1, collection, fo_points)
 
 fo_pl_1.fo_direction = 'right'
 fo_pl_1.n_fanout = 0
+
+# add via etch
+fo_pl_1.via_etch = BasicPolygon('via_etch_plunger_1', collection)
+fo_pl_1.via_etch.diameter = 0.9*pl.diameter
+fo_pl_1.via_etch.asymx = pl.asymx
+fo_pl_1.via_etch.corners = 16
+
+# add via
+fo_pl_1.via = BasicPolygon('via_plunger_1', collection)
+fo_pl_1.via.diameter = pl.diameter
+fo_pl_1.via.asymx = pl.asymx
 
 fo_pl_1.fo_line_fine.fo_width_start = 40e-3
 fo_pl_1.fo_line_fine.points_along_path = [[0.6, 0.6, 'start']
@@ -239,6 +263,17 @@ fo_pl_2 = FanOutLine('plunger', 2, collection, fo_points)
 fo_pl_2.fo_direction = 'left'
 fo_pl_2.n_fanout = -1
 
+# add via etch
+fo_pl_2.via_etch = BasicPolygon('via_etch_plunger_2', collection)
+fo_pl_2.via_etch.diameter = 0.9*pl.diameter
+fo_pl_2.via_etch.asymx = pl.asymx
+fo_pl_2.via_etch.corners = 16
+
+# add via
+fo_pl_2.via = BasicPolygon('via_plunger_2', collection)
+fo_pl_2.via.diameter = pl.diameter
+fo_pl_2.via.asymx = pl.asymx
+
 fo_pl_2.fo_line_fine.fo_width_start = 40e-3
 points = mirror(fo_pl_1.fo_line_fine.points_along_path)
 fo_pl_2.fo_line_fine.points_along_path = points
@@ -250,6 +285,17 @@ fo_pl_3 = FanOutLine('plunger', 3, collection, fo_points)
 
 fo_pl_3.fo_direction = 'right'
 fo_pl_3.n_fanout = 2
+
+# add via etch
+fo_pl_3.via_etch = BasicPolygon('via_etch_plunger_3', collection)
+fo_pl_3.via_etch.diameter = 0.9*pl.diameter
+fo_pl_3.via_etch.asymx = pl.asymx
+fo_pl_3.via_etch.corners = 16
+
+# add via
+fo_pl_3.via = BasicPolygon('via_plunger_3', collection)
+fo_pl_3.via.diameter = pl.diameter
+fo_pl_3.via.asymx = pl.asymx
 
 fo_pl_3.fo_line_fine.fo_width_start = 40e-3
 points = mirror(fo_pl_0.fo_line_fine.points_along_path)
@@ -465,55 +511,6 @@ fo_sens_bottom_bar_sep.fo_line_fine.points_along_path = points
 fo.add_component(fo_sens_bottom_bar_sep)
 
 # %% Screening gates
-# %%% Plunger screening
-# %%%% Plunger 0 screening
-screen_pl_0 = ScreeningGate('screening_gate_pl_0', collection)
-
-screen_pl_0.screen('plunger', 0,
-                   [0.1, 0.3, 0.4], [50e-3, 50e-3, (25e-3, 75e-3)])
-screen_pl_0.layer = screening_layer
-screen_pl_0.fo_contact_width = 50e-3
-screen_pl_0.fo_contact_direction = 1
-
-screen_pl_0_qda = qda.add_component()
-screen_pl_0_qda.component = screen_pl_0
-
-# %%%% Plunger 1 screening
-screen_pl_1 = ScreeningGate('screening_gate_pl_1', collection)
-
-screen_pl_1.screen('plunger', 1,
-                   [0.1, 0.3, 0.4], [50e-3, 50e-3, (75e-3, 25e-3)])
-screen_pl_1.layer = screening_layer
-screen_pl_1.fo_contact_width = 50e-3
-screen_pl_1.fo_contact_direction = 0
-
-screen_pl_1_qda = qda.add_component()
-screen_pl_1_qda.component = screen_pl_1
-
-# %%%% Plunger 2 screening
-screen_pl_2 = ScreeningGate('screening_gate_pl_2', collection)
-
-screen_pl_2.screen('plunger', 2,
-                   [0.1, 0.3, 0.4], [50e-3, 50e-3, (75e-3, 25e-3)])
-screen_pl_2.layer = screening_layer
-screen_pl_2.fo_contact_width = 50e-3
-screen_pl_2.fo_contact_direction = 0
-
-screen_pl_2_qda = qda.add_component()
-screen_pl_2_qda.component = screen_pl_2
-
-# %%%% Plunger 3 screening
-screen_pl_3 = ScreeningGate('screening_gate_pl_3', collection)
-
-screen_pl_3.screen('plunger', 3,
-                   [0.1, 0.3, 0.4], [50e-3, 50e-3, (25e-3, 75e-3)])
-screen_pl_3.layer = screening_layer
-screen_pl_3.fo_contact_width = 50e-3
-screen_pl_3.fo_contact_direction = 1
-
-screen_pl_3_qda = qda.add_component()
-screen_pl_3_qda.component = screen_pl_3
-
 # %%% Sensor plunger screening
 # %%%% Plunger sens top plunger screening
 screen_sens_pl_top = ScreeningGate('screening_gate_sens_pl_top',
@@ -543,64 +540,6 @@ screen_sens_pl_bottom_qda.component = screen_sens_pl_bottom
 
 # %% Fanout screening gates
 qda.build()
-
-# %%% Plunger screening fanout
-# %%%% Fanout screening plunger 0
-
-fo_screen_pl_0 = FanOutLine('screening_gate_pl_0', 0, collection, fo_points)
-
-fo_screen_pl_0.fo_direction = 'left'
-fo_screen_pl_0.n_fanout = 3
-
-fo_screen_pl_0.fo_line_fine.fo_width_start = screen_pl_0.fo_contact_width
-fo_screen_pl_0.fo_line_fine.points_along_path = [[-0.1, 0, 'start'],
-                                                 [-0.8, 0.01, 'start'],
-                                                 ]
-
-fo.add_component(fo_screen_pl_0)
-
-# %%%% Fanout screening plunger 1
-
-fo_screen_pl_1 = FanOutLine(
-    'screening_gate_pl_1', 0, collection, fo_points)
-
-fo_screen_pl_1.fo_direction = 'top'
-fo_screen_pl_1.n_fanout = -1
-
-fo_screen_pl_1.fo_line_fine.fo_width_start = screen_pl_1.fo_contact_width
-fo_screen_pl_1.fo_line_fine.points_along_path = [[0.05, 0.1, 'start'],
-                                                 [0.1, 0.3, 'start'],
-                                                 ]
-
-fo.add_component(fo_screen_pl_1)
-
-# %%%% Fanout screening plunger 2
-
-fo_screen_pl_2 = FanOutLine(
-    'screening_gate_pl_2', 0, collection, fo_points)
-
-fo_screen_pl_2.fo_direction = 'bottom'
-fo_screen_pl_2.n_fanout = 0
-
-fo_screen_pl_2.fo_line_fine.fo_width_start = screen_pl_2.fo_contact_width
-points = mirror(fo_screen_pl_1.fo_line_fine.points_along_path)
-fo_screen_pl_2.fo_line_fine.points_along_path = points
-
-fo.add_component(fo_screen_pl_2)
-
-# %%%% Fanout screening plunger 3
-
-fo_screen_pl_3 = FanOutLine(
-    'screening_gate_pl_3', 0, collection, fo_points)
-
-fo_screen_pl_3.fo_direction = 'right'
-fo_screen_pl_3.n_fanout = 3
-
-fo_screen_pl_3.fo_line_fine.fo_width_start = screen_pl_3.fo_contact_width
-points = mirror(fo_screen_pl_0.fo_line_fine.points_along_path)
-fo_screen_pl_3.fo_line_fine.points_along_path = points
-
-fo.add_component(fo_screen_pl_3)
 
 # %%% Sensor plunger screening fanout
 # %%%% Fanout screening plunger sensor top
@@ -642,4 +581,4 @@ fo_qda.component = fo
 qda.build()
 layout_path = "..\example_notebooks\layout_files\chip_layout.gds"
 layout = qda.add_chip_layout(layout_path)
-qda.save_as_gds('..\example_notebooks\example_2x2_device.gds')
+qda.save_as_gds('..\example_notebooks\example_2x2_vias_device.gds')

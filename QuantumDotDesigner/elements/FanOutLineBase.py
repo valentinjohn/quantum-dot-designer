@@ -49,6 +49,7 @@ class FanOutLineBase(PlotMixin):
         self.elements[self.name]['vertices'] = self.polygons  # fo_line.points
         self.elements[self.name]['positions'] = [[0, 0]]
         self.elements[self.name]['layer'] = self.layer
+        self.elements[self.name]['layer_stage'] = self.layer_stage
 
         self.cell.add(fo_line)
         self._set_built(True)

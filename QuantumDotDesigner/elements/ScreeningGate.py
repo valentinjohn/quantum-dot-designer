@@ -56,6 +56,7 @@ class ScreeningGate(Element):
             # self.elements[self.name]['positions'] = [[self.x, self.y]]
             self.elements[self.name]['positions'] = [[0, 0]]
             self.elements[self.name]['layer'] = self.layer
+            self.elements[self.name]['layer_stage'] = self.layer_stage
 
         if self.screen_paths:
             end_path = get_end_path(self.vertices)

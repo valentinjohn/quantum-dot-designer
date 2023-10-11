@@ -8,27 +8,25 @@ Created on Wed Sep 13 13:02:28 2023
 from QuantumDotDesigner.base import Element
 from QuantumDotDesigner.BaseCollection import BaseCollection
 import numpy as np
-from QuantumDotDesigner.helpers.helpers import gen_poly
 import gdstk
-import copy
 
 
-class Plunger(Element):
+class ArbitraryPolygon(Element):
     def __init__(self, name: str, collection: BaseCollection):
         """
-        Initialize an Plunger object.
+        Initialize an ArbitraryPolygon object.
 
         Args:
             name (str): Name of the element.
             layer (int): Description of layer. Default is None.
-            rotate (float): Rotation of the plunger. Default is 0.0.
+            rotate (float): Rotation of the polyunger. Default is 0.0.
             fillet (float): Fillet value. Indicates how much the polygon is rounded.
             ... (other attributes)
         """
         super().__init__(name, collection)
         self.layer = None
         self.layer_stage = 'fine'
-        self.diameter = None
+        self.vertices = None
         self._asymx = 1
         self._asymy = 1 / self._asymx
 
@@ -52,37 +50,19 @@ class Plunger(Element):
             self._asymy = value
             self._asymx = 1 / self._asymy
 
-    # def copy(self, copy_name, collection: BaseCollection):
-    #     # if not component.built:
-    #     #     component.build()
-    #     attributes = copy.copy(vars(self))
-    #     attributes.pop('name')
-    #     attributes.pop('cell')
-    #     attributes.pop('elements')
-    #     # attributes.pop('components')
-
-    #     new_element = type(self)(copy_name, collection)
-    #     new_element.__dict__.update(attributes)
-    #     collection.add_element(new_element)
-
-    #     return new_element
-
     def build(self):
         """
-        Build the plunger element.
+        Build the polyunger element.
         """
-        pl_points = gen_poly(8)
         layer = getattr(self.layer, self.layer_stage)
-        pl = gdstk.Polygon(pl_points, layer=layer)
-        pl.scale(0.5 / np.cos(np.pi / 8) * self.diameter)
-        pl.scale(sx=self._asymx, sy=self._asymy)
-        # pl.translate(self.x, self.y)
-        pl.fillet(self.fillet, tolerance=self.fillet_tolerance)
-        pl.fillet(0.02, tolerance=1e-4)
+        poly = gdstk.Polygon(self.vertices, layer=layer)
+        poly.scale(0.5 / np.cos(np.pi / 8) * self.diameter)
+        poly.scale(sx=self._asymx, sy=self._asymy)
+        poly.fillet(self.fillet, tolerance=self.fillet_tolerance)
+        poly.fillet(0.02, tolerance=1e-4)
         cell = gdstk.Cell(self.name)
-        cell.add(pl)
-        self.elements[self.name]['vertices'] = pl.points
-        # self.elements[self.name]['positions'] = [[self.x, self.y]]
+        cell.add(poly)
+        self.elements[self.name]['vertices'] = poly.points
         self.elements[self.name]['positions'] = [[0, 0]]
         self.elements[self.name]['layer'] = self.layer
         self.elements[self.name]['layer_stage'] = self.layer_stage
