@@ -20,7 +20,8 @@ import gdstk
 class ScreeningGate(Element):
     def __init__(self, name, collection: BaseCollection):
         super().__init__(name, collection)
-        self.layer = 5
+        self.layer = None
+        self.layer_stage = 'fine'
         self.vertices = []
         self.screen_paths = []
         self.collection = collection
@@ -44,9 +45,10 @@ class ScreeningGate(Element):
 
     def build(self):
         cell = gdstk.Cell(self.name)
+        layer = getattr(self.layer, self.layer_stage)
         for vertices in self.vertices:
             screen = gdstk.Polygon(vertices,
-                                   layer=self.layer)
+                                   layer=layer)
             # screen.translate(self.x, self.y)
             screen.fillet(self.fillet, tolerance=self.fillet_tolerance)
             cell.add(screen)

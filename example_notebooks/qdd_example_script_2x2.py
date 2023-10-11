@@ -9,36 +9,55 @@ Created on Tue May  9 08:18:02 2023
 import numpy as np
 import QuantumDotDesigner as qdd
 
-from QuantumDotDesigner.elements import Plunger, Barrier, ScreeningGate
+from QuantumDotDesigner.base import Layer
+
+from QuantumDotDesigner.elements import (Plunger, Barrier, ScreeningGate,
+                                         BasicPolygon)
 from QuantumDotDesigner.components import Sensor, FanOutLine
 
 from QuantumDotDesigner.helpers.helpers import mirror_points_along_path as mirror
-
-# %% Layers
-
-ohmic_layer = 4
-barrier_layer = 5
-screening_layer = 32
-barrier_source_layer = 5
-barrier_drain_layer = 5
-plunger_layer = 21
 
 # %% Elements/components
 
 collection = qdd.BaseCollection()
 
+# %% Layers
+
+ohmic_layer = Layer('ohmic_layer', collection)
+ohmic_layer.fine = 3
+ohmic_layer.coarse = 4
+
+barrier_layer = Layer('barrier_layer', collection)
+barrier_layer.fine = 5
+barrier_layer.coarse = 6
+
+screening_layer = Layer('screening_layer', collection, 3, 4)
+screening_layer.fine = 31
+screening_layer.coarse = 32
+
+barrier_source_layer = barrier_layer.copy('barrier_source_layer', collection)
+barrier_drain_layer = barrier_layer.copy('barrier_drain_layer', collection)
+barrier_sep_layer = screening_layer.copy('barrier_screening_layer', collection)
+
+plunger_layer = Layer('plunger_layer', collection)
+plunger_layer.fine = 21
+plunger_layer.coarse = 22
+plunger_layer.via = 23
+plunger_layer.via_fine = 24
+plunger_layer.via_coarse = 25
+
 # %%% define plungers
 
 pl = Plunger('plunger', collection)
 pl.diameter = 150e-3
-pl.layer = 21
+pl.layer = plunger_layer
 
 # %%% define barriers
 
 bar_0deg = Barrier('barrier_0deg_rotated', collection)
 bar_0deg.width = 40e-3
 bar_0deg.length = 70e-3
-bar_0deg.layer = 5
+bar_0deg.layer = barrier_layer
 bar_0deg.rotate = 0/2*np.pi
 
 bar_90deg = bar_0deg.copy('barrier_90deg_rotated', collection)
@@ -195,10 +214,20 @@ fo_pl_0 = FanOutLine('plunger', 0, collection, fo_points)
 fo_pl_0.fo_direction = 'left'
 fo_pl_0.n_fanout = 4
 
-fo_pl_0.fo_line_fine.fo_width_start = 40e-3
+# add via
+fo_pl_0.via = BasicPolygon('via_plunger_0', collection)
+fo_pl_0.via.diameter = 0.9*pl.diameter
+fo_pl_0.via.asymx = pl.asymx
+fo_pl_0.via.corners = 16
+# fo_pl_0.via.layer = plunger_layer['via_fine']
+
+fo_pl_0.fo_line_fine.fo_width_start = fo_pl_0.via.diameter  # 40e-3
 fo_pl_0.fo_line_fine.points_along_path = [[-0.15, -0.05, 'start'],
                                           [-0.4, -0.1, 'prev']
                                           ]
+
+# fo_pl_0.fo_line_coarse.layer = plunger_layer['via_coarse']
+
 fo.add_component(fo_pl_0)
 
 # %%%% Fanout plunger ver 1
@@ -210,6 +239,9 @@ fo_pl_1.n_fanout = 0
 fo_pl_1.fo_line_fine.fo_width_start = 40e-3
 fo_pl_1.fo_line_fine.points_along_path = [[0.6, 0.6, 'start']
                                           ]
+
+# fo_pl_1.fo_line_coarse.layer = plunger_layer
+
 fo.add_component(fo_pl_1)
 
 # %%%% Fanout plunger ver 2
@@ -221,6 +253,9 @@ fo_pl_2.n_fanout = -1
 fo_pl_2.fo_line_fine.fo_width_start = 40e-3
 points = mirror(fo_pl_1.fo_line_fine.points_along_path)
 fo_pl_2.fo_line_fine.points_along_path = points
+
+# fo_pl_2.fo_line_coarse.layer = plunger_layer
+
 fo.add_component(fo_pl_2)
 
 # %%%% Fanout plunger ver 3
@@ -232,6 +267,9 @@ fo_pl_3.n_fanout = 2
 fo_pl_3.fo_line_fine.fo_width_start = 40e-3
 points = mirror(fo_pl_0.fo_line_fine.points_along_path)
 fo_pl_3.fo_line_fine.points_along_path = points
+
+# fo_pl_3.fo_line_coarse.layer = plunger_layer
+
 fo.add_component(fo_pl_3)
 
 # %%% Fanout barriers
@@ -246,6 +284,9 @@ fo_bar_0deg_0.fo_line_fine.points_along_path = [[0.1, 0, 'start'],
                                                 [0.1, 0.03, 'prev'],
                                                 [0.2, 0.1, 'prev']
                                                 ]
+
+# fo_bar_0deg_0.fo_line_coarse.layer = barrier_layer
+
 fo.add_component(fo_bar_0deg_0)
 
 # %%%% Fanout bar 90deg 0
@@ -259,6 +300,9 @@ fo_bar_90deg_0.fo_line_fine.points_along_path = [[0, 0.1, 'start'],
                                                  [0.03, 0.1, 'prev'],
                                                  [0.1, 0.2, 'prev']
                                                  ]
+
+# fo_bar_90deg_0.fo_line_coarse.layer = barrier_layer
+
 fo.add_component(fo_bar_90deg_0)
 
 # %%%% Fanout bar 180deg 0
@@ -271,6 +315,8 @@ fo_bar_180deg_0.n_fanout = 5
 fo_bar_180deg_0.fo_line_fine.fo_width_start = 40e-3
 points = mirror(fo_bar_0deg_0.fo_line_fine.points_along_path)
 fo_bar_180deg_0.fo_line_fine.points_along_path = points
+
+# fo_bar_180deg_0.fo_line_coarse.layer = barrier_layer
 
 fo.add_component(fo_bar_180deg_0)
 
@@ -285,6 +331,8 @@ fo_bar_270deg_0.fo_line_fine.fo_width_start = 40e-3
 points = mirror(fo_bar_90deg_0.fo_line_fine.points_along_path)
 fo_bar_270deg_0.fo_line_fine.points_along_path = points
 
+# fo_bar_270deg_0.fo_line_coarse.layer = barrier_layer
+
 fo.add_component(fo_bar_270deg_0)
 
 # %%% Fanout sensor top
@@ -297,6 +345,9 @@ fo_sens_pl_top.n_fanout = 0
 fo_sens_pl_top.fo_line_fine.fo_width_start = 40e-3
 fo_sens_pl_top.fo_line_fine.points_along_path = [[-0.5, 0.5, 'start', 40e-3]
                                                  ]
+
+# fo_sens_pl_top.fo_line_coarse.layer = plunger_layer
+
 fo.add_component(fo_sens_pl_top)
 
 # %%%% Fanout sensor source top
@@ -309,6 +360,9 @@ fo_sens_top_source.n_fanout = 2
 fo_sens_top_source.fo_line_fine.points_along_path = [[0, 0.4, 'start'],
                                                      [-0.04, 0.4, 'prev']
                                                      ]
+
+# fo_sens_top_source.fo_line_coarse.layer = ohmic_layer
+
 fo.add_component(fo_sens_top_source)
 
 # %%%% Fanout sensor drain top
@@ -320,6 +374,9 @@ fo_sens_top_drain.n_fanout = 2
 
 fo_sens_top_drain.fo_line_fine.points_along_path = [[-0.25, -0.01, 'start']
                                                     ]
+
+# fo_sens_top_drain.fo_line_coarse.layer = ohmic_layer
+
 fo.add_component(fo_sens_top_drain)
 
 # %%%% Fanout sensor source barrier top
@@ -332,6 +389,9 @@ fo_sens_top_bar_source.n_fanout = 1
 fo_sens_top_bar_source.fo_line_fine.points_along_path = [[-0.1, 0.1, 'start'],
                                                          [-0.1, 0.2, 'prev']
                                                          ]
+
+# fo_sens_top_bar_source.fo_line_coarse.layer = barrier_source_layer
+
 fo.add_component(fo_sens_top_bar_source)
 
 # %%%% Fanout sensor drain barrier top
@@ -344,6 +404,9 @@ fo_sens_top_bar_drain.n_fanout = 1
 fo_sens_top_bar_drain.fo_line_fine.points_along_path = [[-0.1, 0.1, 'start'],
                                                         [-0.2, 0.1, 'prev']
                                                         ]
+
+# fo_sens_top_bar_drain.fo_line_coarse.layer = barrier_drain_layer
+
 fo.add_component(fo_sens_top_bar_drain)
 
 # %%%% Fanout sensor sep barrier top
@@ -357,6 +420,9 @@ fo_sens_top_bar_sep.fo_line_fine.points_along_path = [[0.1, 0.1, 'start'],
                                                       [0.1, 0.2, 'prev'],
                                                       [0, 0.3, 'prev']
                                                       ]
+
+# fo_sens_top_bar_sep.fo_line_coarse.layer = barrier_sep_layer
+
 fo.add_component(fo_sens_top_bar_sep)
 
 # %%% Fanout sensor bottom
@@ -371,6 +437,8 @@ fo_sens_pl_bottom.fo_line_fine.fo_width_start = 40e-3
 points = mirror(fo_sens_pl_top.fo_line_fine.points_along_path)
 fo_sens_pl_bottom.fo_line_fine.points_along_path = points
 
+# fo_sens_pl_bottom.fo_line_coarse.layer = plunger_layer
+
 fo.add_component(fo_sens_pl_bottom)
 
 # %%%% Fanout sensor source bottom
@@ -382,6 +450,8 @@ fo_sens_bottom_source.n_fanout = 3
 
 points = mirror(fo_sens_top_source.fo_line_fine.points_along_path)
 fo_sens_bottom_source.fo_line_fine.points_along_path = points
+
+# fo_sens_bottom_source.fo_line_coarse.layer = ohmic_layer
 
 fo.add_component(fo_sens_bottom_source)
 
@@ -395,6 +465,8 @@ fo_sens_bottom_drain.n_fanout = 4
 points = mirror(fo_sens_top_drain.fo_line_fine.points_along_path)
 fo_sens_bottom_drain.fo_line_fine.points_along_path = points
 
+# fo_sens_bottom_drain.fo_line_coarse.layer = ohmic_layer
+
 fo.add_component(fo_sens_bottom_drain)
 
 # %%%% Fanout sensor source barrier bottom
@@ -406,6 +478,8 @@ fo_sens_bottom_bar_source.n_fanout = 4
 
 points = mirror(fo_sens_top_bar_source.fo_line_fine.points_along_path)
 fo_sens_bottom_bar_source.fo_line_fine.points_along_path = points
+
+# fo_sens_bottom_bar_source.fo_line_coarse.layer = barrier_source_layer
 
 fo.add_component(fo_sens_bottom_bar_source)
 
@@ -419,6 +493,8 @@ fo_sens_bottom_bar_drain.n_fanout = 5
 points = mirror(fo_sens_top_bar_drain.fo_line_fine.points_along_path)
 fo_sens_bottom_bar_drain.fo_line_fine.points_along_path = points
 
+# fo_sens_bottom_bar_drain.fo_line_coarse.layer = barrier_drain_layer
+
 fo.add_component(fo_sens_bottom_bar_drain)
 
 # %%%% Fanout sensor sep barrier bottom
@@ -430,6 +506,8 @@ fo_sens_bottom_bar_sep.n_fanout = 2
 
 points = mirror(fo_sens_top_bar_sep.fo_line_fine.points_along_path)
 fo_sens_bottom_bar_sep.fo_line_fine.points_along_path = points
+
+# fo_sens_bottom_bar_sep.fo_line_coarse.layer = barrier_sep_layer
 
 fo.add_component(fo_sens_bottom_bar_sep)
 
@@ -525,6 +603,10 @@ fo_screen_pl_0.fo_line_fine.fo_width_start = screen_pl_0.fo_contact_width
 fo_screen_pl_0.fo_line_fine.points_along_path = [[-0.1, 0, 'start'],
                                                  [-0.8, 0.01, 'start'],
                                                  ]
+
+
+# fo_screen_pl_0.fo_line_coarse.layer = screening_layer
+
 fo.add_component(fo_screen_pl_0)
 
 # %%%% Fanout screening plunger 1
@@ -539,6 +621,9 @@ fo_screen_pl_1.fo_line_fine.fo_width_start = screen_pl_1.fo_contact_width
 fo_screen_pl_1.fo_line_fine.points_along_path = [[0.05, 0.1, 'start'],
                                                  [0.1, 0.3, 'start'],
                                                  ]
+
+# fo_screen_pl_1.fo_line_coarse.layer = screening_layer
+
 fo.add_component(fo_screen_pl_1)
 
 # %%%% Fanout screening plunger 2
@@ -553,6 +638,8 @@ fo_screen_pl_2.fo_line_fine.fo_width_start = screen_pl_2.fo_contact_width
 points = mirror(fo_screen_pl_1.fo_line_fine.points_along_path)
 fo_screen_pl_2.fo_line_fine.points_along_path = points
 
+# fo_screen_pl_2.fo_line_coarse.layer = screening_layer
+
 fo.add_component(fo_screen_pl_2)
 
 # %%%% Fanout screening plunger 3
@@ -566,6 +653,8 @@ fo_screen_pl_3.n_fanout = 3
 fo_screen_pl_3.fo_line_fine.fo_width_start = screen_pl_3.fo_contact_width
 points = mirror(fo_screen_pl_0.fo_line_fine.points_along_path)
 fo_screen_pl_3.fo_line_fine.points_along_path = points
+
+# fo_screen_pl_3.fo_line_coarse.layer = screening_layer
 
 fo.add_component(fo_screen_pl_3)
 
@@ -582,6 +671,9 @@ fo_screen_sens_pl_top.fo_line_fine.fo_width_start = screen_sens_pl_top.fo_contac
 fo_screen_sens_pl_top.fo_line_fine.points_along_path = [[-0.05, 0.1, 'start'],
                                                         [-0.2, 0.4, 'start'],
                                                         ]
+
+# fo_screen_sens_pl_top.fo_line_coarse.layer = screening_layer
+
 fo.add_component(fo_screen_sens_pl_top)
 
 # %%%% Fanout screening plunger sensor bottom
@@ -595,6 +687,8 @@ fo_screen_sens_pl_bottom.n_fanout = -1
 fo_screen_sens_pl_bottom.fo_line_fine.fo_width_start = screen_sens_pl_bottom.fo_contact_width
 points = mirror(fo_screen_sens_pl_top.fo_line_fine.points_along_path)
 fo_screen_sens_pl_bottom.fo_line_fine.points_along_path = points
+
+# fo_screen_sens_pl_bottom.fo_line_coarse.layer = screening_layer
 
 fo.add_component(fo_screen_sens_pl_bottom)
 

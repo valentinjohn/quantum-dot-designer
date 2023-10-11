@@ -64,6 +64,17 @@ class FanOutLine(Component):
         self.fo_line_coarse = FanOutLineCoarse(name_coarse, collection)
         name_fine = f'fo_line_{element_name}_{element_number}'
         self.fo_line_fine = FanOutLineFine(name_fine, collection)
+        self.via = None
+
+    def add_via(self):
+        if self.via is not None:
+            self.via.layer = self.layer
+            self.via.layer_stage = 'via'
+            self.via.build()
+            uc_via = self.add_component(self.via)
+            center = self.fo_points.qda.elements[self.element_name]['positions'][self.element_number]
+            uc_via.center = center
+            uc_via.build()
 
     def add_coarse_fo_line(self):
 
@@ -75,7 +86,12 @@ class FanOutLine(Component):
         # self.fo_line_coarse = self.fo_line_coarse(name)
 
         self.fo_line_coarse.fo_direction = self.fo_direction
-        self.fo_line_coarse.layer = self.collection.elements[self.element_name].layer + 20
+
+        self.fo_line_coarse.layer = self.layer
+        if self.via is not None:
+            self.fo_line_coarse.layer_stage = 'via_coarse'
+        else:
+            self.fo_line_coarse.layer_stage = 'coarse'
 
         attributes = {'fo_direction': self.fo_direction,
                       'n_fanout': self.n_fanout,
@@ -108,7 +124,13 @@ class FanOutLine(Component):
                                                  'layer': self.fo_line_fine.layer}
 
         self.fo_line_fine.fo_direction = self.fo_direction
-        self.fo_line_fine.layer = self.collection.elements[self.element_name].layer
+
+        self.fo_line_fine.layer = self.layer
+        if self.via is not None:
+            self.fo_line_fine.layer_stage = 'via_fine'
+        else:
+            self.fo_line_fine.layer_stage = 'fine'
+
         self.fo_line_fine.fillet = self.fillet
 
         attributes = {
@@ -156,6 +178,7 @@ class FanOutLine(Component):
         plt.tight_layout()
 
     def build(self):
+        self.add_via()
         self.add_coarse_fo_line()
         self.add_fine_fo_line()
         super().build()

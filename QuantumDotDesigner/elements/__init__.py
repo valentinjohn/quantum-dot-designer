@@ -6,3 +6,5 @@ from .ClavierGate import ClavierGate
 from .FanOutLineBase import FanOutLineBase
 from .FanOutLineCoarse import FanOutLineCoarse
 from .FanOutLineFine import FanOutLineFine
+from .BasicPolygon import BasicPolygon
+from .ArbitraryPolygon import ArbitraryPolygon

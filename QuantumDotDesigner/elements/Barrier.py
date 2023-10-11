@@ -20,7 +20,8 @@ class Barrier(Element):
             name (str): Name of the barrier.
         """
         super().__init__(name, collection)
-        self.layer = 5
+        self.layer = None
+        self.layer_stage = 'fine'
         self.width = None
         self.length = None
 
@@ -28,6 +29,7 @@ class Barrier(Element):
         """
         Build the barrier element.
         """
+        layer = getattr(self.layer, self.layer_stage)
         bar = gdstk.Polygon([(-self.length/2, -self.width/2),
                              (self.length/2, -self.width/2),
                              (self.length/2 + self.width/4, -self.width/8),
@@ -36,7 +38,7 @@ class Barrier(Element):
                              (-self.length/2, self.width/2),
                              (-self.length/2 - self.width/2, self.width/8),
                              (-self.length/2 - self.width/2, -self.width/8)],
-                            layer=self.layer)
+                            layer=layer)
         bar.rotate(self.rotate)
         # bar.translate(self.x, self.y)
         bar.fillet(self.fillet, tolerance=self.fillet_tolerance)

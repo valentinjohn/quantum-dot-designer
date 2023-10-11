@@ -26,7 +26,8 @@ class Plunger(Element):
             ... (other attributes)
         """
         super().__init__(name, collection)
-        self.layer = 21
+        self.layer = None
+        self.layer_stage = 'fine'
         self.diameter = None
         self._asymx = 1
         self._asymy = 1 / self._asymx
@@ -71,7 +72,8 @@ class Plunger(Element):
         Build the plunger element.
         """
         pl_points = gen_poly(8)
-        pl = gdstk.Polygon(pl_points, layer=self.layer)
+        layer = getattr(self.layer, self.layer_stage)
+        pl = gdstk.Polygon(pl_points, layer=layer)
         pl.scale(0.5 / np.cos(np.pi / 8) * self.diameter)
         pl.scale(sx=self._asymx, sy=self._asymy)
         # pl.translate(self.x, self.y)

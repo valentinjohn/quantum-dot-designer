@@ -14,6 +14,7 @@ from QuantumDotDesigner.BaseCollection import BaseCollection
 class FanOutLineFine(FanOutLineBase):
     def __init__(self, name, collection: BaseCollection):
         super().__init__(name, collection)
+        self.layer_stage = 'fine'
         self.fo_width_start = 40e-3
         self.fo_start = None
         self.fo_end = None

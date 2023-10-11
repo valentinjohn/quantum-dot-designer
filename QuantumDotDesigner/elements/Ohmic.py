@@ -18,7 +18,8 @@ import gdstk
 class Ohmic(Element):
     def __init__(self, name, collection: BaseCollection):
         super().__init__(name, collection)
-        self.layer = 1
+        self.layer = None
+        self.layer_stage = 'fine'
         self.contact_length = 0.095
         self.contact_offset = 0.01
         self.contact_angle = np.pi/4
@@ -69,7 +70,8 @@ class Ohmic(Element):
         Build the ohmic element.
         """
         self.compute_ohmic_vertices()
-        ohmic = gdstk.Polygon(self.vertices, layer=self.layer)
+        layer = getattr(self.layer, self.layer_stage)
+        ohmic = gdstk.Polygon(self.vertices, layer=layer)
         ohmic.fillet(self.fillet, tolerance=self.fillet_tolerance)
         ohmic.rotate(self.rotate)
         self._fo_contact_point = midpoint(ohmic.points[-2],
