@@ -45,12 +45,13 @@ class FanOutLine(Component):
         self.cell = gdstk.Cell(self.name)
         self.fillet = 0
         self.fillet_tolerance = 1e-3
-        # self.elements = {}
-        # self.fine_fo_width_start = 40e-3
-        # self.fine_fo_start = None
-        # self.fine_fo_end = None
-        # self.points_along_path = []
         self._built = False
+
+        self.bp_ohmic_position = None
+        self.bp_ohmic_width_out = None
+        self.bp_ohmic_width_in = None
+        self.bp_ohmic_length = None
+        self.bp_ohmic_shift = None
 
         self.fo_line_fine.element_name = self.element_name
         self.fo_line_fine.element_number = self.element_number
@@ -92,8 +93,6 @@ class FanOutLine(Component):
 
     def add_coarse_fo_line(self):
 
-        # self.fo_line_coarse.name = name
-        # self.fo_line_coarse.cell.name = name
         self.elements[self.fo_line_coarse.name] = {'vertices': [],
                                                    'positions': [],
                                                    'layer': self.fo_line_coarse.layer}
@@ -116,7 +115,14 @@ class FanOutLine(Component):
             raise ValueError(
                 f"Attributes {', '.join(missing_attrs)} cannot be None.")
         if isinstance(self.element, Ohmic):
-            fo_poly = self.fo_points.fo_ohmics_polygons_coarse[self.fo_direction][self.n_fanout]
+            self.fo_points.create_single_ohmic_bp(self.fo_direction,
+                                                  self.n_fanout,
+                                                  self.bp_ohmic_position,
+                                                  self.bp_ohmic_width_out,
+                                                  self.bp_ohmic_width_in,
+                                                  self.bp_ohmic_length,
+                                                  self.bp_ohmic_shift)
+            fo_poly = self.fo_points.ohmic_bondpads[self.fo_direction][self.n_fanout]
         else:
             fo_poly = self.fo_points.fo_polygons_coarse[self.fo_direction][self.n_fanout]
         self.fo_line_coarse.polygons = fo_poly

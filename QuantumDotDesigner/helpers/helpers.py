@@ -405,11 +405,6 @@ def merge_device_positions(dict1, dict2):
                 raise ValueError(
                     f"The vertices for the key {key} are different between the two dictionaries.")
 
-            # Check if the layers are the same
-            if merged[key]['layer'] != value['layer']:
-                raise ValueError(
-                    f"The layers for the key {key} are different between the two dictionaries.")
-
             # Merge the positions
             merged[key]['positions'] += value['positions']
 
@@ -750,29 +745,8 @@ def generate_polygon_for_fanout(direction, fo_line, bondpad_position, bondpad_si
 
 
 def generate_polygon_for_ohmic_fanout(direction, fo_line, bondpad_position,
-                                      bondpad_size, ohmic_bondpad, fo_widths,
-                                      fo_fine_coarse_overlap):
-    """
-    Generate a polygon for a single fanout based on the given direction.
-
-    Parameters:
-    - direction (str): Indicates the direction of the fanout. Can be one of ['top', 'bottom', 'left', 'right'].
-    - fo_line (list): List of 3 tuples representing the fanout lines in format [(x1, y1), (x2, y2), (x3, y3)].
-    - bondpad_position (dict): Dictionary containing the position of the bondpad for each direction.
-    - bondpad_size (dict): Dictionary containing the size of the bondpad for each direction.
-    - fo_widths (list): List of 3 floats representing the widths of the fanout at each of the 3 fanout lines.
-    - fo_fine_coarse_overlap (float): The overlap between the fine and coarse parts of the fanout.
-
-    Returns:
-    - fo_polys (list): List of tuples representing the vertices of the generated polygon in the format [(x1, y1), (x2, y2), ...].
-
-    Notes:
-    The function calculates the vertices of the polygon based on the provided parameters and direction.
-    It first adjusts the calculations based on the direction. Then, it calculates the bondpad corners,
-    the bondpad to fine vertices, the overlap between fine and coarse, and the fine to bondpad vertices.
-    Finally, it returns a list of these vertices in order to generate the desired polygon.
-    """
-
+                                      width_out, width_in, length, shift,
+                                      fo_widths, fo_fine_coarse_overlap):
     # Adjustments based on direction
     if direction in ['top', 'bottom']:
         coord_index = 0
@@ -784,26 +758,33 @@ def generate_polygon_for_ohmic_fanout(direction, fo_line, bondpad_position,
     # Base points and offsets
     if direction in ['top', 'bottom']:
         base_point = [fo_line[2][0],
-                      multiplier*abs(bondpad_position[direction])]
+                      multiplier*abs(bondpad_position)]
     else:
-        base_point = [multiplier*abs(bondpad_position[direction]),
+        base_point = [multiplier*abs(bondpad_position),
                       fo_line[2][1]]
 
-    bondpad_offset = [multiplier * bondpad_size[direction][0]/2,
-                      multiplier * bondpad_size[direction][1]/2]
+    if direction == 'top' or direction == 'bottom':
+        bondpad_size = [(width_out, length), (width_in, length)]
+    else:
+        bondpad_size = [(length, width_out), (length, width_in)]
+
+    bondpad_offset = [[multiplier * bondpad_size[0][0]/2,
+                       multiplier * bondpad_size[0][1]/2],
+                      [multiplier * bondpad_size[1][0]/2,
+                       multiplier * bondpad_size[1][1]/2]]
     fo_width_offset = [0, 0]
     fo_width_offset[coord_index] = multiplier * fo_widths[2]/2
 
     # Calculating bondpad corners
     if direction in ['top', 'bottom']:
         top_left = calculate_vertex(
-            base_point, [-multiplier*bondpad_offset[0], bondpad_offset[1]])
+            base_point, [-multiplier*bondpad_offset[0][0], bondpad_offset[0][1]])
         top_right = calculate_vertex(
-            base_point, [multiplier*bondpad_offset[0], bondpad_offset[1]])
+            base_point, [multiplier*bondpad_offset[0][0], bondpad_offset[0][1]])
         bottom_left = calculate_vertex(
-            base_point, [multiplier*(ohmic_bondpad[direction]['shift']-bondpad_offset[0]), -bondpad_offset[1]])
+            base_point, [multiplier*(shift-bondpad_offset[1][0]), -bondpad_offset[1][1]])
         bottom_right = calculate_vertex(
-            base_point, [multiplier*(ohmic_bondpad[direction]['shift']+bondpad_offset[0]), -bondpad_offset[1]])
+            base_point, [multiplier*(shift+bondpad_offset[1][0]), -bondpad_offset[1][1]])
 
         bondpad = [top_left, bottom_left, bottom_right, top_right]
 
@@ -811,13 +792,13 @@ def generate_polygon_for_ohmic_fanout(direction, fo_line, bondpad_position,
         dir_unit_orth = np.array([0, 1])
     else:
         top_left = calculate_vertex(
-            base_point, [-bondpad_offset[0], multiplier*(ohmic_bondpad[direction]['shift']+bondpad_offset[1])])
+            base_point, [-bondpad_offset[1][0], multiplier*(shift+bondpad_offset[1][1])])
         top_right = calculate_vertex(
-            base_point, [bondpad_offset[0], multiplier*bondpad_offset[1]])
+            base_point, [bondpad_offset[0][0], multiplier*bondpad_offset[0][1]])
         bottom_left = calculate_vertex(
-            base_point, [-bondpad_offset[0], multiplier*(ohmic_bondpad[direction]['shift']-bondpad_offset[1])])
+            base_point, [-bondpad_offset[1][0], multiplier*(shift-bondpad_offset[1][1])])
         bottom_right = calculate_vertex(
-            base_point, [bondpad_offset[0], -multiplier*bondpad_offset[1]])
+            base_point, [bondpad_offset[0][0], -multiplier*bondpad_offset[0][1]])
 
         bondpad = [bottom_right, bottom_left, top_left, top_right]
         dir_unit = np.array([0, 1])

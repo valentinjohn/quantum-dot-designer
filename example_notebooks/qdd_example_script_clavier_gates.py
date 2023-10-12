@@ -10,6 +10,7 @@ Created on Thu Jul 27 16:28:10 2023
 import numpy as np
 import QuantumDotDesigner as qdd
 
+from QuantumDotDesigner.base.Layer import Layer
 from QuantumDotDesigner.elements import Plunger, Barrier, ScreeningGate
 from QuantumDotDesigner.components import Sensor, FanOutLine, Clavier
 
@@ -21,15 +22,28 @@ qda = qdd.QuantumDotArray()
 
 # %% Layers
 
-ohmic_layer = 4
-barrier_layer = 5
-screening_layer = 9
-barrier_source_layer = 5
-barrier_drain_layer = 5
-plunger_layer = 7
+ohmic_layer = Layer('ohmic_layer', collection)
+ohmic_layer.fine = 3
+ohmic_layer.coarse = 4
 
-clav_gate_1_layer = 5
-clav_gate_2_layer = 7
+barrier_layer = Layer('barrier_layer', collection)
+barrier_layer.fine = 5
+barrier_layer.coarse = 6
+
+screening_layer = Layer('screening_layer', collection, 3, 4)
+screening_layer.fine = 31
+screening_layer.coarse = 32
+
+barrier_source_layer = barrier_layer.copy('barrier_source_layer', collection)
+barrier_drain_layer = barrier_layer.copy('barrier_drain_layer', collection)
+barrier_sep_layer = screening_layer.copy('barrier_screening_layer', collection)
+
+plunger_layer = Layer('plunger_layer', collection)
+plunger_layer.fine = 21
+plunger_layer.coarse = 22
+
+clav_gate_1_layer = barrier_layer.copy('clav_gate_1_layer', collection)
+clav_gate_2_layer = screening_layer.copy('clav_gate_2_layer', collection)
 
 # %% define plungers
 

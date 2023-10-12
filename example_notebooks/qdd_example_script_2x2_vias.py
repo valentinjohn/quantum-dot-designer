@@ -209,12 +209,19 @@ fo_points.spacings = [2, 80, 250]
 fo_points.bondpad_size = {'top': (110, 400), 'bottom': (110, 400),
                           'left': (400, 110), 'right': (400, 110)}
 
-fo_points.ohmic_bondpad['top']['shift'] = 50
-fo_points.ohmic_bondpad['bottom']['shift'] = 50
-fo_points.ohmic_bondpad['left']['shift'] = 90
-fo_points.ohmic_bondpad['right']['shift'] = 90
-
 fo_points.create_fo_polygons_coarse()
+
+# %%% Ohmic fanout parameters
+
+bp_ohmic_position = 1000
+bp_ohmic_width_out = 110
+bp_ohmic_width_in = 80
+bp_ohmic_length = 400
+
+bp_shift_top_source = 50
+bp_shift_top_drain = 100
+bp_shift_bottom_source = 50
+bp_shift_bottom_drain = 100
 
 # %%% Fanout plunger
 # %%%% Fanout plunger ver 0
@@ -387,6 +394,12 @@ fo_sens_top_source = FanOutLine(
 fo_sens_top_source.fo_direction = 'top'
 fo_sens_top_source.n_fanout = 2
 
+fo_sens_top_source.bp_ohmic_position = bp_ohmic_position
+fo_sens_top_source.bp_ohmic_width_out = bp_ohmic_width_out
+fo_sens_top_source.bp_ohmic_width_in = bp_ohmic_width_in
+fo_sens_top_source.bp_ohmic_length = bp_ohmic_length
+fo_sens_top_source.bp_ohmic_shift = bp_shift_top_source
+
 fo_sens_top_source.fo_line_fine.points_along_path = [[0, 0.4, 'start'],
                                                      [-0.04, 0.4, 'prev']
                                                      ]
@@ -399,6 +412,12 @@ fo_sens_top_drain = FanOutLine(
 
 fo_sens_top_drain.fo_direction = 'left'
 fo_sens_top_drain.n_fanout = 2
+
+fo_sens_top_drain.bp_ohmic_position = bp_ohmic_position
+fo_sens_top_drain.bp_ohmic_width_out = bp_ohmic_width_out
+fo_sens_top_drain.bp_ohmic_width_in = bp_ohmic_width_in
+fo_sens_top_drain.bp_ohmic_length = bp_ohmic_length
+fo_sens_top_drain.bp_ohmic_shift = bp_shift_top_drain
 
 fo_sens_top_drain.fo_line_fine.points_along_path = [[-0.25, -0.01, 'start']
                                                     ]
@@ -466,6 +485,12 @@ fo_sens_bottom_source = FanOutLine(
 fo_sens_bottom_source.fo_direction = 'bottom'
 fo_sens_bottom_source.n_fanout = 3
 
+fo_sens_bottom_source.bp_ohmic_position = bp_ohmic_position
+fo_sens_bottom_source.bp_ohmic_width_out = bp_ohmic_width_out
+fo_sens_bottom_source.bp_ohmic_width_in = bp_ohmic_width_in
+fo_sens_bottom_source.bp_ohmic_length = bp_ohmic_length
+fo_sens_bottom_source.bp_ohmic_shift = bp_shift_bottom_source
+
 points = mirror(fo_sens_top_source.fo_line_fine.points_along_path)
 fo_sens_bottom_source.fo_line_fine.points_along_path = points
 
@@ -477,6 +502,12 @@ fo_sens_bottom_drain = FanOutLine(
 
 fo_sens_bottom_drain.fo_direction = 'right'
 fo_sens_bottom_drain.n_fanout = 4
+
+fo_sens_bottom_drain.bp_ohmic_position = bp_ohmic_position
+fo_sens_bottom_drain.bp_ohmic_width_out = bp_ohmic_width_out
+fo_sens_bottom_drain.bp_ohmic_width_in = bp_ohmic_width_in
+fo_sens_bottom_drain.bp_ohmic_length = bp_ohmic_length
+fo_sens_bottom_drain.bp_ohmic_shift = bp_shift_bottom_drain
 
 points = mirror(fo_sens_top_drain.fo_line_fine.points_along_path)
 fo_sens_bottom_drain.fo_line_fine.points_along_path = points

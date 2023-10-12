@@ -52,12 +52,16 @@ class FanoutPoints():
                                        'width_in': 50,
                                        'shift': 50,
                                        'length': 110}
+        self.ohmic_bondpads = {'top': {},
+                               'bottom': {},
+                               'left': {},
+                               'right': {}
+                               }
         self._n = 0
         self.fanout_positions = None
 
     def create_fo_polygons_coarse(self):
         polygons = {}
-        polygons_ohmics = {}
         fanout_positions = compute_fanout_positions(self.fo_stages,
                                                     self.fanout_counts,
                                                     self.spacings)
@@ -72,18 +76,20 @@ class FanoutPoints():
                                                                self.fo_widths,
                                                                self.fo_fine_coarse_overlap)
                                    for n_fo in range(self.fanout_counts[direction])]
-
-            polygons_ohmics[direction] = [generate_polygon_for_ohmic_fanout(direction,
-                                                                            self.fo_lines[direction][n_fo],
-                                                                            self.ohmic_bondpad_position,
-                                                                            self.bondpad_size,
-                                                                            self.ohmic_bondpad,
-                                                                            self.fo_widths,
-                                                                            self.fo_fine_coarse_overlap)
-                                          for n_fo in range(self.fanout_counts[direction])]
-
         self.fo_polygons_coarse = polygons
-        self.fo_ohmics_polygons_coarse = polygons_ohmics
+
+    def create_single_ohmic_bp(self, direction, n_fo, bondpad_position,
+                               width_out, width_in, length, shift=0):
+        bp = generate_polygon_for_ohmic_fanout(direction,
+                                               self.fo_lines[direction][n_fo],
+                                               bondpad_position,
+                                               width_out,
+                                               width_in,
+                                               length,
+                                               shift,
+                                               self.fo_widths,
+                                               self.fo_fine_coarse_overlap)
+        self.ohmic_bondpads[direction][n_fo] = bp
 
     def get_fo_overlap_points(self, n_fanout, direction):
         multiplier = 1

@@ -9,6 +9,7 @@ Created on Tue May  9 08:18:02 2023
 import numpy as np
 import QuantumDotDesigner as qdd
 
+from QuantumDotDesigner.base import Layer
 from QuantumDotDesigner.elements import Plunger, Barrier, ScreeningGate
 from QuantumDotDesigner.components import Sensor, FanOutLine
 
@@ -20,34 +21,50 @@ qda = qdd.QuantumDotArray()
 
 # %% Layers
 
-ohmic_layer = 4
-barrier_layer = 5
-screening_layer = 9
-barrier_source_layer = 5
-barrier_drain_layer = 5
-plunger_layer = 7
+ohmic_layer = Layer('ohmic_layer', collection)
+ohmic_layer.fine = 3
+ohmic_layer.coarse = 4
 
-clav_gate_1_layer = 5
-clav_gate_2_layer = 7
+barrier_layer = Layer('barrier_layer', collection)
+barrier_layer.fine = 5
+barrier_layer.coarse = 6
+
+screening_layer = Layer('screening_layer', collection, 3, 4)
+screening_layer.fine = 31
+screening_layer.coarse = 32
+
+barrier_source_layer = barrier_layer.copy('barrier_source_layer', collection)
+barrier_drain_layer = barrier_layer.copy('barrier_drain_layer', collection)
+barrier_sep_layer = screening_layer.copy('barrier_screening_layer', collection)
+
+plunger_layer = Layer('plunger_layer', collection)
+plunger_layer.fine = 21
+plunger_layer.coarse = 22
+plunger_layer.via_etch = 23
+plunger_layer.via_fine = 24
+plunger_layer.via_coarse = 25
+
+clav_gate_1_layer = barrier_layer.copy('barrier_source_layer', collection)
+clav_gate_2_layer = screening_layer.copy('barrier_source_layer', collection)
 
 # %% define plungers
 
 pl_ver = Plunger('plunger_vertically_elongated', collection)
 pl_ver.asymx = 0.8
 pl_ver.diameter = 150e-3
-pl_ver.layer = 21
+pl_ver.layer = plunger_layer
 
 pl_hor = Plunger('plunger_horizontally_elongated', collection)
 pl_hor.asymx = 1.1
 pl_hor.diameter = 100e-3
-pl_hor.layer = 21
+pl_hor.layer = plunger_layer
 
 # %% define barriers
 
 bar_45deg = Barrier('barrier_45deg_rotated', collection)
 bar_45deg.width = 40e-3
 bar_45deg.length = 70e-3
-bar_45deg.layer = 5
+bar_45deg.layer = barrier_layer
 bar_45deg.rotate = 1/4*np.pi + 1/16*np.pi
 
 bar_135deg = bar_45deg.copy('barrier_135deg_rotated', collection)
@@ -131,19 +148,19 @@ sensor_top.gap_sep = 60e-3
 sensor_top.gap_ohmic_pl = 50e-3
 
 sensor_top.plunger.diameter = 160e-3
-sensor_top.plunger.layer = 21
+sensor_top.plunger.layer = plunger_layer
 
 sensor_top.barrier_source.width = 40e-3
 sensor_top.barrier_source.length = 70e-3
-sensor_top.barrier_source.layer = 5
+sensor_top.barrier_source.layer = barrier_source_layer
 
 sensor_top.barrier_drain.width = 40e-3
 sensor_top.barrier_drain.length = 70e-3
-sensor_top.barrier_drain.layer = 5
+sensor_top.barrier_drain.layer = barrier_drain_layer
 
 sensor_top.barrier_sep.width = 50e-3
 sensor_top.barrier_sep.length = 60e-3
-sensor_top.barrier_sep.layer = 5
+sensor_top.barrier_sep.layer = barrier_sep_layer
 
 sensor_top.source.layer = ohmic_layer
 sensor_top.source.contact_length = 70e-3
@@ -229,6 +246,17 @@ fo_points.bondpad_size = {'top': (110, 400), 'bottom': (110, 400),
                           'left': (400, 110), 'right': (400, 110)}
 fo_points.create_fo_polygons_coarse()
 
+# %%% Ohmic fanout parameters
+
+bp_ohmic_position = 1000
+bp_ohmic_width_out = 110
+bp_ohmic_width_in = 80
+bp_ohmic_length = 400
+
+bp_shift_top_source = -160
+bp_shift_top_drain = 160
+bp_shift_right_source = 200
+bp_shift_right_drain = -200
 
 # %%% Fanout plunger ver 0
 fo_pl_ver_0 = FanOutLine(
@@ -289,6 +317,12 @@ fo_sens_top_source = FanOutLine(
 fo_sens_top_source.fo_direction = 'top'
 fo_sens_top_source.n_fanout = 6
 
+fo_sens_top_source.bp_ohmic_position = bp_ohmic_position
+fo_sens_top_source.bp_ohmic_width_out = bp_ohmic_width_out
+fo_sens_top_source.bp_ohmic_width_in = bp_ohmic_width_in
+fo_sens_top_source.bp_ohmic_length = bp_ohmic_length
+fo_sens_top_source.bp_ohmic_shift = bp_shift_top_source
+
 fo_sens_top_source.fo_line_fine.points_along_path = [[0.25, 0.8, 'start'],
                                                      # [0, pl_ver.diameter/2, 'prev'],
                                                      # [-0.2, 0.5, 'prev']
@@ -301,6 +335,12 @@ fo_sens_top_drain = FanOutLine(
 
 fo_sens_top_drain.fo_direction = 'top'
 fo_sens_top_drain.n_fanout = 3
+
+fo_sens_top_drain.bp_ohmic_position = bp_ohmic_position
+fo_sens_top_drain.bp_ohmic_width_out = bp_ohmic_width_out
+fo_sens_top_drain.bp_ohmic_width_in = bp_ohmic_width_in
+fo_sens_top_drain.bp_ohmic_length = bp_ohmic_length
+fo_sens_top_drain.bp_ohmic_shift = bp_shift_top_drain
 
 fo_sens_top_drain.fo_line_fine.points_along_path = [[-0.25, 0.8, 'start'],
                                                     # [0, pl_ver.diameter/2, 'prev'],
@@ -345,6 +385,12 @@ fo_sens_right_source = FanOutLine(
 fo_sens_right_source.fo_direction = 'right'
 fo_sens_right_source.n_fanout = 4
 
+fo_sens_right_source.bp_ohmic_position = bp_ohmic_position
+fo_sens_right_source.bp_ohmic_width_out = bp_ohmic_width_out
+fo_sens_right_source.bp_ohmic_width_in = bp_ohmic_width_in
+fo_sens_right_source.bp_ohmic_length = bp_ohmic_length
+fo_sens_right_source.bp_ohmic_shift = bp_shift_right_source
+
 fo_sens_right_source.fo_line_fine.points_along_path = [[0.8, -0.25, 'start'],
                                                        # [0, pl_ver.diameter/2, 'prev'],
                                                        # [-0.2, 0.5, 'prev']
@@ -358,6 +404,12 @@ fo_sens_right_drain = FanOutLine(
 
 fo_sens_right_drain.fo_direction = 'right'
 fo_sens_right_drain.n_fanout = 0
+
+fo_sens_right_drain.bp_ohmic_position = bp_ohmic_position
+fo_sens_right_drain.bp_ohmic_width_out = bp_ohmic_width_out
+fo_sens_right_drain.bp_ohmic_width_in = bp_ohmic_width_in
+fo_sens_right_drain.bp_ohmic_length = bp_ohmic_length
+fo_sens_right_drain.bp_ohmic_shift = bp_shift_right_drain
 
 fo_sens_right_drain.fo_line_fine.points_along_path = [[0.8, 0.25, 'start'],
                                                       # [0, pl_ver.diameter/2, 'prev'],
