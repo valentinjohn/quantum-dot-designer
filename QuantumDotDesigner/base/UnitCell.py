@@ -11,8 +11,6 @@ from QuantumDotDesigner.base.Sublattice import Sublattice
 from QuantumDotDesigner.helpers.helpers import merge_device_positions
 import gdstk
 
-from icecream import ic
-
 # %% definition
 
 
