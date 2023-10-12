@@ -7,7 +7,7 @@ Created on Mon Sep 11 11:07:21 2023
 
 # %% imports
 
-from QuantumDotDesigner.BaseCollection import BaseCollection
+from QuantumDotDesigner import BaseCollection
 import copy
 
 # %% definition
@@ -22,7 +22,7 @@ class Layer:
         self.via_etch = via_etch
         self.via_fine = via_fine
         self.via_coarse = via_coarse
-        # collection.add_layer(self)
+        collection.add_layer(self)
 
     def copy(self, copy_name, collection: BaseCollection):
         attributes = copy.copy(vars(self))

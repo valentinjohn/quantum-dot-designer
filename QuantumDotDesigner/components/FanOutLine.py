@@ -58,7 +58,7 @@ class FanOutLine(Component):
         self.fo_line_coarse.element_name = self.element_name
         self.fo_line_coarse.element_number = self.element_number
 
-        self.collection.add_component(self)
+        self.collection.add_fo_component(self)
 
     def _init_elements(self, element_name, element_number, collection):
         name_coarse = f'fo_coarse_{element_name}_{element_number}'

@@ -67,6 +67,7 @@ class Sensor(Component):
         self.components_position = {}
         self.fillet = (0, 1e-3)
         self.__feature_gap = None
+        collection.add_component(self)
 
     def _init_elements(self, name, collection):
         self.plunger = Plunger(f'{name}_plunger', collection)

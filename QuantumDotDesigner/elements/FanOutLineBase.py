@@ -31,7 +31,7 @@ class FanOutLineBase(PlotMixin):
                                      'layer': self.layer}}
         self._built = False
 
-        collection.add_element(self)
+        collection.add_fo_element(self)
 
     @property
     def built(self):

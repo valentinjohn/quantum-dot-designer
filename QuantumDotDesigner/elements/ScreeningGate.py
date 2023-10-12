@@ -33,7 +33,7 @@ class ScreeningGate(Element):
     def screen(self, element_name, element_number,
                points, widths):
         fo_line_name = f'fo_line_{element_name}_{element_number}'
-        element_fo_path = self.collection.elements[fo_line_name].path
+        element_fo_path = self.collection.fo_elements[fo_line_name].path
         screen_path = create_segmented_path(element_fo_path,
                                             points,
                                             widths)
