@@ -50,7 +50,7 @@ clav_gate_2_layer = screening_layer.copy('barrier_source_layer', collection)
 # %% define plungers
 
 pl_ver = Plunger('plunger_vertically_elongated', collection)
-pl_ver.asymx = 0.8
+pl_ver.asymx = 1
 pl_ver.diameter = 150e-3
 pl_ver.layer = plunger_layer
 
@@ -265,6 +265,13 @@ fo_pl_ver_0 = FanOutLine(
 fo_pl_ver_0.fo_direction = 'top'
 fo_pl_ver_0.n_fanout = 0
 
+# fo_pl_ver_0.element.bondpad_off = True
+# fo_pl_ver_0.bp_ohmic_position = bp_ohmic_position
+# fo_pl_ver_0.bp_ohmic_width_out = bp_ohmic_width_out
+# fo_pl_ver_0.bp_ohmic_width_in = bp_ohmic_width_in
+# fo_pl_ver_0.bp_ohmic_length = bp_ohmic_length
+# fo_pl_ver_0.bp_ohmic_shift = 80
+
 fo_pl_ver_0.fo_line_fine.fo_width_start = 40e-3
 fo_pl_ver_0.fo_line_fine.points_along_path = [[-0.15, 0.3, 'start'],
                                               [-0.4, 0.7, 'start']]
@@ -276,6 +283,8 @@ fo_pl_ver_1 = FanOutLine(
 
 fo_pl_ver_1.fo_direction = 'top'
 fo_pl_ver_1.n_fanout = 2
+
+fo_pl_ver_0.element.bondpad_off = False
 
 fo_pl_ver_1.fo_line_fine.fo_width_start = 40e-3
 fo_pl_ver_1.fo_line_fine.points_along_path = [[-qda.spacing_qd_diag/2, 0, 'start'],

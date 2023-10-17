@@ -114,7 +114,7 @@ class FanOutLine(Component):
         if missing_attrs:
             raise ValueError(
                 f"Attributes {', '.join(missing_attrs)} cannot be None.")
-        if isinstance(self.element, Ohmic):
+        if self.element.bondpad_off:
             self.fo_points.create_single_ohmic_bp(self.fo_direction,
                                                   self.n_fanout,
                                                   self.bp_ohmic_position,
@@ -125,6 +125,7 @@ class FanOutLine(Component):
             fo_poly = self.fo_points.ohmic_bondpads[self.fo_direction][self.n_fanout]
         else:
             fo_poly = self.fo_points.fo_polygons_coarse[self.fo_direction][self.n_fanout]
+
         self.fo_line_coarse.polygons = fo_poly
 
         # self.elements[name] = self.fo_line_coarse

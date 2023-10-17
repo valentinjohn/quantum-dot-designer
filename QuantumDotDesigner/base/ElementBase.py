@@ -38,6 +38,7 @@ class ElementBase(PlotMixin):
         self.fillet = 0.0
         self.fillet_tolerance = 1e-3
         self._built = False
+        self.bondpad_off = False
 
     # default attributes to skip for Element
     _skip_copy_attrs = {'name', 'cell', 'elements'}
