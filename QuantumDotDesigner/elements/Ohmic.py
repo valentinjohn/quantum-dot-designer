@@ -28,6 +28,7 @@ class Ohmic(Element):
         self.ohmic_pos = 'right'
         self.rotate = 0
         self.vertices = None
+        self.bondpad_off = True
 
     def compute_ohmic_vertices(self):
         multiplier_dict = {('top', 'right'): 1,
