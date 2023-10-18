@@ -173,25 +173,14 @@ class Sensor(Component):
         if self.barrier_orientation['sep'] == 'clockwise':
             bar_sep_angle_offset = np.pi
 
-        # if isinstance(self.source_pos_angle, str):
-        #     bar_source.rotate = self._bar_angle_dict[self.source_pos_angle]
-        #     source.rotate = (self._bar_angle_dict[self.source_pos_angle] +
-        #                      multiplier_bar_source*np.pi/2)
-        # else:
         bar_source.rotate = -self.source_pos_angle+bar_source_angle_offset
         source.rotate = (-self.source_pos_angle+bar_source_angle_offset +
                          multiplier_bar_source*np.pi/2)
-        # if isinstance(self.drain_pos_angle, str):
-        #     bar_drain.rotate = -self._bar_angle_dict[self.drain_pos_angle]
-        #     drain.rotate = (self._bar_angle_dict[self.drain_pos_angle] -
-        #                     multiplier_bar_drain*np.pi/2)
-        # else:
+
         bar_drain.rotate = -self.drain_pos_angle+bar_drain_angle_offset
         drain.rotate = (-self.drain_pos_angle+bar_drain_angle_offset +
                         multiplier_bar_drain*np.pi/2)
-        # if isinstance(self.sep_pos_angle, str):
-        #     bar_sep.rotate = self._bar_angle_dict[self.sep_pos_angle]
-        # else:
+
         bar_sep.rotate = -self.sep_pos_angle+bar_sep_angle_offset
 
     def _build_and_add_elements(self):

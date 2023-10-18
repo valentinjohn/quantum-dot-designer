@@ -172,8 +172,8 @@ class FanOutLine(Component):
             raise KeyError(f"'{self.element_name}' not found in QuantumDotArray elements. "
                            "Have you built the QuantumDotArray before?")
         else:
-            self.fo_line_fine.fo_start = self.fo_points.qda.elements[
-                self.element_name]['positions'][self.element_number]
+            self.fo_line_fine.fo_start = list(self.fo_points.qda.elements[self.element_name]
+                                              ['positions'][self.element_number]).copy()
             self.fo_line_fine.fo_start[0] += self.start_offset[0]
             self.fo_line_fine.fo_start[1] += self.start_offset[1]
             self.fo_line_fine.fo_end = self.fo_points.get_fo_overlap_points(

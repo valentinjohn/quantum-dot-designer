@@ -6,6 +6,7 @@ Created on Tue May  9 08:18:02 2023
 """
 # %% import
 
+from icecream import ic
 import numpy as np
 import QuantumDotDesigner as qdd
 
@@ -182,6 +183,7 @@ sensor_left.sep_pos = 'right'
 sensor_left.source_pos = 'top'
 sensor_left.drain_pos = 'bottom'
 
+# sensor_top.build()
 # sensor_top.plot(build=True)
 
 # %% add sensor to unit cell
@@ -198,11 +200,15 @@ uc_st = unit_cell.add_component()
 uc_st.component = sensor_top
 uc_st.center = (sensor_pos_unix, sensor_pos_uniy)
 
+# uc_st.build()
+
 uc_sb = unit_cell.add_component()
 uc_sb.component = sensor_bottom
 uc_sb.center = (-sensor_pos_unix, -sensor_pos_uniy)
 
 # %% Add unit cell to main cell
+
+# unit_cell.build()
 
 uc_unitcell = qda.add_component()
 uc_unitcell.component = unit_cell
@@ -497,9 +503,12 @@ fo_screen_pl_0.fo_line_fine.fo_width_start = screen_pl_0.fo_contact_width
 fo_screen_pl_0.fo_line_fine.points_along_path = [[-0.1, 0.1, 'start'],
                                                  [-0.8, 0.4, 'start'],
                                                  ]
+
 fo.add_component(fo_screen_pl_0)
 
 # %%% Fanout screening plunger sensor top
+
+screen_sens_pl_top_qda.build()  # to have plot correctly
 
 fo_screen_sens_pl_top = FanOutLine(
     'screening_gate_sens_pl_top', 0, collection, fo_points)
