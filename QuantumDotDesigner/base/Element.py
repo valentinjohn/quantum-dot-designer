@@ -17,28 +17,43 @@ import copy
 
 
 class Element(ElementBase):
+    """
+    Represents a specific type of element in the QuantumDotDesigner system, extending the base functionalities 
+    provided by the ElementBase class. Each Element object is registered within a collection upon initialization.
+
+    The Element class integrates with the BaseCollection, allowing each element to be part of a broader collection 
+    for organized storage and management. It also overrides the copy functionality to handle deep copying of 
+    the element and its attributes, ensuring the new element is also registered within the desired collection.
+
+    Attributes:
+        Inherits all attributes from ElementBase.
+
+    Methods:
+        __init__(self, name: str, collection: BaseCollection): Initializes the Element and registers it within the provided collection.
+        copy(self, copy_name: str, collection: BaseCollection): Creates a deep copy of the element with a new name and registers it within the provided collection.
+    """
+
     def __init__(self, name: str, collection: BaseCollection):
         """
-        Initialize an Element object.
+        Initialize an Element object and register it to a collection.
+
+        The constructor takes in the name of the element and a collection to which the element will belong. 
+        It calls the superclass constructor to set up the element itself, then adds the element to the 
+        specified collection.
 
         Args:
-            name (str): Name of the element.
-            layer (int): Description of layer. Default is None.
-            rotate (float): Rotation of the element. Default is 0.0.
-            fillet (float): Fillet value. Indicates how much the polygon is rounded.
-        """
+            name (str): Unique identifier for the element.
+            collection (BaseCollection): The collection to which the element will be added.
 
+        """
         super().__init__(name)
         collection.add_element(self)
 
     def copy(self, copy_name, collection: BaseCollection):
-        # if not component.built:
-        #     component.build()
         attributes = copy.copy(vars(self))
         attributes.pop('name')
         attributes.pop('cell')
         attributes.pop('elements')
-        # attributes.pop('components')
 
         new_element = type(self)(copy_name, collection)
         new_element.__dict__.update(attributes)

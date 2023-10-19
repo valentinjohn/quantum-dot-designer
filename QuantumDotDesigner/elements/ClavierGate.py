@@ -12,6 +12,32 @@ import gdstk
 
 
 class ClavierGate(Element):
+    """
+    Represents a Clavier gate within the QuantumDotDesigner system, a specialized structure used in quantum dot device designs.
+
+    The ClavierGate class extends the standard Element class, introducing specific parameters that define the unique geometry of a Clavier gate. This gate features a series of repeating structures resembling a keyboard, which can be used for conveyor-mode shuttling of electrons and holes.
+    This class allows for detailed customization of the gate's properties, including dimensions, spacing, and repetition count. The build process involves generating the gate's geometric representation and incorporating it into the device design.
+
+    Attributes:
+        layer (Layer): The layer to which the Clavier gate belongs. It must be a valid Layer instance.
+        layer_stage (str): The stage of the layer associated with the Clavier gate, defaults to 'fine'.
+        width (int): The width of the individual gate segments.
+        length (int): The total length of the Clavier gate structure.
+        gate_width (int): The width of the gate structure.
+        gate_length (int): The length of the individual gate segments.
+        n_clav_rep (int): The number of repeating fingers in the Clavier gate structure.
+        spacing (int): The distance between individual fingers in the Clavier gate.
+        shift (int): Lateral displacement of the Clavier gate structure.
+        x (int): The x-coordinate of the Clavier gate's position.
+        y (int): The y-coordinate of the Clavier gate's position.
+        fillet (float): The radius of the corners of the Clavier gate's structure.
+        fillet_tolerance (float): The precision used in constructing the filleted corners.
+        rotation (float): The angle of rotation applied to the Clavier gate structure.
+
+    Methods:
+        build(): Constructs the Clavier gate's geometric representation and integrates it into the device design.
+    """
+
     def __init__(self, name, collection: BaseCollection):
         """
         Initialize a Clavier gate object.
@@ -37,7 +63,14 @@ class ClavierGate(Element):
 
     def build(self):
         """
-        Build the clavier gate element.
+        Construct the Clavier gate's geometric representation based on the specified properties.
+
+        This method generates the detailed geometry of the Clavier gate, taking into account its width, length, number of repetitions, and other characteristics. The process involves creating a complex polygon structure, performing necessary geometric transformations, and finalizing the gate's shape.
+
+        The constructed Clavier gate is then registered within a cell, integrating its geometry into the overall quantum dot device design.
+
+        Raises:
+            ValueError: If no valid Layer is assigned before building.
         """
         cl_points = generate_clavier_gates(self.width, self.length,
                                            self.gate_width,
