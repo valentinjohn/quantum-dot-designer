@@ -8,6 +8,8 @@
 
 [Making the first design](instructions/qdd_example_notebook.ipynb)
 
+[Adding a new element class](instructions/adding_new_elements.md)
+
 
 ## Design scripts:
 
