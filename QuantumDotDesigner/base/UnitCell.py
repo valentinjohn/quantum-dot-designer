@@ -15,6 +15,22 @@ import gdstk
 
 
 class UnitCell(PlotMixin):
+    """
+    Represents a unit cell in a quantum dot design, serving as the basic building block for larger structures.
+
+    The `UnitCell` class defines a small, repeatable structure (like a tile) that can be used in the construction of more complex structures.
+
+    Attributes:
+        name (str): Unique identifier for the unit cell.
+        elements (dict): Dictionary of elements that constitute the unit cell.
+        components (dict): Dictionary of components (or sublattices) added to the unit cell.
+        cell (gdstk.Cell): Underlying representation of the unit cell in GDSTK.
+        _xlim (tuple, optional): Horizontal (x-axis) limits of the unit cell's geometry.
+        _ylim (tuple, optional): Vertical (y-axis) limits of the unit cell's geometry.
+        _n (int): Counter used for naming sublattices.
+        _built (bool): Flag indicating if the unit cell has been constructed.
+    """
+
     def __init__(self, name):
         """
         Initialize a UnitCell object.

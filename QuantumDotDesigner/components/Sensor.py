@@ -21,13 +21,39 @@ import copy
 
 
 class Sensor(Component):
-    def __init__(self, name: str, collection: BaseCollection):
-        """
-        Initialize a Sensor object.
+    """
+    Represents a sensor component in a quantum dot design, containing elements like plungers, barriers, and ohmics.
 
-        Args:
-            name (str): Name of the sensor.
-        """
+    The `Sensor` class is an extension of the `Component` class and represents a more complex entity in the quantum dot system. It manages the geometric and spatial configuration of its constituent elements and handles their collective behavior as a single component.
+
+    Attributes:
+        gap_ohmic_pl (int): Gap between the ohmic and plunger elements.
+        gap_sep (int): Gap between the separation gate and plunger elements.
+        source_pos (str): Position identifier for the source element (e.g., 'top', 'bottom').
+        source_pos_angle (float): Angular position of the source element, in radians.
+        drain_pos (str): Position identifier for the drain element.
+        drain_pos_angle (float): Angular position of the drain element, in radians.
+        sep_pos (str): Position identifier for the separation gate.
+        sep_pos_angle (float): Angular position of the separation gate, in radians.
+        barrier_orientation (dict): Orientation specifications for barriers.
+        offset (dict): Offset values for various elements within the sensor.
+        element_positions (dict): Stores the positions of constituent elements.
+        _bar_angle_dict (dict): Dictionary mapping position identifiers to angles.
+        components_position (dict): Positions of the various components within the sensor.
+        fillet (tuple): Parameters for the fillet operation in geometry construction.
+        __feature_gap (float): Internal attribute to manage feature gaps.
+
+    Methods:
+        _init_elements(name, collection): Initializes the elements that make up the sensor.
+        _calculate_positions(): Calculates the positions of the elements based on sensor geometry.
+        _set_barrier_properties(): Sets properties related to barriers within the sensor.
+        _build_and_add_elements(): Builds and adds elements to the sensor component.
+        _build_elements(): Handles the comprehensive building process for the sensor elements.
+        copy(copy_name, collection): Creates a copy of the sensor with a new name and potentially new attributes.
+        build(): Overridden method that builds the sensor component, assembling its subcomponents and finalizing its geometry.
+    """
+
+    def __init__(self, name: str, collection: BaseCollection):
         if not isinstance(collection, BaseCollection):
             raise TypeError(
                 f"Expected collection to be of type {BaseCollection}, but got {type(collection)} instead.")

@@ -18,7 +18,7 @@ class FanOutLineBase(PlotMixin):
         self.fo_fine_coarse_overlap = None
         self.fo_fine_coarse_overlap_gap = 0.3
         self.layer = None
-        self.layer_stage = 'coarse'
+        self._layer_stage = 'coarse'
         self.polygons = None
         self.path = None
         self.fo_direction = None
@@ -42,14 +42,14 @@ class FanOutLineBase(PlotMixin):
         self._built = new_value
 
     def build(self):
-        layer = getattr(self.layer, self.layer_stage)
+        layer = getattr(self.layer, self._layer_stage)
         fo_line = gdstk.Polygon(self.polygons, layer=layer)
         fo_line.fillet(self.fillet, tolerance=self.fillet_tolerance)
 
         self.elements[self.name]['vertices'] = self.polygons  # fo_line.points
         self.elements[self.name]['positions'] = [[0, 0]]
         self.elements[self.name]['layer'] = self.layer
-        self.elements[self.name]['layer_stage'] = self.layer_stage
+        self.elements[self.name]['layer_stage'] = self._layer_stage
 
         self.cell.add(fo_line)
         self._set_built(True)

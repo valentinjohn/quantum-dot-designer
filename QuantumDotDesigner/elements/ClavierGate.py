@@ -47,7 +47,7 @@ class ClavierGate(Element):
         """
         super().__init__(name, collection)
         self.layer = None
-        self.layer_stage = 'fine'
+        self._layer_stage = 'fine'
         self.width = 100
         self.length = 100*4*10
         self.gate_width = 100
@@ -78,7 +78,7 @@ class ClavierGate(Element):
                                            self.n_clav_rep, self.spacing,
                                            self.shift, (-self.length/2, 0),
                                            self.rotation)
-        layer = getattr(self.layer, self.layer_stage)
+        layer = getattr(self.layer, self._layer_stage)
         cl = gdstk.Polygon(cl_points, layer=layer)
 
         cl.translate(self.x, self.y)
@@ -88,6 +88,6 @@ class ClavierGate(Element):
         self.elements[self.name]['vertices'] = cl.points
         self.elements[self.name]['positions'] = [[self.x, self.y]]
         self.elements[self.name]['layer'] = self.layer
-        self.elements[self.name]['layer_stage'] = self.layer_stage
+        self.elements[self.name]['layer_stage'] = self._layer_stage
         self.cell = cell
         self._set_built(True)

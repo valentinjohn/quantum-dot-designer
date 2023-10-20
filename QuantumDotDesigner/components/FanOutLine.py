@@ -23,17 +23,20 @@ import matplotlib.pylab as plt
 class FanOutLine(Component):
     def __init__(self, element_name: str, element_number: int,
                  collection: BaseCollection, fo_points: FanoutPoints):
-        # if not isinstance(qda_elements, QuantumDotArrayElements):
-        #     raise TypeError(
-        #         f"Expected qda_elements to be of type {QuantumDotArrayElements}, but got {type(qda_elements)} instead.")
+
+        if not isinstance(fo_points, FanoutPoints):
+            raise TypeError(
+                f"Expected fo_points to be of type {FanoutPoints()}, but got {type(fo_points)} instead.")
+        if not isinstance(collection, BaseCollection):
+            raise TypeError(
+                f"Expected collection to be of type {BaseCollection}, but got {type(collection)} instead.")
+
         super().__init__(f'fo_{element_name}_{element_number}')
         self._init_elements(element_name, element_number, collection)
         self.collection = collection
         self.fo_points = fo_points
         self.element_name = element_name
         self.element_number = element_number
-        # self.fo_fine_coarse_overlap = None
-        # self.fo_fine_coarse_overlap_gap = 0.3
         self.element = self.collection.elements[element_name]
         self.start_offset = self.element._fo_contact_point
         self.fo_line_fine.fo_width_start = self.element._fo_contact_width
@@ -72,7 +75,7 @@ class FanOutLine(Component):
     def add_via(self):
         if self.via is not None:
             self.via.layer = self.layer
-            self.via.layer_stage = 'via_fine'
+            self.via._layer_stage = 'via_fine'
             self.via.build()
 
             uc_via = self.add_component(self.via)
@@ -83,7 +86,7 @@ class FanOutLine(Component):
     def add_via_etch(self):
         if self.via is not None:
             self.via_etch.layer = self.layer
-            self.via_etch.layer_stage = 'via_etch'
+            self.via_etch._layer_stage = 'via_etch'
             self.via_etch.build()
 
             uc_via_etch = self.add_component(self.via_etch)
@@ -102,9 +105,9 @@ class FanOutLine(Component):
 
         self.fo_line_coarse.layer = self.layer
         if self.via is not None:
-            self.fo_line_coarse.layer_stage = 'via_coarse'
+            self.fo_line_coarse._layer_stage = 'via_coarse'
         else:
-            self.fo_line_coarse.layer_stage = 'coarse'
+            self.fo_line_coarse._layer_stage = 'coarse'
 
         attributes = {'fo_direction': self.fo_direction,
                       'n_fanout': self.n_fanout,
@@ -150,9 +153,9 @@ class FanOutLine(Component):
 
         self.fo_line_fine.layer = self.layer
         if self.via is not None:
-            self.fo_line_fine.layer_stage = 'via_fine'
+            self.fo_line_fine._layer_stage = 'via_fine'
         else:
-            self.fo_line_fine.layer_stage = 'fine'
+            self.fo_line_fine._layer_stage = 'fine'
 
         self.fo_line_fine.fillet = self.fillet
 
