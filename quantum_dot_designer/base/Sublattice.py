@@ -6,9 +6,9 @@ Created on Mon Sep 11 11:41:19 2023
 """
 # %% imports
 
-from QuantumDotDesigner.base import PlotMixin
-# from QuantumDotDesigner.elements.FanOutLineBase import FanOutLineBase
-from QuantumDotDesigner.helpers.helpers import update_positions
+from .PlotMixin import PlotMixin
+from ..helpers.helpers import update_positions
+
 import gdstk
 
 # %% definition

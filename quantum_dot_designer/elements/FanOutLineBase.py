@@ -5,8 +5,10 @@ Created on Wed Sep 13 13:02:28 2023
 @author: vjohn
 """
 
-from QuantumDotDesigner.base import PlotMixin
-from QuantumDotDesigner.BaseCollection import BaseCollection
+from ..base import PlotMixin
+from ..BaseCollection import BaseCollection
+
+
 import gdstk
 
 

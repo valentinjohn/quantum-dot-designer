@@ -5,11 +5,13 @@ Created on Thu Sep 14 10:05:40 2023
 @author: vjohn
 """
 
-from QuantumDotDesigner import QuantumDotArray
-from QuantumDotDesigner.helpers.helpers import (compute_fanout_positions,
-                                                get_fo_lines,
-                                                generate_polygon_for_fanout,
-                                                generate_polygon_for_ohmic_fanout)
+from ..QuantumDotArray import QuantumDotArray
+
+from ..helpers.helpers import (compute_fanout_positions,
+                                                  get_fo_lines,
+                                                  generate_polygon_for_fanout,
+                                                  generate_polygon_for_ohmic_fanout)
+
 
 
 class FanoutPoints():

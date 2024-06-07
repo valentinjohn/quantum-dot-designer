@@ -24,38 +24,48 @@ Suppose we want to create a `CustomGate` with a specific polygon shape. This ele
 First, we define the `CustomGate` class, inheriting properties and methods from the `Element` class. We will override the `build` method to specify the geometry of our custom gate. Optionally, we can also generate the vertices from the newly created attributes in a separate method.
 
 ```python
-from QuantumDotDesigner.base import Element
-from QuantumDotDesigner.BaseCollection import BaseCollection
+from quantum_dot_designer.base import Element
+from quantum_dot_designer.BaseCollection import BaseCollection
 import gdstk
 
+
 class CustomGate(Element):
-    def __init__(self, name, collection: BaseCollection, vertices):
-        super().__init__(name, collection)
+
+       
+
+def __init__(self, name, collection: BaseCollection, vertices):
+
+            super().__init__(name, collection)
         self.attr_1 = None
         self.attr_2 = None
         self.attr_3 = None
-        # ... and more attributes if desired
+         # ... and more attributes if desired
 
-	def get_vertices(self):
-        """
-        method to create polygon vertices from newly defined attributes 'self.attr_1',
-        'self.attr_2', 'self.attr_3', ...
-        """
-        # code to calculate vertices
-        # ...
-        return vertices
+def get_vertices(self):
 
-    def build(self):
-        if self.layer is None or not isinstance(self.layer, Layer):
-            raise ValueError("A valid Layer must be assigned before building the element.")
-		vertices = self.get.vertices()
+
+    """
+    method to create polygon vertices from newly defined attributes 'self.attr_1',
+    'self.attr_2', 'self.attr_3', ...
+    """
+# code to calculate vertices
+# ...
+return vertices
+
+   
+
+def build(self):
+
+            if self.layer is None or not isinstance(self.layer, Layer):
+                raise ValueError("A valid Layer must be assigned before building the element.")
+vertices = self.get.vertices()
         polygon = gdstk.Polygon(vertices, layer=self.layer)
         cell = gdstk.Cell(self.name)
         cell.add(polygon)
         self.elements[self.name]['vertices'] = polygon.points
-        self.elements[self.name]['positions'] = [[0, 0]]
-        self.elements[self.name]['layer'] = self.layer
-        self.elements[self.name]['layer_stage'] = self._layer_stage
+self.elements[self.name]['positions'] = [[0, 0]]
+self.elements[self.name]['layer'] = self.layer
+self.elements[self.name]['layer_stage'] = self._layer_stage
         self.cell = cell
         self._set_built(True)
 ```
@@ -66,12 +76,11 @@ After defining our `CustomGate`, we need to create an instance of it and integra
 
 ```python
 
-from QuantumDotDesigner.BaseCollection import BaseCollection
+from quantum_dot_designer.BaseCollection import BaseCollection
 
 # other imports...
 
 collection = BaseCollection()
-
 
 custom_gate = CustomGate(name="my_custom_gate", collection=collection)
 

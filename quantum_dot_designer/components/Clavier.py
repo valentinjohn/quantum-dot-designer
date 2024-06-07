@@ -6,11 +6,12 @@ Created on Mon Sep 11 11:46:38 2023
 """
 # %% imports
 
-from QuantumDotDesigner.base import Component
-from QuantumDotDesigner.BaseCollection import BaseCollection
+from ..base import Component
+from ..BaseCollection import BaseCollection
 
-from QuantumDotDesigner.elements.ClavierGate import ClavierGate
-from QuantumDotDesigner.elements.ScreeningGate import ScreeningGate
+from ..elements.ClavierGate import ClavierGate
+from ..elements.ScreeningGate import ScreeningGate
+
 
 import numpy as np
 import copy

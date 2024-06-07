@@ -7,9 +7,9 @@ Created on Mon Sep 11 11:07:21 2023
 
 # %% imports
 
-from abc import abstractmethod
-from QuantumDotDesigner.base.ElementBase import ElementBase
-from QuantumDotDesigner.BaseCollection import BaseCollection
+from .ElementBase import ElementBase
+from ..BaseCollection import BaseCollection
+
 
 import copy
 
@@ -18,7 +18,7 @@ import copy
 
 class Element(ElementBase):
     """
-    Represents a specific type of element in the QuantumDotDesigner system, extending the base functionalities 
+    Represents a specific type of element in the quantum_dot_designer system, extending the base functionalities
     provided by the ElementBase class. Each Element object is registered within a collection upon initialization.
 
     The Element class integrates with the BaseCollection, allowing each element to be part of a broader collection 

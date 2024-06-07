@@ -1,0 +1,40 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "quantum_dot_designer"
+authors = [
+    {name = "Valentine John", email = "v.john@tudelft.nl"},
+    { name = "Barnaby van Straaten", email = "b.l.vanstraaten@tudelft.nl" }
+]
+readme = "README.md"
+license = { file = "LICENSE" }
+classifiers = [
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+keywords = [
+    "semiconducting",
+    "quantum dots",
+    "quantum"
+]
+
+dynamic = ["version", "description"]
+requires-python = ">=3.10"
+dependencies = [
+    'numpy>=1.26',
+    'matplotlib>=3.9',
+    'tqdm>=4.6',
+    'gdstk==0.9.52'
+]
+
+[project.urls]
+Home = "https://github.com/valentinjohn/quantum-dot-designer"
+Repository = "https://github.com/valentinjohn/quantum-dot-designer"
+Issues = "https://github.com/valentinjohn/quantum-dot-designer/issues"

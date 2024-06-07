@@ -5,8 +5,7 @@ Created on Wed Sep 13 13:02:28 2023
 @author: vjohn
 """
 
-from QuantumDotDesigner.elements.FanOutLineBase import FanOutLineBase
-
+from ..elements.FanOutLineBase import FanOutLineBase
 
 class FanOutLineCoarse(FanOutLineBase):
     pass

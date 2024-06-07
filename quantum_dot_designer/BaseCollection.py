@@ -5,7 +5,9 @@ Created on Thu Sep 21 08:38:11 2023
 @author: vjohn
 """
 
-from QuantumDotDesigner.base import ElementBase, UnitCell, Layer
+from .base.ElementBase import ElementBase
+from .base.UnitCell import UnitCell
+from .base.Layer import Layer
 
 
 class BaseCollection:

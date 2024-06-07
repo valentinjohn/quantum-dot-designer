@@ -5,19 +5,20 @@ Created on Wed Sep 13 13:02:28 2023
 @author: vjohn
 """
 
-from QuantumDotDesigner.base import Element, Layer
-from QuantumDotDesigner.BaseCollection import BaseCollection
+from ..base import Element, Layer
+from ..BaseCollection import BaseCollection
 import numpy as np
-from QuantumDotDesigner.helpers.helpers import (rot_mat, midpoint,
-                                                orthogonal_unit_vector,
-                                                distance,
-                                                adjust_vector_direction)
+from ..helpers.helpers import (rot_mat, midpoint,
+                                                  orthogonal_unit_vector,
+                                                  distance,
+                                                  adjust_vector_direction)
+
 import gdstk
 
 
 class Ohmic(Element):
     """
-    Represents an ohmic contact within the QuantumDotDesigner system.
+    Represents an ohmic contact within the quantum_dot_designer system.
 
     It is an extension of the standard Element class, equipped with additional attributes specific to ohmic contacts, such as contact length, contact offset, and contact angle.
 

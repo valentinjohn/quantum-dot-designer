@@ -8,11 +8,11 @@ Created on Thu Jul 27 16:28:10 2023
 # %% import
 
 import numpy as np
-import QuantumDotDesigner as qdd
+import quantum_dot_designer as qdd
 
-from QuantumDotDesigner.base.Layer import Layer
-from QuantumDotDesigner.elements import Plunger, Barrier, ScreeningGate
-from QuantumDotDesigner.components import Sensor, FanOutLine, Clavier
+from quantum_dot_designer.base.Layer import Layer
+from quantum_dot_designer.elements import Plunger, Barrier, ScreeningGate
+from quantum_dot_designer.components import Sensor, FanOutLine, Clavier
 
 # %% Init
 

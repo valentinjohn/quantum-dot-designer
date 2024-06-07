@@ -7,9 +7,9 @@ Created on Thu Sep 14 10:11:40 2023
 
 import gdstk
 
-from QuantumDotDesigner.helpers.helpers import merge_device_positions
-from QuantumDotDesigner.base import Sublattice, PlotMixin
 
+from ..helpers.helpers import merge_device_positions
+from ..base import Sublattice, PlotMixin
 
 class Fanout(PlotMixin):
     def __init__(self, name):

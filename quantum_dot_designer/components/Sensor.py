@@ -7,12 +7,14 @@ Created on Mon Sep 11 11:33:18 2023
 
 # %% imports
 
-from QuantumDotDesigner.base import Component
-from QuantumDotDesigner.BaseCollection import BaseCollection
+from ..base import Component
+from ..BaseCollection import BaseCollection
 
-from QuantumDotDesigner.elements.Plunger import Plunger
-from QuantumDotDesigner.elements.Barrier import Barrier
-from QuantumDotDesigner.elements.Ohmic import Ohmic
+from ..elements.Plunger import Plunger
+from ..elements.Barrier import Barrier
+from ..elements.Ohmic import Ohmic
+
+
 
 import numpy as np
 import copy

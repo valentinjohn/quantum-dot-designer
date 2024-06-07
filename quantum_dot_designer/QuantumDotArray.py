@@ -6,10 +6,11 @@ Created on Thu Sep 14 10:46:45 2023
 """
 
 import gdstk
-from QuantumDotDesigner.helpers.helpers import merge_device_positions
-from QuantumDotDesigner.base import UnitCell
-from QuantumDotDesigner.base import PlotMixin, Sublattice
 
+
+from .helpers.helpers import merge_device_positions
+from .base import UnitCell
+from .base import PlotMixin, Sublattice
 
 class QuantumDotArray(PlotMixin):
     def __init__(self):

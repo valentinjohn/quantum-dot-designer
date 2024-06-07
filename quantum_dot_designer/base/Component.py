@@ -7,7 +7,7 @@ Created on Fri Sep 29 09:37:32 2023
 
 # %% imports
 
-from QuantumDotDesigner.base import UnitCell
+from .UnitCell import UnitCell
 
 # %% definition
 

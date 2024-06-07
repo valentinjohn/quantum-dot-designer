@@ -7,14 +7,13 @@ Created on Mon Sep 11 11:07:21 2023
 
 # %% imports
 
-from QuantumDotDesigner import BaseCollection
 import copy
 
 # %% definition
 
 
 class Layer:
-    def __init__(self, name: str, collection: BaseCollection,
+    def __init__(self, name: str, collection,
                  fine=0, coarse=1, via_etch=None, via_fine=None, via_coarse=None):
         self.name = name
         self.fine = fine
@@ -24,7 +23,7 @@ class Layer:
         self.via_coarse = via_coarse
         collection.add_layer(self)
 
-    def copy(self, copy_name, collection: BaseCollection):
+    def copy(self, copy_name, collection):
         attributes = copy.copy(vars(self))
         attributes.pop('name')
 

@@ -8,14 +8,14 @@ Created on Mon Sep 11 11:07:21 2023
 # %% imports
 
 from abc import abstractmethod
-from QuantumDotDesigner.base import PlotMixin
+from .PlotMixin import PlotMixin
 
 # %% definition
 
 
 class ElementBase(PlotMixin):
     """
-    Abstract base class for elements in the QuantumDotDesigner system, providing a common interface, 
+    Abstract base class for elements in the quantum_dot_designer system, providing a common interface,
     properties, and methods for all element objects. This class should not be instantiated directly 
     but should be subclassed to create specific element types with their own implementations.
 

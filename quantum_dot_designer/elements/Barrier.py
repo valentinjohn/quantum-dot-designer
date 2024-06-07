@@ -4,16 +4,17 @@ Created on Wed Sep 13 13:02:28 2023
 
 @author: vjohn
 """
+from ..base import Element, Layer
+from ..BaseCollection import BaseCollection
 
-from QuantumDotDesigner.base import Element, Layer
-from QuantumDotDesigner.BaseCollection import BaseCollection
+
 import gdstk
 import copy
 
 
 class Barrier(Element):
     """
-    Represents a barrier element in the QuantumDotDesigner system, extending the functionalities provided by the Element class.
+    Represents a barrier element in the quantum_dot_designer system, extending the functionalities provided by the Element class.
 
     The Barrier class is tailored for elements that simulate physical barriers, having specific geometric attributes such as width and length. These barriers are rectangular with additional geometric features, and they can be associated with a specific layer.
 

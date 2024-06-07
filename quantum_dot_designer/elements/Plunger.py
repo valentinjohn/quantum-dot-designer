@@ -4,18 +4,17 @@ Created on Wed Sep 13 13:02:28 2023
 
 @author: vjohn
 """
+from ..base import Element, Layer
+from ..BaseCollection import BaseCollection
+from ..helpers.helpers import gen_poly
 
-from QuantumDotDesigner.base import Element, Layer
-from QuantumDotDesigner.BaseCollection import BaseCollection
 import numpy as np
-from QuantumDotDesigner.helpers.helpers import gen_poly
 import gdstk
-import copy
 
 
 class Plunger(Element):
     """
-    Represents a plunger element in the QuantumDotDesigner system, extending the functionalities provided by the Element class.
+    Represents a plunger element in the quantum_dot_designer system, extending the functionalities provided by the Element class.
 
     The Plunger class is designed for elements that require specific geometric constructions, particularly a circular shape with adjustable asymmetry in the x and y directions. It is associated with a specific layer and has a defined diameter that influences its build process.
 

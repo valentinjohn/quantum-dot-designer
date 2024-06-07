@@ -7,15 +7,15 @@ Created on Tue May  9 08:18:02 2023
 # %% import
 
 import numpy as np
-import QuantumDotDesigner as qdd
+import quantum_dot_designer as qdd
 
-from QuantumDotDesigner.base import Layer
+from quantum_dot_designer.base import Layer
 
-from QuantumDotDesigner.elements import (Plunger, Barrier, ScreeningGate,
-                                         BasicPolygon)
-from QuantumDotDesigner.components import Sensor, FanOutLine
+from quantum_dot_designer.elements import (Plunger, Barrier, ScreeningGate,
+                                           BasicPolygon)
+from quantum_dot_designer.components import Sensor, FanOutLine
 
-from QuantumDotDesigner.helpers.helpers import mirror_points_along_path as mirror
+from quantum_dot_designer.helpers.helpers import mirror_points_along_path as mirror
 
 # %% Elements/components
 

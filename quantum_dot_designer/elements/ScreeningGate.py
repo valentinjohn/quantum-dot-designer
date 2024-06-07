@@ -4,22 +4,22 @@ Created on Wed Sep 13 13:02:28 2023
 
 @author: vjohn
 """
-
-from QuantumDotDesigner.base import Element, Layer
-from QuantumDotDesigner.BaseCollection import BaseCollection
+from ..base import Element, Layer
+from ..BaseCollection import BaseCollection
 import numpy as np
-from QuantumDotDesigner.helpers.helpers import (create_segmented_path,
-                                                get_polygons_from_path,
-                                                get_end_path,
-                                                point_along_line,
-                                                orthogonal_unit_vector,
-                                                adjust_vector_direction)
+from ..helpers.helpers import (create_segmented_path,
+                                                  get_polygons_from_path,
+                                                  get_end_path,
+                                                  point_along_line,
+                                                  orthogonal_unit_vector,
+                                                  adjust_vector_direction)
+
 import gdstk
 
 
 class ScreeningGate(Element):
     """
-    Represents a screening gate within the QuantumDotDesigner system, used for controlling electrostatic potentials in quantum dot device designs.
+    Represents a screening gate within the quantum_dot_designer system, used for controlling electrostatic potentials in quantum dot device designs.
 
     The ScreeningGate class extends the standard Element class, adding functionalities that allow it to manage and manipulate screening paths. These paths are crucial in the design of quantum dot devices, as they help control the electrostatic environments within these devices, a key factor in their operational behavior.
 

@@ -8,11 +8,11 @@ Created on Tue May  9 08:18:02 2023
 
 from icecream import ic
 import numpy as np
-import QuantumDotDesigner as qdd
+import quantum_dot_designer as qdd
 
-from QuantumDotDesigner.base import Layer
-from QuantumDotDesigner.elements import Plunger, Barrier, ScreeningGate
-from QuantumDotDesigner.components import Sensor, FanOutLine
+from quantum_dot_designer.base import Layer
+from quantum_dot_designer.elements import Plunger, Barrier, ScreeningGate
+from quantum_dot_designer.components import Sensor, FanOutLine
 
 # %% Init
 

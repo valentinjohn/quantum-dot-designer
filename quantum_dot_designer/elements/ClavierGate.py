@@ -5,15 +5,16 @@ Created on Wed Sep 13 13:02:28 2023
 @author: vjohn
 """
 
-from QuantumDotDesigner.base import Element
-from QuantumDotDesigner.helpers.helpers import generate_clavier_gates
-from QuantumDotDesigner.BaseCollection import BaseCollection
+from ..base import Element
+from ..helpers.helpers import generate_clavier_gates
+from ..BaseCollection import BaseCollection
+
 import gdstk
 
 
 class ClavierGate(Element):
     """
-    Represents a Clavier gate within the QuantumDotDesigner system, a specialized structure used in quantum dot device designs.
+    Represents a Clavier gate within the quantum_dot_designer system, a specialized structure used in quantum dot device designs.
 
     The ClavierGate class extends the standard Element class, introducing specific parameters that define the unique geometry of a Clavier gate. This gate features a series of repeating structures resembling a keyboard, which can be used for conveyor-mode shuttling of electrons and holes.
     This class allows for detailed customization of the gate's properties, including dimensions, spacing, and repetition count. The build process involves generating the gate's geometric representation and incorporating it into the device design.

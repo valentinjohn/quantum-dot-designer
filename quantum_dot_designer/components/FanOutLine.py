@@ -6,13 +6,12 @@ Created on Mon Sep 11 11:53:24 2023
 """
 # %% imports
 
-from QuantumDotDesigner.base import Component
-from QuantumDotDesigner.BaseCollection import BaseCollection
-from QuantumDotDesigner.fanout import FanoutPoints
+from ..base import Component
+from ..BaseCollection import BaseCollection
+from ..fanout import FanoutPoints
 
-from QuantumDotDesigner.elements.Ohmic import Ohmic
-from QuantumDotDesigner.elements.FanOutLineFine import FanOutLineFine
-from QuantumDotDesigner.elements.FanOutLineCoarse import FanOutLineCoarse
+from ..elements.FanOutLineFine import FanOutLineFine
+from ..elements.FanOutLineCoarse import FanOutLineCoarse
 
 import gdstk
 import matplotlib.pylab as plt

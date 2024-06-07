@@ -5,17 +5,17 @@ Created on Wed Sep 13 13:02:28 2023
 @author: vjohn
 """
 
-from QuantumDotDesigner.base import Element, Layer
-from QuantumDotDesigner.BaseCollection import BaseCollection
+from ..base import Element, Layer
+from ..BaseCollection import BaseCollection
 import numpy as np
-from QuantumDotDesigner.helpers.helpers import gen_poly
+from ..helpers.helpers import gen_poly
 import gdstk
-import copy
+
 
 
 class BasicPolygon(Element):
     """
-    Represents a basic polygon element in the QuantumDotDesigner system, extending the functionalities provided by the Element class.
+    Represents a basic polygon element in the quantum_dot_designer system, extending the functionalities provided by the Element class.
 
     The BasicPolygon class is tailored for the creation of regular, standardized polygons. It allows for the definition of the number of corners, creating shapes ranging from triangles (minimal) to polygons with several sides. The class maintains the properties of standard elements, including layer association, scaling, and fillet operations.
 

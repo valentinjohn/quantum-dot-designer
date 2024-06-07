@@ -5,11 +5,10 @@ Created on Wed Sep 13 13:02:28 2023
 @author: vjohn
 """
 
-from QuantumDotDesigner.elements.FanOutLineBase import FanOutLineBase
+from ..elements.FanOutLineBase import FanOutLineBase
 import numpy as np
-from QuantumDotDesigner.helpers.helpers import get_polygons_from_path
-from QuantumDotDesigner.BaseCollection import BaseCollection
-
+from ..helpers.helpers import get_polygons_from_path
+from ..BaseCollection import BaseCollection
 
 class FanOutLineFine(FanOutLineBase):
     def __init__(self, name, collection: BaseCollection):

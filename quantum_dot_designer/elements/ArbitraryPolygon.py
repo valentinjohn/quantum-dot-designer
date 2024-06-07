@@ -5,15 +5,16 @@ Created on Wed Sep 13 13:02:28 2023
 @author: vjohn
 """
 
-from QuantumDotDesigner.base import Element, Layer
-from QuantumDotDesigner.BaseCollection import BaseCollection
+from ..base import Element, Layer
+from ..BaseCollection import BaseCollection
+
 import numpy as np
 import gdstk
 
 
 class ArbitraryPolygon(Element):
     """
-    Represents an arbitrary polygon element in the QuantumDotDesigner system, extending the functionalities provided by the Element class.
+    Represents an arbitrary polygon element in the quantum_dot_designer system, extending the functionalities provided by the Element class.
 
     The ArbitraryPolygon class caters to elements that require custom geometric shapes, allowing users to define a polygon with an arbitrary number of vertices. This class maintains the properties of standard elements while providing additional flexibility in terms of shape design.
 
